@@ -1,0 +1,64 @@
+# 独立一级频道「帮助中心（docs/ 沉浸式开源文档阅读器）」中文语言包（web/src/lang/zh-cn/help.yaml ⇒ 前缀 help.*）
+badge: docs/ 开源文档中心
+title: 帮助与开源文档中心
+subtitle: 直接加载并渲染 rocareer/rolling-memory 根目录与 docs/ 目录下的 Markdown 全文、章节大纲与代码片段。
+searchPlaceholder: 全文搜索 13 篇文档标题、路径或正文内容…
+scopeSwitchLabel: 目录范围：
+categorySwitchLabel: 文档分类：
+scopeAll: 全部文档
+scopeRoot: 根目录声明与总览
+scopeDocs: docs/ 技术与使用手册
+catAll: 全部文档
+enterZen: 专注阅读
+exitZen: 退出专注
+enterEdit: Markdown 在线编辑 (md-editor-v3)
+exitEdit: 返回阅读模式
+resetDraft: 还原初始正文
+mdEngineTag: md-editor-v3 v1.0.6 已启用
+noMatch: 未找到匹配的文档或章节内容
+resetFilter: 重置筛选条件
+openGitHub: 在 GitHub 打开源文件
+copyUrl: 复制链接
+copyContent: 复制 Markdown 全文
+copied: 已复制到剪贴板
+goReposPage: 开源仓库与声明
+goDocsPage: 打开文档阅读器
+statusPlaceholder: 待补充
+statusReady: 实时同步
+outlineTitle: 本篇核心章节导读（Key Takeaways）
+draftTitle: 文档全文
+repoPathLabel: 文件路径：
+targetUrlLabel: GitHub 远端地址：
+repos:
+  main:
+    name: rocareer/rolling-memory
+    badge: 开源主仓库（含插件与控制台）
+    status: GitHub rocareer 组织维护
+    url: https://github.com/rocareer/rolling-memory
+    desc: Rolling Memory 开源发布仓库（包含 Go 核心引擎、多宿主插件、Web 管理控制台及根级 README / DECLARATION / LICENSE / NOTICE）。
+  docsDir:
+    name: rocareer/rolling-memory/docs
+    badge: docs/ 文档目录
+    status: 随仓库同步维护
+    url: https://github.com/rocareer/rolling-memory/tree/main/docs
+    desc: 全部公开文档（多宿主接入 harness.md、MCP 契约 mcp.md、Web 控制台与插件指南 plugin-console.md、基准评测 benchmarks.md、隐私与本地数据说明 privacy.md）均位于 docs/ 目录。
+categories:
+  overview: 总览与变更日志
+  guide: 宿主接入与评测指南
+  architecture: 核心架构与协议契约
+  legal: 立场声明、许可与隐私
+  faq: 常见问题
+reposPage:
+  title: 开源仓库、立场声明与许可说明
+  subtitle: 统一托管于 GitHub rocareer/rolling-memory，文档与代码随仓库同步提供。
+  stageNoticeTitle: 文档与仓库结构（rocareer/rolling-memory + docs/）
+  stageNoticeDesc: 全部核心代码、插件资产、根级版权/免责声明（DECLARATION.md / LICENSE / NOTICE）与 docs/ 技术文档统一由 rocareer/rolling-memory 提供。
+  tableTitle: 公开文档与声明一览表
+  colScope: 所在目录
+  colPath: 相对路径
+  colCategory: 分类
+  colTitle: 文档标题与内容摘要
+  colStatus: 状态
+  colAction: 操作
+  previewBtn: 阅读全文
+  openRemoteBtn: GitHub ↗

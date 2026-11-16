@@ -1,0 +1,274 @@
+# 仓库来源 + 插件清单两页的文案（web/src/views/admin/plugin/source/**、catalog/**）。
+# 命名空间由物理路径生成：本文件在 web/src/lang/zh-cn/plugin/source.yaml ⇒ 前缀 plugin.source.*
+# 第一层键不要写 plugin/source：直接写 title/columns/form/catalog/errors。
+title: 仓库来源
+subtitle: 清单托管位置（本地文件 / HTTP URL），所有来源共用同一种清单格式
+tips:
+    format: 所有来源只接受 ai-go-plugin-catalog/v1 这一种清单格式；来源类型只决定清单从哪里读取，不改变字段、解析器与安装流程。
+searchPlaceholder: 搜索来源名或展示名
+empty: 还没有仓库来源（先新增一个来源，再同步清单）
+# 跨页跳转守卫（来源页 ⇄ 清单页 ⇄ 插件管理）：目标页路由由菜单下发，未注册时给提示而不是跳空白区
+routeMissing: 目标页面未注册（迁移未应用，或当前账号没有该菜单权限）；先到「菜单规则管理」核对「插件中心」下的菜单是否已下发并授权。
+actions:
+    create: 新增来源
+    test: 测试
+    toggle: 启用/停用
+    enableConfirm: 确认启用来源「{name}」？启用后会参与默认同步。
+    disableConfirm: 确认停用来源「{name}」？停用后不参与默认同步，且不允许从该来源安装；已装插件不受影响。
+    deleteConfirm: 确认删除来源「{name}」？快照会一并删除，已安装插件不受影响。
+columns:
+    name: 来源名
+    title: 展示名
+    type: 类型
+    location: 清单位置
+    enabled: 状态
+    syncStatus: 同步状态
+    syncedAt: 最后同步
+type:
+    local: 本地文件
+    http: HTTP
+    git: Git 仓库
+enabled:
+    'on': 启用
+    'off': 停用
+syncStatus:
+    ok: 成功
+    error: 失败
+    never: 未同步
+dialog:
+    createTitle: 新增来源
+    editTitle: 编辑来源
+    snapshotCleared: 类型、位置或安全开关已修改，该来源的清单快照已清空；请到「插件清单」重新同步。
+form:
+    name: 来源键
+    namePlaceholder: 例如 internal-mirror
+    nameTip: 小写字母开头，仅小写字母、数字与连字符，长度 2-32；创建后不可修改（CLI、审计与快照都依赖它）。
+    title: 展示名
+    titlePlaceholder: 例如 内部镜像
+    type: 类型
+    location: 清单位置
+    locationLocalPlaceholder: 仓库根相对路径，例如 catalog/catalog.yaml
+    locationHttpPlaceholder: https://example.com/plugins/catalog.yaml
+    locationLocalTip: 相对路径必须留在仓库根内；开启「允许绝对路径」后才可使用绝对路径。
+    locationHttpTip: 仅 https；明文 http 需显式开启对应开关。URL 不允许携带 userinfo、query 或 fragment。
+    locationGitPlaceholder: https://github.com/org/repo.git#main!catalog/catalog.yaml
+    locationGitTip: 语法 <仓库URL>[#<ref>][!<仓内清单路径>]：只支持公开仓库的 http(s) 地址（暂不支持 ssh 与带凭据的地址）；缺省读仓库根下 catalog.yaml，浅克隆单分支，每次同步/取包重新克隆。
+    enabled: 启用
+    allowInsecureHttp: 允许明文 HTTP
+    allowInsecureHttpTip: 仅 http 来源；仍受内网地址检查约束，开启会写审计。
+    allowPrivateHosts: 允许内网地址
+    allowPrivateHostsTip: 仅 http 来源；放行 RFC1918/回环镜像，但仍拒绝云元数据与链路本地地址；开启会写审计。
+    allowAbsolutePaths: 允许绝对路径
+    allowAbsolutePathsTip: 仅 local 来源；允许清单位置与包路径使用绝对路径，开启会写审计。
+    weigh: 权重
+    remark: 备注
+    rules:
+        nameRequired: 请输入来源键
+        namePattern: 来源键须为小写字母开头，仅含小写字母、数字与连字符，长度 2-32
+        titleRequired: 请输入展示名
+        typeRequired: 请选择来源类型
+        locationRequired: 请输入清单位置
+        locationUrl: HTTP 来源必须是 http(s) 绝对 URL
+        locationGit: Git 来源须为 <仓库URL>[#<ref>][!<仓内清单路径>] 形式的 http(s) 地址
+test:
+    title: 来源测试
+    ok: 清单合法，共 {entries} 条
+    schema: 清单格式
+    entries: 条目数
+    sha256: 清单摘要
+    generatedAt: 生成时间
+    errors: 错误明细
+    goCatalog: 去插件清单
+catalog:
+    title: 插件清单
+    subtitle: 来源汇总的清单条目；每行一个 (来源, uid, 版本)
+    searchPlaceholder: 搜索 uid、标题或版本
+    loading: 正在加载清单
+    installNow: 安装
+    syncOk: 已同步 {total} 个来源
+    syncPartial: 部分来源同步失败（{failed}/{total}），成功的来源已更新快照
+    sourceErrorUnknown: 同步失败（服务端未返回明细）
+    sourceErrorHint: 检查来源地址与网络后点「同步清单」重试；清单格式非法时按 ai-go-plugin-catalog/v1 修正后重新同步。
+    editSource: 编辑来源
+    empty:
+        noSources: 还没有仓库来源
+        goSource: 去配置来源
+        goSync: 同步清单
+        noMatch: 没有匹配「{keyword}」的清单条目：换个关键词，或清空搜索后重试；若来源尚未同步，先点「同步清单」再重试。
+    tips:
+        trust: 插件代码与宿主同权限、无隔离层；只从已配置的来源清单安装，清单只证明传输完整性，不证明来源可信。
+    tabs:
+        all: 全部
+    toolbar:
+        refresh: 刷新
+        sync: 同步清单
+        syncTip: 同步所有启用来源的清单快照（逐来源串行，失败逐来源报告）
+    kind:
+        code: 源码插件
+        declarative: 声明式插件
+        mixed: 混合插件
+    card:
+        installed: 已安装 v{version}
+        conflict: 来源冲突
+        sameContent: 同内容多来源
+        sourceDisabled: 来源已停用
+        empty: 该来源暂无清单条目
+    version:
+        version: 版本
+        source: 来源
+        size: 包大小
+        sha256: 包 sha256
+        signed: 签名声明
+        signedYes: 已签名
+        signedNo: 未签名
+        action: 安装状态
+    detail:
+        title: 插件详情
+        uid: 插件 uid
+        version: 版本
+        kind: 形态
+        hostApi: 机制接口版本域
+        frameworkReq: 框架线版本域
+        requires: 依赖插件
+        license: 许可证
+        source: 来源
+        size: 包大小
+        signed: 签名声明
+        syncedAt: 快照时间
+        sha256: 包 sha256
+        catalogSha256: 清单 sha256
+        preflight: 预演
+        versions: 可用版本
+        versionsLoadFailed: 版本表加载失败，仅显示当前条目
+        noDescription: 该条目没有简介
+        empty: 条目不存在或已被同步移除
+    dialog:
+        preflightTitle: 安装预演
+        installingTitle: 正在安装
+        preflightLoading: 正在下载并校验包、生成安装计划
+        installLoading: 正在校验并安装，请勿重复提交
+        doneTitle: 安装完成
+        failedTitle: 操作失败
+    preflight:
+        report: 预演报告（与真实安装同一管线，未落盘、未写库）
+        confirmInstall: 确认安装
+        allowUnsigned: 我确认接受未签名的包，仅限本次安装
+        allowUnsignedUnverified: 我确认接受本机无法验证签名的包，仅限本次安装
+    signature:
+        trustedKeysInvalid: 公钥配置有误：不是“未配置”，请先修正 plugin.trusted_keys
+        unsigned: 包未签名：勾选下方确认后才允许安装
+        noTrustedKeys: 包有签名，但本机未配置可信公钥，无法验证
+        verified: 签名已通过本机可信公钥校验
+        unverified: 包有签名，但本次预演未完成验签
+    conflict:
+        title: 以下目标已存在，catalog 安装不覆盖
+        target: 目标路径
+        hint: 先人工处理这些文件（确认归属或移除），再重新预演；本流程不提供“备份并覆盖/丢弃”选项。
+        items: 其他冲突项（规则名/路径、实体表）
+        itemsHint: 后端一次只保证首个冲突类别；先处理此冲突，再重新预演。
+    failed:
+        cleanup: 若安装中途失败留下半装现场，用 aigo plugin uninstall --force <uid> 清理，再用 aigo plugin list 对账；不要直接重试。
+    done:
+        title: 安装完成
+        subtitle: 台账已记录；代码/声明式插件需重编译 + 重启后才生效
+        name: 插件名
+        version: 版本
+        status: 台账状态
+        effect: 生效方式
+        checksum: 整包 sha256
+        signedBy: 签名公钥指纹
+        catalogSha256: 清单 sha256
+        rebuildRequired: effect=rebuild_required：需重编译并重启服务，插件路由才会出现。
+        reconcile: "到「插件管理」核对台账与接线状态；安装来源标签为 catalog:<source>:<uid>{'@'}<version>。"
+        goPlugins: 去插件管理
+errors:
+    invalid_input:
+        message: 参数非法
+        hint: 检查名称、类型、清单位置与安全开关后重试。
+    catalog_invalid:
+        message: 清单格式非法
+        hint: 确认清单使用 ai-go-plugin-catalog/v1、没有未知键/重复键/重复 (uid, version)，修正后重新测试或同步。
+    network_blocked:
+        message: 来源不可达（网络策略拒绝）
+        hint: 检查地址、DNS 与出网策略；内网镜像需在来源上显式开启「允许内网地址」。
+    upstream_error:
+        message: 来源不可达（上游返回错误）
+        hint: 确认来源服务可用、URL 不含 userinfo/query/fragment 后重试。
+    repo_root_unavailable:
+        message: 服务不在源码检出内运行
+        hint: 配置 plugin.root 指向含 go.mod 的源码根后重试；不会降级为只写台账。
+    package_not_found:
+        message: 包不存在
+        hint: 确认清单的 package.path/url 指向真实 zip，且文件可读、可下载。
+    entry_not_found:
+        message: 清单条目不存在
+        hint: 该 (uid, version) 已从当前来源清单移除；重新同步清单，刷新后再预演/安装。
+    package_size_mismatch:
+        message: 包大小与清单不一致
+        hint: 重新导出包，并用清单生成脚本重算 size 与 sha256。
+    package_sha_mismatch:
+        message: sha256 不匹配
+        hint: 包内容已变化；作者必须升 version 并重新生成清单，不能修改同版本内容。
+    package_signed_mismatch:
+        message: 签名声明与包内事实不一致
+        hint: 核对 package.signed 与包内签名条目后重新生成清单。
+    unsigned_not_allowed:
+        message: 未签名或未验证，且未获确认
+        hint: 若接受风险，在预演弹窗勾选「允许未签名/未验证」，仅对本次安装生效。
+    signature_invalid:
+        message: 签名无效
+        hint: 包可能被篡改；拒绝安装，并联系作者重新签名。
+    manifest_mismatch:
+        message: 清单与包内元数据不一致
+        hint: uid/version/kind/host_api/requires 必须与包内元数据一致（标准包 ini.yaml；当前兼容包 plugin.yaml）。
+    conflict:
+        message: 安装冲突
+        hint: 先处理规则名/路径、实体表或目标文件冲突，再重新预演。
+    existing_targets:
+        message: 目标文件已存在
+        hint: catalog 安装不覆盖已有文件；人工确认并移除旧文件，或改用未安装的 uid 后重新预演。
+    rule_name_collision:
+        message: 菜单规则名冲突
+        hint: 修改插件规则名或清理同名宿主规则后重新预演。
+    rule_path_collision:
+        message: 菜单路径冲突
+        hint: 修改插件菜单 path 或清理同路径宿主规则后重新预演。
+    entity_table_exists:
+        message: 实体表已存在
+        hint: 更换实体表名或清理旧表后重新预演（插件迁移自管的表不在本检查内）。
+    trusted_keys_invalid:
+        message: 公钥配置有误
+        hint: 修正 plugin.trusted_keys 中的公钥后重新预演；这不是“未配置”。
+    already_installed:
+        message: 已安装
+        hint: 当前版本不支持升级/重装；到「插件管理」查看台账，升级需另行设计。
+    plugin_failed:
+        message: 存在半装现场
+        hint: 先用 aigo plugin uninstall --force <uid> 清理，再重新安装。
+    downgrade_not_supported:
+        message: 不支持降级
+        hint: 安装更高版本；如需降级，先人工确认卸载与数据保留策略。
+    upgrade_not_supported:
+        message: 不支持升级/重装
+        hint: 到「插件管理」查看台账；升级需先卸载再装，或等待后续升级编排。
+    source_not_found:
+        message: 来源不存在
+        hint: 刷新来源列表，确认来源未被删除。
+    source_disabled:
+        message: 来源已停用
+        hint: 到「仓库来源」启用该来源并重新同步后再操作。
+    catalog_not_synced:
+        message: 清单未同步
+        hint: 先在清单页点「同步清单」，再预演/安装。
+    catalog_stale:
+        message: 清单已变化（快照过期）
+        hint: 重新同步清单，并按新快照重新预演。
+    lifecycle_forbidden:
+        message: 生产环境禁止安装/卸载
+        hint: 当前运行环境被判定为生产（显式配置 plugin.env=prod，或未配置且没有源码检出）；到开发环境执行，或显式配置 plugin.env=dev 后重启服务。
+    install_failed:
+        message: 安装失败
+        hint: 按错误信息清理半装现场（aigo plugin uninstall --force <uid>），用 aigo plugin list 对账后重试。
+    unknown:
+        message: 操作失败
+        hint: 查看服务端消息与日志后重试；若安装已开始，先刷新插件列表对账。

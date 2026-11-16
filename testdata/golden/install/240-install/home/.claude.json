@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "other-tool": {
+      "args": [
+        "serve"
+      ],
+      "command": "/usr/local/bin/other-tool",
+      "type": "stdio"
+    }
+  },
+  "numStartups": 3
+}

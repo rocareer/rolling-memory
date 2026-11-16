@@ -1,0 +1,103 @@
+# 品牌与导航
+brandTriad: AUTONOETIC MEMORY ENGINE
+navWhat: 它能做什么
+navCost: 费用与隐私
+navSavings: 真的有用吗
+navStart: 开始使用
+navPreview: 预览
+navDocs: 文档中心
+navAria: 首页导航
+languageSwitchAria: 切换为 English
+repoAria: 开源仓库
+enterConsole: 打开控制台
+openMenu: 打开导航菜单
+closeMenu: 关闭导航菜单
+backToTop: 返回顶部
+skipToContent: 跳至主要内容
+copyCmd: 复制命令
+copied: 已复制
+copy: 复制
+
+# 第一屏
+heroEyebrow: 给编程 Agent 用的本地记忆
+heroTitleA: 每次对话都记得，
+heroTitleB: 都留在你自己电脑上。
+heroFacts: 免费开源 · 存下即可搜到 · 数据不离开本机
+ctaConsole: 打开控制台
+
+# 一、它能做什么
+whatQ: 它能做什么？
+whatLead: 让你的编程 Agent 记得以前的对话。
+whatBody: 你和 Agent 的对话，以及你挂载的项目文件夹，都会原样存进你电脑上的一个数据库文件。Agent 需要查以前的事时，调用一个叫 recall 的工具，拿回原文和出处。
+whatWithoutLabel: 没有记忆时
+whatWithoutText: 你问「上次那个状态栏闪烁是在哪修的？」，Agent 只能猜关键词，来回搜三五轮文件才找到。
+whatWithLabel: recall 命中时
+whatWithText: recall 找出当时提到那个文件的对话，Agent 直接打开它。
+whatCost: 长任务里 Agent 的上下文常在 10 万到 40 万 token，每多搜一轮，这些内容都要重新发给大模型一次。少走一轮，就省下这么多。
+whatAuto: 保存是自动的：做完的对话会在后台记下来，Agent 不用停下来记笔记。
+
+# 二、费用与隐私
+costQ: 要花钱吗？谁能看到我的数据？
+costLead: 不花钱，中间也没有别人。
+promiseFreeTitle: 免费
+promiseFreeText: 没有大模型或向量化费用，不用托管，不用注册账号，不用绑卡。源码公开，一切非商业用途免费。
+promiseLiveTitle: 不用等
+promiseLiveText: 后台不做摘要，也不建向量索引。对话存下几毫秒后就能搜到。
+promiseLocalTitle: 留在本机
+promiseLocalText: 一个程序文件加一个数据库文件，都在你自己电脑上。存和搜都不联网——除了你和正在干活的 Agent，没有别人能看到你的代码和对话。
+promiseOwnTitle: 随时带走
+promiseOwnText: 数据就是一个标准 SQLite 文件，可以随时备份、导出成 JSON，或者直接删掉。
+costNote: 需要说明一点：如果你的 Agent 用的是 Claude、GPT 这类在线模型，recall 找回的内容会和 Agent 读到的其他文件一样，一起发给那个模型。
+
+# 三、真的有用吗
+savingsQ: 真的有用吗？
+savingsLead: 按我们自己的统计，大约一半时候有用。
+ledgerCaption: '我们在一台开发机上统计了 24 小时：{total} 轮 Agent 对话，每轮事后逐一复核'
+ledgerHelpedLabel: 帮上了
+ledgerIdleLabel: 没帮上
+ledgerSaved: 帮上的那些轮，估计少搜了 {low}–{high} 轮。
+ledgerMiss: 没命中时，这次调用反而多花一轮。它是基于关键词和统计的检索，问题和记录里一个词都对不上时就会漏。
+ledgerBench: "在公开评测 ATM-Bench 上，前 10 条结果里找到正确记录的比例是 {score}（官方 Recall{'@'}10 口径）。"
+ledgerDocLink: 查看完整的 token 算账
+ledgerBenchLink: 自己复现评测
+
+# 四、开始使用
+startQ: 怎么开始用？
+startLead: 装好，接上你的 Agent，就可以继续干活了。
+stepInstallTitle: 安装
+stepInstallText: 需要 Go 1.26 或更高版本。macOS 和 Linux 上，这一步会编译程序，并接入它找到的 Agent。Windows 上改为在 PowerShell 里运行 install.ps1。
+stepCheckTitle: 检查是否接好
+stepCheckText: 确认每个 Agent 都能看到记忆工具。
+stepAdjustTitle: 不想要的都可以关
+stepAdjustText: 在 ZCode 和 Claude Code 里，安装时还会给每条提问加一个简短提醒，可能带上相关的过往记忆；同时在本地记一笔 recall 有没有帮上忙，供控制台统计。你可以只留 recall 工具、关掉这份记录，或者全部移除。
+adjustMcpOnly: 只保留 recall 工具：先移除提醒和技能文件，再重新接入
+adjustHooksOff: 关掉「recall 是否帮上忙」的本地记录（同时也会关掉重复过滤）
+adjustUninstall: 删掉安装时加的所有内容
+agentsTitle: 支持的 Agent
+agentsAutoText: install 不带名字时，会接入你电脑上找到的这几个。
+agentsNamedText: 下面三个需要点名接入。
+agentsOther: 其他支持 MCP 的工具，运行 rolling-memory mcp 即可。
+consoleText: 本地控制台可以浏览存下的内容，也能看到 recall 帮上忙的比例。
+
+# 五、预览
+previewQ: 接下来做什么？
+previewTag: 预览
+previewLead: 脉冲模式：一个看不到你原文的云端引擎。
+previewBody: 依然不用大模型，也不用向量库。你的电脑只上传打乱过、无法还原的编码，引擎不看原文就能找到匹配，原文再从你本机的副本里补回来。这是对 Agent 记忆新做法的一次早期探索，不包含在这次发布里。
+previewApply: 申请试用
+previewSupport: 问题与支持
+
+# 六、关于
+aboutQ: 谁在做？
+aboutLead: 一支跨学科的小团队。
+aboutBody: 我们来自「湖川 · Psychology Lake」社区，长期关注心智和记忆是怎么运作的。我们希望编程 Agent 的长期记忆是谁都能用上的东西，不需要订阅，也没有暗藏的 token 账单。
+aboutLicense: 源码按 PolyForm Noncommercial 1.0.0 公开，一切非商业用途可自由使用、修改与分享；商业使用另行授权。按现状提供，不附带任何担保。
+linkGithub: GitHub 仓库
+linkMirror: Gitee 镜像
+linkDocs: 文档中心
+linkDeclaration: 立场与免责声明
+contactTeam: 联系我们
+
+# 页脚
+footerTagline: 给编程 Agent 用的本地记忆
+footerNote: 记忆不应以交出原文为代价。

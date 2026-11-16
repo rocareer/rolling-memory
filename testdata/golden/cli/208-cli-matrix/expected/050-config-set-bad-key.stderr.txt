@@ -1,0 +1,1 @@
+error: config key must look like 'section.key'

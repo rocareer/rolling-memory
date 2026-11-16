@@ -1,0 +1,19 @@
+# plugin: env-badge v1.0.0
+# 环境检测浮标（kind: code）：后台布局右下角显示 DEV / PROD（英文），悬停显示判定依据。
+#
+# 环境判定不另立口径：复用宿主唯一权威 internal/plugin/cli/environment.go ——
+#   plugin.env=dev|prod 显式配置优先；未配置时按「源码检出是否可用」自动判定（检出 ⇒ dev，否则 prod）。
+# 浮标对全体已登录管理员可见（端点只挂 AdminAuth，不设权限节点）：它只回报环境名与判定依据，
+# 不含本机路径、配置敏感值与任何业务数据。
+#
+# 布局级组件约定：web/views/widget.vue → 落位副本 web/src/views/admin/plugin/env-badge/widget.vue，
+# 由宿主后台布局的通用挂载点 web/src/layouts/admin/components/pluginWidgets.vue 自动挂载；
+# 插件停用/卸载后本插件端点 404，浮标自行隐藏（fail-closed）。
+name: env-badge
+title: 环境检测浮标
+version: 1.0.0
+kind: code
+host_api: ">=1 <2"
+framework_req: ">=0.1 <1"
+web:
+  views: [web/views]

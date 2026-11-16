@@ -1,0 +1,4 @@
+{
+  "error": "graph recall cannot enforce session, asof or window filters across all sources",
+  "ok": false
+}

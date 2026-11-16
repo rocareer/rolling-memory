@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "rolling-memory": {
+      "command": "rolling-memory",
+      "args": ["mcp"],
+      "env": {
+        "ROLLING_MEMORY_SCOPE": "mem:task:my-project",
+        "ROLLING_MEMORY_DB": "/absolute/path/to/.rolling-memory/memory.db"
+      }
+    }
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rolling-memory hook recall --json",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

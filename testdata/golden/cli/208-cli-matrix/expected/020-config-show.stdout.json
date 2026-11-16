@@ -1,0 +1,42 @@
+{
+  "db": "<DB>",
+  "egress": "loopback-only",
+  "llm": {
+    "base_url": "https://api.openai.com/v1",
+    "key": {
+      "configured": false,
+      "source": "none"
+    },
+    "model": "gpt-4o-mini",
+    "provider": "none"
+  },
+  "log": "<LOG>",
+  "mode": "local",
+  "path": "<CFG>",
+  "reader": "deliverable",
+  "recall": {
+    "activation_rank": false,
+    "activation_record": true,
+    "alias_expand": true,
+    "bands": 8,
+    "budget_ms": 500,
+    "chars": 16000,
+    "hook_bands": 3,
+    "hook_chars": 1500,
+    "hook_nodes": 12,
+    "mention_backfill": true,
+    "nodes": 50,
+    "relative_tag": false,
+    "token_correct": false
+  },
+  "scope": "mem:golden:208",
+  "sync": {
+    "auto": false,
+    "base_url": "",
+    "enabled": false,
+    "key": {
+      "configured": false,
+      "source": "none"
+    }
+  }
+}

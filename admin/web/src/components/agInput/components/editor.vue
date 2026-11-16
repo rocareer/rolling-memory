@@ -1,0 +1,57 @@
+<!-- 多编辑器共存支持 -->
+<!-- 所有编辑器的代码位于 @/components/agInput/components/editor/ 文件夹，一个文件为一种编辑器，文件名则为编辑器名称 -->
+<!-- 开发者也可以直接导入 @/components/agInput/components/editor/ 中的编辑器原组件直接使用 -->
+<!-- 向本组件传递 name（文件名/编辑器名称）自动加载对应的编辑器进行渲染，编辑器自定义属性通过 attrs 传递 -->
+<template>
+    <div>
+        <component v-bind="$attrs" :is="mixins[state.name]" :modelValue="model ?? ''" @update:modelValue="model = $event" />
+    </div>
+</template>
+
+<script setup lang="ts">
+import type { Component } from 'vue'
+import { reactive } from 'vue'
+
+interface Props {
+    name?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    name: 'default',
+})
+
+const model = defineModel<string | null>({ default: '' })
+const state = reactive({
+    name: props.name,
+})
+
+const mixins: Record<string, Component> = {}
+const mixinComponents: Record<string, any> = import.meta.glob('./editor/**.vue', { eager: true })
+for (const key in mixinComponents) {
+    const fileName = key.replace('./editor/', '').replace('.vue', '')
+    mixins[fileName] = mixinComponents[key].default
+
+    // 未安装富文本编辑器时，值为 default，安装之后，则值为最后一个编辑器的名称
+    if (props.name == 'default' && fileName != 'default') {
+        state.name = fileName
+    }
+}
+
+// 通用插件编辑器扩展点：自动扫描 /src/views/admin/plugin/<插件名>/editor.vue（如 mdeditorv3）
+const pluginEditors: Record<string, any> = import.meta.glob('/src/views/admin/plugin/*/editor.vue', { eager: true })
+for (const key in pluginEditors) {
+    const match = key.match(/\/src\/views\/admin\/plugin\/([^/]+)\/editor\.vue$/)
+    const pluginName = match ? match[1] : ''
+    if (pluginName && pluginEditors[key]?.default) {
+        mixins[pluginName] = pluginEditors[key].default
+        if (pluginName === 'mdeditorv3' && !mixins['md-v3']) {
+            mixins['md-v3'] = pluginEditors[key].default
+        }
+        if (props.name == 'default' && state.name == 'default') {
+            state.name = pluginName
+        }
+    }
+}
+</script>
+
+<style scoped lang="scss"></style>

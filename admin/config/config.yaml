@@ -1,0 +1,53 @@
+app:
+  name: ai-go-admin
+  timezone: Asia/Shanghai
+
+server:
+  # 监听地址：默认只听本机回环（控制台可读写全部本地记忆，且开箱账号公开可查）。
+  # 需要从其他设备访问时显式设为 0.0.0.0 或网卡地址（环境变量 SERVER_HOST 同效），并先修改默认口令。
+  host: 127.0.0.1
+  # 服务端口
+  port: 9006
+  # 可信代理 CIDR/IP 列表
+  trusted_proxies:
+    - ::1
+    - 127.0.0.1
+  # 后台路由前缀（后台入口）
+  admin_base_route_path: /admin
+
+token:
+  driver: database
+  expire:
+    admin: 72           # 管理员 token 有效期，单位: 小时（3 天）
+    admin_remember: 720 # 管理员 token 有效期（记住登录），单位: 小时（30 天）
+
+cdn:
+  # 内容分发网络 URL，末尾不带 `/`
+  url:
+  # 内容分发网络 URL 参数，将自动拼接到 URL 的结尾（值如 `format/heif`）
+  url_params:
+
+database:
+  type: sqlite
+  prefix:
+  write:
+    host: 127.0.0.1
+    port: 5432
+    user: postgres
+    password: "<set-on-first-run>"
+    dbname: ~/.local/share/rolling-memory/admin/rolling-admin.db
+    sslmode: disable
+    max_open_conns: 1
+    max_idle_conns: 1
+    conn_max_lifetime: 300 # 秒
+  read:
+    enabled: false # 是否启用读写分离
+    host: 
+    port: 5433 # 读副本默认配置了不同的端口号
+    user: 
+    password: 
+    dbname: 
+    sslmode: disable
+    max_open_conns: 50
+    max_idle_conns: 20
+    conn_max_lifetime: 300 # 秒

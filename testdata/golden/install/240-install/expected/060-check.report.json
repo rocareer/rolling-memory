@@ -1,0 +1,159 @@
+{
+  "actions": [
+    {
+      "component": "skill",
+      "detail": "",
+      "harness": "zcode",
+      "path": "<HOME>/.zcode/skills/rolling-memory/SKILL.md",
+      "status": "ok"
+    },
+    {
+      "component": "mcp",
+      "detail": "<CASE>/bin/rolling-memory",
+      "harness": "zcode",
+      "path": "<HOME>/.zcode/cli/config.json",
+      "status": "ok"
+    },
+    {
+      "component": "hooks",
+      "detail": "1 event",
+      "harness": "zcode",
+      "path": "<HOME>/.zcode/cli/config.json",
+      "status": "ok"
+    },
+    {
+      "component": "instructions",
+      "detail": "half marker found",
+      "harness": "zcode",
+      "path": "<HOME>/.zcode/AGENTS.md",
+      "status": "conflict"
+    },
+    {
+      "component": "skill",
+      "detail": "",
+      "harness": "claude-code",
+      "path": "<HOME>/.claude/skills/rolling-memory/SKILL.md",
+      "status": "ok"
+    },
+    {
+      "component": "mcp",
+      "detail": "<CASE>/bin/rolling-memory",
+      "harness": "claude-code",
+      "path": "<HOME>/.claude.json",
+      "status": "ok"
+    },
+    {
+      "component": "hooks",
+      "detail": "1 event",
+      "harness": "claude-code",
+      "path": "<HOME>/.claude/settings.json",
+      "status": "ok"
+    },
+    {
+      "component": "instructions",
+      "detail": "",
+      "harness": "claude-code",
+      "path": "<HOME>/.claude/CLAUDE.md",
+      "status": "ok"
+    },
+    {
+      "component": "skill",
+      "detail": "",
+      "harness": "codex",
+      "path": "<HOME>/.codex/skills/rolling-memory/SKILL.md",
+      "status": "ok"
+    },
+    {
+      "component": "mcp",
+      "detail": "<CASE>/bin/rolling-memory",
+      "harness": "codex",
+      "path": "<CFG>",
+      "status": "ok"
+    },
+    {
+      "component": "hooks",
+      "detail": "not supported",
+      "harness": "codex",
+      "path": "-",
+      "status": "skipped"
+    },
+    {
+      "component": "instructions",
+      "detail": "",
+      "harness": "codex",
+      "path": "<HOME>/.codex/AGENTS.md",
+      "status": "ok"
+    },
+    {
+      "component": "skill",
+      "detail": "",
+      "harness": "dsh",
+      "path": "<HOME>/.dsh/skills/rolling-memory/SKILL.md",
+      "status": "ok"
+    },
+    {
+      "component": "mcp",
+      "detail": "",
+      "harness": "dsh",
+      "path": "<HOME>/.dsh/profiles/web/cordis.patch.yml",
+      "status": "ok"
+    },
+    {
+      "component": "hooks",
+      "detail": "not supported",
+      "harness": "dsh",
+      "path": "-",
+      "status": "skipped"
+    },
+    {
+      "component": "instructions",
+      "detail": "",
+      "harness": "dsh",
+      "path": "<HOME>/.dsh/AGENTS.md",
+      "status": "ok"
+    },
+    {
+      "component": "skill",
+      "detail": "",
+      "harness": "codebuddy",
+      "path": "<HOME>/.codebuddy/skills/rolling-memory/SKILL.md",
+      "status": "ok"
+    },
+    {
+      "component": "mcp",
+      "detail": "<CASE>/bin/rolling-memory",
+      "harness": "codebuddy",
+      "path": "<HOME>/.codebuddy/mcp.json",
+      "status": "ok"
+    },
+    {
+      "component": "hooks",
+      "detail": "not supported",
+      "harness": "codebuddy",
+      "path": "-",
+      "status": "skipped"
+    },
+    {
+      "component": "instructions",
+      "detail": "no instruction target for this scope",
+      "harness": "codebuddy",
+      "path": "-",
+      "status": "skipped"
+    }
+  ],
+  "binary": "<CASE>/bin/rolling-memory",
+  "dry_run": false,
+  "mode": "check",
+  "name": "rolling-memory",
+  "ok": false,
+  "server": {
+    "ok": true,
+    "server": {
+      "name": "rolling-memory",
+      "version": "0.0.1"
+    },
+    "tools": [
+      "recall"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@rocareer/dsh-rolling-memory",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "DeepSeek Harness (dsh) Cordis plugin bundle for Rolling Memory (mounts dsh-mcp-client + bundled skill).",
+  "files": [
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

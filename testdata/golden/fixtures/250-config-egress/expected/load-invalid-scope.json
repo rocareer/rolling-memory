@@ -1,0 +1,5 @@
+{
+  "error": "ConfigError",
+  "message": "invalid scope 'bad scope'",
+  "ok": false
+}

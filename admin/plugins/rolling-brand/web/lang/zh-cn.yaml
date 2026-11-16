@@ -1,0 +1,16 @@
+# Rolling 品牌包语言包（键前缀 plugin.rolling-brand.*）
+siteName: Rolling
+brandSystem: Rolling
+brandTriad: Autonoetic Memory Engine
+recordNumber: ''
+presetTip: "本机演示账号：{username}"
+presetFill: "一键填入"
+welcomeTip: "Rolling · Autonoetic Memory Engine —— 100% 向量无关 × 100% 大模型无关。"
+heroTitle: "AI记忆引擎的新范式"
+heroDescription: "波场 × 星系 · 语种无关 · 语义无关 · 模型无关 · 向量无关"
+pointRouterTitle: "极致高效 · < 10 ms 毫秒级相干召回"
+pointRouterDesc: "波场 × 星系寻址驱动 L1 · L2 · L3 三层记忆瞬时共振"
+pointEvalTitle: "极致安全 · 0 明文出网的本地金库"
+pointEvalDesc: "原始明文与 256-bit 密钥锁死本机 SQLite，仅传 10 字节盲化脉冲"
+pointAuditTitle: "极致经济 · 0 向量 × 0 大模型税"
+pointAuditDesc: "告别向量膨胀与后台 LLM 抽取账单，LoCoMo 1,540 题全量实测 85.26%"

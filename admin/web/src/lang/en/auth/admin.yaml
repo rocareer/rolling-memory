@@ -1,0 +1,8 @@
+username: Username
+nickname: Nickname
+avatar: Avatar
+bio: Bio
+leaveBlankIfUnchanged: Leave blank if unchanged
+groups: Groups
+oldPassword: Current password
+passwordChanged: Password changed, please log in again

@@ -1,0 +1,107 @@
+# plugin: kb v1.0.0
+# 知识库模块（KB）配置：本插件 README（口径正本，见其「四・配置键与覆盖口径」）（切片体系 / 管道 / 成本）。
+# 端口化改造——嵌入/候选生成经本插件 service/kb/aiport 端口
+#   （provider/model 键为默认实现接线；下游部署注册自有 Provider 后可无视默认实现文件）。
+# 键闭集与值域由 service/kb/chunk 单点校验（kb.chunk 段**未知键响亮拒绝**——防配置漂移，C3）。
+# 三层覆盖：global（本文件 + 代码缺省）▷ library（kb_library.chunk_config）▷ document（kb_document.chunk_config）。
+kb:
+  # 全局切片配置（三层覆盖的 global 层；有效配置由 chunk.Effective 纯函数单点计算，禁第二处合并）。
+  # 缺省档 = 512/64；注意：细粒度 + min-dist 改档必须与融合档**同批配对读数**，
+  # 禁未经 A/B 验证随意改档。改本段即改全局档 ⇒ 新 build_hash ⇒ 触发重切（只比 chunk-affecting 键）。
+  chunk:
+    target: 512              # 目标块长（rune；值域 [128,4096]）
+    overlap: 64              # 超帽切分重叠（rune；仅超帽切分启用，结构边界不叠加；0 合法）
+    hard_cap: 1024           # 硬帽（rune；≥ target；单块超过即按 overlap 切分）
+    # tail_merge 不写 = 按**最终** target/4 派生（本档 512 ⇒ 128）；显式写 0 = 不合并尾块。
+    heading_prefix: true     # 标题路径前置进派生文本（嵌入/tsv 同源：ChunkTextOf 单点）
+    levels: [1, 2, 3, 4, 5, 6]  # heading 生效层级（1..6 子集）
+    window: 3                # semantic 句窗（window=3 缺省档）
+    threshold: 0.25          # semantic 相似度分位阈值（0,1]；语义档缺省关（C4），读数前不动缺省
+    min: 128                 # semantic 最小块长（rune）
+    max: 1024                # semantic/code 最大块长（rune）
+    rows_per_chunk: 50       # table 每块数据行数
+    header_repeat: true      # table 表头重复（进派生文本；verbatim 正文不含重复表头——见 chunk 包注释）
+    min_rows: 3              # table 尾块最小数据行数（少于则并入前块）
+  # 词面腿 tsv 查询配置（tsv 为 DB 生成列 to_tsvector('simple'::regconfig, match_text)——migrations/1_core.up.sql，
+  #   生成侧口径自 DDL 冻结；本键为**查询侧单点**（ingest.ResolveFTSConfig），仅接受空/simple，其余值响亮拒绝）
+  fts:
+    config: simple
+  # 检索面（v1 可见域精确扫描，无 ANN 索引；扫描帽配置化——≤0/未配回落先例值 5000）
+  #   容量超阈重新裁决 ANN 的触发判据登记（属 SQL 纪律例外，需负责人确认）
+  search:
+    scan_cap: 5000           # 腿窗帽（LIMIT 上限；同时约束榜上限——读取点 repository/kb.ScanCap 单点）
+    rrf_k: 60                # RRF 融合常数（≤0 回落 60）
+    trgm_threshold: 0.45     # trgm 腿相似度阈值（取值域 (0,1)，越域回落缺省）
+    log_query_text_max: 200  # 查询原文落日志的截断帽（显式 0/负 = 关，不落原文；封顶 512）
+    query_cache_file: ""     # 查询向量缓存文件（空 + 落盘开关开 = 系统临时目录的缺省文件）
+    query_cache_persist: false  # 落盘开关（缺省关：无向量腿时查询缓存无收益，避免落盘路径不确定）
+  # 检索日志保留期（kb:prune 作业按日清理；≤0 回落 180 天）
+  prune:
+    retention_days: 180
+  # 嵌入档（kb:ingest 作业内向量生产；经 aiport 端口——框架默认实现 = openai-compatible 直连，
+  #   上游地址/密钥读宿主 configs 的 ai 组（ai_api_url / ai_api_key）；下游部署注册自有 Provider 后 provider/model
+  #   键交由其解释，默认实现文件被物理排除）
+  embed:
+    enabled: false           # 关 = 只切不嵌（检索面自动降级词面腿）。
+                             # 缺省关：无 AI 密钥的环境下 true 会让每次导入在嵌入阶段响亮失败
+                             # （向量身份不可用）；武装需配齐密钥 + 模型名 + 维度。
+    batch: 16                # 单次嵌入调用文本条数（先例：批 16、上限 64）
+    max_batch: 64            # 单批硬上限
+    max_chars: 2000          # 单条嵌入文本字符帽（超帽截断并记读数）
+    provider: "openai-compatible"  # 嵌入端口实现名（未注册 ⇒ 响亮失败，不回落）
+    model: ""                # 默认实现的嵌入模型（**向量身份 = 该值**；空 = 身份不可用 ⇒ 嵌入面 fail-closed）
+    dim: 1024                # 期望向量维度（须与 kb_chunk_vectors halfvec 列一致；≤0 = 不校验）
+  # 成本闸（每任务预算预检，超限挂起待批）+ 成本系数表（估算口径；0 = 不设限）
+  # ⚠ 出厂四上限均 0 = **闸不生效**（仅留估算读数）——默认部署下大作业不会被拦；武装需运维按库规模显式设限
+  #   （判据：超限 ⇒ 文档落 failed_stage='budget' 挂起待批，批准 = 复投作业）。
+  budget:
+    max_docs_per_job: 0          # 单作业处理文档数上限
+    max_chunks_per_job: 0        # 单作业切片数上限
+    max_chars_per_job: 0         # 单作业字符预算（rune）
+    max_est_tokens_per_job: 0    # 单作业 token 估算预算
+    cjk_token_per_char: 0.6      # 估算系数：CJK 0.6 token/字
+    non_cjk_token_per_char: 0.25 # 估算系数：非 CJK 1/4 token/字符（核对 = 模型端口侧调用日志回算，超差 20% 回查）
+    ocr_price_per_page: 0        # OCR 单价（CNY/页；0=未配价——估算按 0 计并标注「估算」，记账行 unit_price=0 + detail.price_unconfigured）
+    asr_price_per_minute: 0      # ASR 单价（CNY/分钟；0=未配价——同上）
+  # 媒体管道（pdf 文本层=纯本地能力，不依赖本段）。图片/扫描件/音频/视频链的渠道缺失
+  # ⇒ **fail-closed**：作业响亮失败（failed_stage='extract'，原因码 ocr_channel_unavailable /
+  #   asr_channel_unavailable / caption_channel_unavailable / ffmpeg_missing），禁伪造产物（fixture 不代跑）。
+  # enabled=true 仅是开关的一半：provider 必须在驱动登记表有对应实现（当前登记表为空——无厂商凭据），
+  #   未登记驱动同样响亮失败（原因码不变，detail 注明 provider 未登记）——「开了开关」不等于「有渠道」。
+  media:
+    ocr:
+      enabled: false             # 图片/扫描件 OCR 渠道（按页计价；接线 = 实现驱动并 RegisterOCRDriver）
+      provider: ""               # 驱动名（登记面 service/kb/ingest 驱动表）
+    asr:
+      enabled: false             # 音视频 ASR 渠道（按分钟计价；接线 = 实现驱动并 RegisterASRDriver）
+      provider: ""
+    caption:
+      enabled: false             # 视频关键帧 caption 渠道（VLM/OCR；接线 = 实现驱动并 RegisterCaptionDriver）
+      provider: ""
+    ffmpeg_bin: ffmpeg           # 抽帧/音轨工具（PATH 查找；可用性由运维巡检端点探测，工具缺失 ⇒ 响亮失败）
+    frame_seconds: 30            # 关键帧步长（秒；缺省 30；R12 视频收益未验证，读数前不翻缺省）
+    # 媒体工具执行预算（工作量自适应——原为固定 180s 硬编码，
+    # 长音视频/多页 pdf 会「每次必超 ⇒ 永久失败」，作业重试无益）。预算 = 基数 + 工作量 × 比例；
+    # 工作量上限由 kb.limits（max_minutes/max_pages）约束 ⇒ 预算有界且全部显式。非正一律取缺省。
+    timeout_seconds: 180                  # 单次执行基数（秒；含进程启动与固定开销）
+    timeout_per_media_minute_seconds: 30  # 每媒体分钟追加（秒；音轨/抽帧随时长放大）
+    timeout_per_page_seconds: 2           # pdf 光栅化每页追加（秒；随页数放大）
+  # 来源上限（失败兜底：超限挂起待批——判据在切分前后，文档落 failed_stage='budget' + 原因码）
+  # 与 budget 四键语义不同：**本段闸始终武装**（0/未配 = 代码缺省 500 页 / 120 分钟）；pdf 文本层提取
+  # 后由 kb_extract.stats.pages 回填实测读数，音频/视频由 ASR 读数回填 minutes。
+  limits:
+    max_pages: 500               # 单文档页数上限
+    max_minutes: 120             # 单文档时长上限（分钟）
+    # 音视频的时长闸已**前置**到转码/ASR 之前（读数 = ffmpeg -i 的 Duration 行；
+    #   探测失败不阻断、由 ASR 后的统一来源闸兜底）；pdf 扫描件的页数闸原就在光栅化/OCR 之前。
+  # 标签候选档（kb:tag.*；「模型候选」打标方式；取值语义与缺省照
+  #   service/kb/tag/job.go 单点。候选生成经 aiport 对话端口：agent = 调用档名（产品适配器
+  #   映射到其 ai agent；框架默认实现忽略），provider/model 为默认实现接线）
+  tag:
+    model_enabled: false         # 模型候选开关（**缺省 false = 关**；翻缺省须单变量臂读数后议，词表污染防护）
+    agent: ""                    # 候选调用档名（空回落 kb-tagger；产品侧映射到其 agent，模型/prompt 归其定义）
+    provider: "openai-compatible"  # 候选生成端口实现名（未注册 ⇒ 响亮失败，不回落）
+    model: ""                    # 默认实现的对话模型（空回落 configs.ai 组 ai_default_model）
+    material_chars: 6000         # 材料字符帽（rune；超出截断——候选只需材料提示，不整篇喂）
+    max_candidates: 5            # 候选条数帽（模型输出再多也截断）
+    vocabulary_cap: 500          # 词表装载上限（平台组 ∪ 本库组条数；超出按 weigh 序截断）

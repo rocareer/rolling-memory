@@ -1,0 +1,1015 @@
+common:
+  globalDefault: Global default
+  defaultHint: "0 = follow plugin settings (default {value})"
+  copy: Copy
+  copied: Copied
+  seconds: sec
+  ms: ms
+  times: times
+  none: "-"
+  unknown: Unknown
+  yes: Yes
+  no: No
+  detail: Detail
+  query: Query
+  reset: Reset
+  all: All
+  start: Start
+  end: End
+  dateRange: Date range
+  loading: Loading
+overview:
+  title: AI Overview
+  intro: "Calls, success rate, tokens and cost for the last 24 hours; the trend covers the last 7 calendar days. Read-only, refreshed every 30 seconds."
+  autoRefresh: Auto refresh (30s)
+  refresh: Refresh
+  updatedAt: Data time
+  windowH24: Last 24 hours
+  windowD7: Last 7 days
+  kpi:
+    calls: Calls (24h)
+    successRate: Success rate
+    tokens: Tokens (24h)
+    cost: Cost (24h)
+    avgLatency: Avg latency
+    callsHint: "{success} succeeded / {fail} failed"
+  trend:
+    title: 7-day trend
+    calls: Calls
+    tokens: Tokens
+    cost: Cost
+    empty: No trend data
+  channels:
+    title: Channel health
+    total: Total channels
+    enabled: Enabled channels
+    circuitOpen: Circuit open
+    circuitHalfOpen: Half-open probes
+    problems: Problem channels
+    noProblems: No problem channels
+  models:
+    title: Models
+    total: Total models
+    enabled: Enabled models
+  topModels:
+    title: Top models
+    model: Model
+    calls: Calls
+    tokens: Tokens
+    cost: Cost
+    empty: No call data
+  recentFails:
+    title: Recent failures
+    time: Time
+    model: Model
+    channel: Channel
+    status: Status
+    error: Error
+    empty: No recent failures
+  recentBreakers:
+    title: Recent breaker events
+    time: Time
+    channel: Channel
+    event: Event
+    failures: Consecutive failures
+    error: Last error
+    empty: No breaker events
+  service:
+    title: Service status
+    db: Database
+    gatewayKey: Gateway key
+    keySet: Configured
+    keyMissing: Not configured (public API returns 503)
+    ok: OK
+    down: Down
+    time: Server time
+  settings:
+    open: Access settings
+    title: Access settings
+    hint: "Plugin settings are managed on this page: the host config page does not render tabs for plugin groups. Leave the key blank to keep it unchanged; clearing it makes the public API return 503 immediately."
+    apiKey: Gateway key (Bearer)
+    apiKeyConfigured: "Currently configured: {masked}"
+    apiKeyNotConfigured: Not configured (public API returns 503)
+    apiKeyPlaceholder: Leave blank to keep unchanged
+    clearKey: Clear key
+    clearConfirm: After clearing, /ai/v1/* will return 503 immediately. Clear it?
+    clearMarked: Marked for clearing; takes effect after saving
+    failThreshold: Breaker failure threshold
+    cooldownSeconds: Breaker cooldown (sec)
+    requestTimeout: Request timeout (sec)
+    streamTimeout: Stream timeout (sec)
+    currency: Currency
+    allowPrivateHosts: Allow private upstreams
+    allowPrivateHostsTip: Required for local ollama and other self-hosted upstreams; otherwise the outbound guard blocks them
+    sseTitle: Streaming limits (SSE)
+    sseMaxLineBytes: SSE max line (MiB)
+    sseMaxFrameBytes: SSE max frame (MiB)
+    sseMaxAccumulatedBytes: SSE max accumulated (MiB)
+    sseTip: Entered in MiB and stored as bytes (1 MiB = 1048576). Over-limit streams are terminated as upstream protocol errors with reading stopped (not retryable) and are never silently truncated into a success.
+    bytesValue: "Effective value: {bytes} bytes (about {mib} MiB)"
+    rateTitle: Public per-key rate limit
+    rateLimitRpm: Requests per minute (RPM)
+    rateLimitBurst: Burst bucket size
+    rateLimitMaxInflight: Max in-flight requests
+    rateTip: 0 = unlimited. A per-key rate_limit override wins; requests that fail authentication do not consume quota (same as the upstream reference).
+    gateTitle: Channel gate defaults
+    gateRpm: Default channel RPM
+    gateTpm: Default channel TPM
+    gateTip: 0 = unlimited. A channel's own rpm_limit / tpm_limit wins; these defaults apply when it is 0. In-process budget, single instance, TPM is charged after the call.
+    taskTitle: Async task worker
+    taskPollSeconds: Poll interval (sec)
+    taskMaxAttempts: Max attempts
+    taskTip: The poll interval is clamped to at least 1 second (0 falls back to the default 5) to avoid busy waiting; while the plugin is disabled the worker idles without picking up work.
+    save: Save
+    saveSuccess: Settings saved
+  events:
+    open: Auto open
+    close: Auto close
+    manualOpen: Manual open
+    manualClose: Manual close
+channel:
+  title: Channels
+  intro: "A channel is an upstream endpoint: the driver selects the protocol (blank = OpenAI compatible) and, when a supplier is attached, blank URL and credential fields are inherited from it at runtime. Keys are always masked on output; on edit, blank or masked means unchanged."
+  searchPlaceholder: Search channel name
+  empty: No channels
+  filters:
+    status: Status
+    vendor: Vendor
+    query: Query
+    reset: Reset
+    allStatus: All statuses
+    allVendor: All vendors
+  stats:
+    circuitOpen: Circuit open
+    circuitHalfOpen: Half-open
+    problem: Problem channels
+    fail1h: Failures in 1h
+  columns:
+    name: Name
+    vendor: Vendor
+    driver: Driver
+    supplier: Supplier
+    baseUrl: Base URL
+    model: Upstream model
+    apiKey: API key
+    status: Status
+    circuit: Circuit
+    timeout: Timeout (sec)
+    priority: Priority
+    weight: Weight
+    rpm: RPM limit
+    tpm: TPM limit
+    failThreshold: Failure threshold
+    cooldown: Cooldown (sec)
+    consecutiveFailures: Consecutive failures
+    totalCalls: Total success
+    totalFailures: Total failures
+    totalTokens: Total tokens
+    lastSuccess: Last success
+    lastProbe: Last probe
+    lastProbeResult: Probe result
+    lastProbeLatency: Probe latency (ms)
+    lastProbeError: Probe error
+    probeFailStreak: Probe fail streak
+    lastError: Last error
+    remark: Remark
+    createdAt: Created at
+    updatedAt: Updated at
+  vendor:
+    openai: OpenAI
+    deepseek: DeepSeek
+    qwen: Qwen
+    moonshot: Moonshot
+    zhipu: Zhipu
+    ollama: Ollama
+    other: Other
+  driver:
+    inherit: Default (OpenAI compatible)
+    openai: OpenAI compatible
+    responses: OpenAI Responses
+    deepseek: DeepSeek
+    dashscope: Qwen (DashScope)
+    dashscope_tts: Qwen TTS
+    tip: Blank = default (OpenAI compatible). Dispatch is decided by the backend driver registry; an unknown driver is rejected explicitly instead of silently falling back.
+    freeInputTip: The options are built-in candidates; when the backend registry gains a driver you can type its name directly.
+  supplierPick:
+    placeholder: Select a supplier (optional)
+    none: Standalone channel (no supplier)
+    inheritTip: Leave blank to inherit the supplier's base URL and credentials; explicit channel values win.
+    loadFailed: Failed to load suppliers (this account may lack supplier read permission); type the supplier ID manually
+    unknown: "Supplier #{id} (not in the current list)"
+  status:
+    on: Enabled
+    off: Disabled
+  circuit:
+    closed: Closed
+    open: Open
+    half_open: Half-open
+  probe:
+    ok: "Probe succeeded ({latency} ms, {models} models)"
+    fail: "Probe failed: {reason}"
+    okShort: Success
+    failShort: Fail
+    never: Never
+  actions:
+    edit: Edit
+    delete: Delete
+    toggle: Toggle
+    enable: Enable
+    disable: Disable
+    breakerOpen: Force open
+    breakerClose: Reset
+    probe: Probe
+    breakerDetail: Breaker detail
+    deleteConfirm: "Delete channel \"{name}\"? Its model bindings are removed as well."
+    enableConfirm: "Enable channel \"{name}\"?"
+    disableConfirm: "Disable channel \"{name}\"? It will stop participating in scheduling."
+    openConfirm: "Force channel \"{name}\" open? It will stop participating in scheduling while open."
+    closeConfirm: "Reset channel \"{name}\"?"
+  form:
+    add: New channel
+    edit: Edit channel
+    name: Channel name
+    namePlaceholder: e.g. openai-main
+    vendor: Vendor label
+    vendorTip: Used for display and filtering only; does not affect the protocol
+    driver: Driver (protocol)
+    driverTip: Selects the upstream protocol; blank = OpenAI compatible (identical to legacy channels)
+    supplier: Supplier
+    baseUrlInheritTip: May stay blank when a supplier is attached - the supplier base URL is inherited at runtime
+    apiKeyInheritTip: May stay blank when a supplier is attached - the supplier credential is inherited at runtime; output is always masked
+    rpm: RPM limit
+    rpmTip: Requests per minute; 0 = follow the plugin default channel RPM (0 = unlimited)
+    tpm: TPM limit
+    tpmTip: Tokens per minute; 0 = follow the plugin default (0 = unlimited). In-process budget, single instance, charged after the call
+    baseUrl: Base URL
+    baseUrlPlaceholder: "https://api.openai.com/v1"
+    baseUrlTip: Private addresses are blocked by the outbound guard; enable "Allow private upstreams" in access settings for local upstreams
+    apiKey: API key
+    apiKeyPlaceholder: Enter the upstream credential (blank is allowed; calls fail closed)
+    apiKeyTip: On edit, blank or the masked value means unchanged; output is always masked and the mask is never written back
+    model: Upstream model
+    modelPlaceholder: e.g. gpt-4o-mini
+    modelTip: Written to the request body's model field
+    timeout: Timeout (sec)
+    timeoutTip: "0 = follow plugin settings; probes use clamp(value, 3, 15) seconds"
+    priority: Priority
+    priorityTip: Lower values are tried first
+    weight: Weight
+    weightTip: The weighted strategy uses max(1, weight)
+    status: Status
+    failThreshold: Failure threshold
+    failThresholdTip: "0 = follow plugin settings (default 5)"
+    cooldown: Cooldown (sec)
+    cooldownTip: "0 = follow plugin settings (default 60)"
+    remark: Remark
+    rules:
+      nameRequired: Enter a channel name
+      baseUrlRequired: Enter the base URL (required only without a supplier; inherited when one is attached)
+      baseUrlInvalid: The base URL must be an http(s) URL
+      modelRequired: Enter the upstream model name
+      timeoutRange: Timeout must be between 0 and 600 seconds
+      nonNegative: Must not be negative
+  breaker:
+    title: "Breaker detail · {name}"
+    circuit: State
+    openedAt: State started at
+    cooldownRemaining: Cooldown remaining
+    cooldownRemainingValue: "{seconds} sec"
+    cooldownExpired: Cooldown finished; the next request will enter a half-open probe
+    cooldownGlobalTip: No cooldown configured on the channel; estimated with the plugin default of 60 seconds
+    consecutive: Consecutive failures
+    threshold: Effective threshold
+    totalCalls: Total success
+    totalFailures: Total failures
+    totalTokens: Total tokens
+    lastError: Last error
+    lastSuccess: Last success time
+    events: Recent breaker events
+    eventTime: Time
+    eventType: Event
+    eventFailures: Consecutive failures
+    eventThreshold: Threshold
+    eventCooldown: Cooldown (sec)
+    eventError: Error
+    eventsEmpty: No breaker events
+    globalDefault: Global default
+  name: Channel
+  rerankCap: Native Rerank
+  priorityWeigh: Priority / Weigh
+  tpmBudget: TPM Limit / Live Bucket
+  tpmUnlimited: Unlimited
+  key: Key Set
+  callsFailures: Calls / Failures
+  bindings: Active/All Bindings
+  breakerValue:
+    closed: Closed (OK)
+    open: Open (Cooling)
+    half_open: Half-Open (Probing)
+    permanent: Permanent (Parked)
+model:
+  title: Models
+  intro: "A model is the public name; channel bindings define scheduling order and weights. Deleting a model removes its bindings."
+  searchPlaceholder: Search model name
+  empty: No models
+  filters:
+    type: Type
+    status: Status
+    query: Query
+    reset: Reset
+    allType: All types
+    allStatus: All statuses
+  type:
+    chat: Chat
+    embedding: Embedding
+    tts: Speech synthesis
+  strategy:
+    priority: Priority
+    weighted: Weighted
+  encoding:
+    off: Off
+    tokenz-r: tokenz-r
+  capability:
+    chat: Chat
+    function_calling: Function calling
+    code: Code
+  status:
+    on: Enabled
+    off: Disabled
+  columns:
+    name: Model name
+    type: Type
+    strategy: Strategy
+    priceInput: Input price
+    priceOutput: Output price
+    encoding: Local counting
+    contextWindow: Context window
+    capabilities: Capabilities
+    status: Status
+    boundChannels: Bound channels
+    boundCount: Bindings
+    description: Description
+    createdAt: Created at
+    updatedAt: Updated at
+  priceUnit: per million tokens
+  actions:
+    edit: Edit
+    delete: Delete
+    bind: Bind channels
+    deleteConfirm: "Delete model \"{name}\"? All of its channel bindings are removed as well."
+  form:
+    add: New model
+    edit: Edit model
+    name: Model name
+    namePlaceholder: Public model name, e.g. gpt-4o-mini
+    nameTip: Unique; this is the name listed by /ai/v1/models
+    type: Type
+    typeTip: Chat / embedding / speech synthesis; a tts model serves the voice library and the public audio endpoint and is not scheduled for chat
+    strategy: Scheduling strategy
+    priceInput: Input price
+    priceOutput: Output price
+    priceUnit: per million tokens
+    encoding: Local counting
+    encodingTip: Blank = disable local approximation and context precheck; uses built-in tokenz-r 128k BPE encoding when enabled
+    contextWindow: Context window
+    contextWindowTip: "0 = no precheck; requests over the window are rejected locally"
+    capabilities: Capabilities
+    capabilitiesTip: Blank = unknown, do not block; if explicitly non-empty without function_calling, chat requests with tools are rejected
+    status: Status
+    description: Description
+    descriptionPlaceholder: Optional
+    rules:
+      nameRequired: Enter a model name
+      nonNegative: Must not be negative
+  bind:
+    title: "Bind channels · {name}"
+    intro: Select channels that participate in scheduling and set priority and weight; saving replaces all bindings of this model.
+    empty: No enabled channels
+    channel: Channel
+    priority: Priority
+    weight: Weight
+    enabled: Enabled
+    disabled: Disabled
+    save: Save bindings
+    saved: Bindings saved
+    noChannels: Create and enable a channel first
+    unknownChannel: "Channel #{id} (not in the enabled list)"
+    loadFailed: Failed to load bindings
+  name: Call name
+  vendor: Vendor
+  inputPrice: 'Input (/1M)'
+  outputPrice: 'Output (/1M)'
+  cachePrice: 'Cache Hit (/1M)'
+  offpeak: Offpeak Ratio
+  priced: Price/Peak OK
+  bindings: 'Bindings (active/all)'
+  agents: Active Agents
+  routeTiers: 'Route Tiers (Priority ASC fallback · Weigh load-balanced)'
+  noRoute: No routable channel
+  typeValue:
+    chat: Chat
+    embedding: Embedding
+    rerank: Rerank
+    unknown: Unknown
+usage:
+  title: Usage
+  intro: "Aggregated by model, business, source or calendar day; cost is a server-side 6-decimal string and is displayed without client-side arithmetic."
+  tabs:
+    aggregate: Aggregate
+    logs: Call logs
+  filters:
+    model: Model name
+    bizType: Business type
+    source: Source
+    group: Group by
+    dateRange: Date range
+    query: Query
+    reset: Reset
+    all: All
+  group:
+    model: By model
+    biz: By business
+    source: By source
+    bizSource: By business + source
+    day: By day
+  groupColumn:
+    model: Model
+    biz: Business type
+    source: Source
+    bizSource: Business / source
+    day: Date
+  totals:
+    calls: Calls
+    success: Success
+    fail: Fail (excl. timeout)
+    timeout: Timeout
+    tokens: Tokens
+    cost: Cost
+  columns:
+    calls: Calls
+    success: Success
+    fail: Fail
+    timeout: Timeout
+    tokens: Tokens
+    cost: Cost
+  empty: No usage data
+  log:
+    title: Call logs
+    intro: "One row per real upstream attempt; a streaming request produces one row for the whole request. The time range is a closed interval in seconds."
+    filters:
+      status: Status
+      callType: Call type
+      bizType: Business type
+      source: Source
+      tokensSource: Token source
+      requestId: Request ID
+      modelName: Model name
+      channelName: Channel name
+      dateRange: Date range
+      query: Query
+      reset: Reset
+      all: All
+    columns:
+      time: Time
+      requestId: Request ID
+      model: Model
+      channel: Channel
+      callType: Type
+      bizType: Business
+      source: Source
+      status: Status
+      promptTokens: Prompt tokens
+      completionTokens: Completion tokens
+      totalTokens: Total tokens
+      cost: Cost
+      latency: Latency (ms)
+      stream: Stream
+      tokensSource: Token source
+      errorClass: Error class
+      errorMessage: Error
+      attempt: Attempt
+      billedPartial: Partial billing
+      operate: Operate
+    status:
+      success: Success
+      fail: Fail
+      timeout: Timeout
+      breaker: Breaker
+    callType:
+      chat: Chat
+      embedding: Embedding
+      tts: Speech synthesis
+    errorClass:
+      auth: Authentication
+      rate_limit: Rate limit
+      upstream: Server
+      transport: Transport
+      local: Local
+      unknown: Unknown
+    tokensSource:
+      usage: Server usage
+      estimate: Estimated
+      none: No counting
+    stream:
+      on: Streaming
+      off: Non-streaming
+    billedPartial:
+      yes: "Yes"
+      no: "No"
+      tip: The server never finished (mid-stream break or client disconnect) but the already aggregated content was billed; the status stays fail / timeout and the breaker does not count it as a failure.
+    legend:
+      title: Legend
+      tokensSource: Token source
+      tokensSourceTip: "usage = server usage frame; estimate = local approximation; - = no counting. Partially billed rows take their tokens from the already aggregated content of an unfinished stream."
+      billedPartial: Partial billing
+      keySource: Per-key attribution
+      keySourceTip: "source = key:<caller> means the call came from an application API key (the source field on the API keys page); key:gateway is the plugin-wide key."
+    detail: Detail
+    empty: No call logs
+    noRequestId: This row has no request_id (direct channel debugging is not recorded)
+  detail:
+    title: Attempt chain
+    intro: "All real attempts of one request share a request_id. In summary, success + fail + timeout = calls; fail excludes timeout, so use fail + timeout for reconciliation."
+    summary:
+      calls: Attempts
+      success: Success
+      fail: Fail
+      timeout: Timeout
+      tokens: Tokens
+      cost: Cost
+    columns:
+      attempt: Attempt
+      time: Time
+      model: Model
+      channel: Channel
+      callType: Type
+      status: Status
+      promptTokens: Prompt tokens
+      completionTokens: Completion tokens
+      totalTokens: Total tokens
+      cost: Cost
+      latency: Latency (ms)
+      stream: Stream
+      tokensSource: Token source
+      errorClass: Error class
+      errorMessage: Error
+      source: Source
+      billedPartial: Partial billing
+    empty: No attempts
+    noRequestId: Direct channel debugging is not recorded
+    loadFailed: Failed to load the attempt chain
+apikey:
+  title: API keys
+  intro: "Application keys: the plaintext is shown once on create / reset, the list only exposes the prefix; billing attribution lands in the usage page as source=key:<caller>."
+  searchPlaceholder: Search app name / caller source
+  empty: No API keys
+  filters:
+    status: Status
+    query: Query
+    reset: Reset
+    allStatus: All statuses
+  status:
+    on: Enabled
+    off: Disabled
+  columns:
+    name: App name
+    source: Caller source
+    keyPrefix: Key prefix
+    modelScope: Model scope
+    rateLimit: Rate limit (per min)
+    status: Status
+    expireAt: Expires at
+    lastUsedAt: Last used
+    remark: Remark
+    createdAt: Created at
+    updatedAt: Updated at
+  scope:
+    all: All models
+  rateLimitFollow: Follow global
+  neverExpires: Never expires
+  actions:
+    edit: Edit
+    reset: Reset key
+    toggle: Toggle
+    delete: Delete
+    resetConfirm: "Reset the key of \"{name}\"? The old key stops working immediately and the new plaintext is shown only once."
+    toggleConfirm: "Toggle \"{name}\"? A disabled key gets 401 on every request."
+    deleteConfirm: "Delete \"{name}\"? The key stops working immediately."
+  form:
+    add: New API key
+    edit: Edit API key
+    name: App name
+    namePlaceholder: e.g. experiment-be
+    source: Caller source
+    sourcePlaceholder: e.g. experiment
+    sourceTip: "One key per caller; at most 24 characters (usage.source is varchar(30) and the key: prefix takes 4)"
+    sourceLocked: The source is fixed once the key is issued
+    modelScope: Model scope
+    modelScopePlaceholder: One model name per line, or separated by commas
+    modelScopeTip: Blank = all models allowed; models outside the scope are rejected (OpenAI shaped)
+    rateLimit: Rate limit override (per minute)
+    rateLimitTip: 0 = follow the plugin-wide limit; greater than 0 = override for this key (minimum 5)
+    expireAt: Expires at
+    expireAtTip: Blank = never expires; an expired key gets 401
+    remark: Remark
+    statusTip: Use the row action "Toggle" to enable or disable (status is not part of the save payload)
+  secret:
+    title: Plaintext key (shown once)
+    intro: "This is the only copy of the plaintext for this issue / reset; it cannot be viewed again after closing. Copy it into the caller configuration now."
+    label: Plaintext key
+    copy: Copy
+    copied: Copied to clipboard
+    copyFailed: Copy failed; select and copy manually
+    close: I saved it, close
+    createMarked: "Key issued ({name})"
+    resetMarked: "Key reset ({name})"
+  rules:
+    nameRequired: Enter an app name
+    sourceRequired: Enter a caller source
+    sourceInvalid: "Only letters, digits, underscore, colon, dot and hyphen are allowed (max 24)"
+supplier:
+  title: Suppliers
+  intro: "A supplier holds shared base URL and credentials; channels inherit them when left blank, and a supplier with channels cannot be deleted."
+  searchPlaceholder: Search supplier name
+  empty: No suppliers
+  filters:
+    status: Status
+    query: Query
+    reset: Reset
+    allStatus: All statuses
+  status:
+    on: Enabled
+    off: Disabled
+  columns:
+    name: Supplier
+    vendor: Vendor label
+    driver: Driver
+    baseUrl: Base URL
+    apiKey: API key
+    timeout: Timeout (sec)
+    channelCount: Channels
+    status: Status
+    remark: Remark
+    createdAt: Created at
+    updatedAt: Updated at
+  actions:
+    edit: Edit
+    delete: Delete
+    deleteConfirm: "Delete supplier \"{name}\"? The backend refuses while channels still reference it (detach those channels first)."
+  form:
+    add: New supplier
+    edit: Edit supplier
+    name: Supplier
+    namePlaceholder: e.g. aliyun-main
+    vendor: Vendor label
+    vendorTip: Used for display and filtering only
+    driver: Driver (protocol)
+    driverTip: Inherited by channels whose driver is blank
+    baseUrl: Base URL
+    baseUrlPlaceholder: "https://api.openai.com/v1"
+    baseUrlTip: Inherited by channels without a base URL; private addresses need "Allow private upstreams"
+    apiKey: API key
+    apiKeyPlaceholder: Inherited by channels without a credential
+    apiKeyTip: On edit, blank or the masked value means unchanged; output is always masked
+    timeout: Timeout (sec)
+    timeoutTip: "0 = follow plugin settings; channels with timeout=0 inherit this value"
+    status: Status
+    remark: Remark
+    rules:
+      nameRequired: Enter a supplier name
+      baseUrlRequired: Enter the base URL
+      baseUrlInvalid: The base URL must be an http(s) URL
+      timeoutRange: Timeout must be between 0 and 600 seconds
+task:
+  title: Tasks
+  intro: "Async tasks: submit chat / batch embedding jobs handled by an in-process worker; chunk progress and results are queryable and exports stream as NDJSON (nothing is written to disk on the server)."
+  searchPlaceholder: Search request ID / source / business / model
+  empty: No tasks
+  filters:
+    taskType: Type
+    status: Status
+    keyword: Keyword (request ID / source / business / model)
+    query: Query
+    reset: Reset
+    all: All
+    allType: All types
+    allStatus: All statuses
+  taskType:
+    chat: Chat
+    embedding: Embedding
+  status:
+    pending: Pending
+    processing: Processing
+    success: Success
+    failed: Failed
+  columns:
+    id: Task ID
+    taskType: Type
+    status: Status
+    model: Model
+    source: Source
+    bizType: Business type
+    requestId: Request ID
+    attempt: Attempt
+    progress: Chunk progress
+    summary: Summary
+    error: Error
+    createdAt: Created at
+    updatedAt: Updated at
+  progress:
+    value: "{done} / {total}"
+    none: "-"
+  actions:
+    detail: Detail
+    exportHint: Exports application/x-ndjson (one entry per line)
+  submit:
+    open: Submit task
+    title: Submit async task
+    taskType: Task type
+    model: Model
+    modelPlaceholder: Select or type the public model name
+    bizType: Business type (biz_type)
+    bizTypePlaceholder: e.g. batch-index
+    contextTip: Both biz_type and source are required (max 30 characters each); they are the two usage dimensions
+    source: Source
+    sourcePlaceholder: e.g. batch-job
+    chatTitle: Chat input
+    chatTip: "One message per line as role:content (e.g. user:hello), at least one"
+    chatPlaceholder: "user:hello"
+    embeddingTitle: Batch embedding input
+    embeddingTip: One text per line (1000 or fewer recommended; split larger batches)
+    embeddingPlaceholder: First text
+    count: "{count} entered"
+    empty: Enter at least one item
+    submit: Submit
+    success: "Task submitted: {id} ({status})"
+  detail:
+    title: "Task detail · {id}"
+    payload: Payload
+    result: Result
+    entries: Result entries
+    usage: Accumulated usage
+    usageValue: "{calls} attempts / {tokens} tokens / {cost}"
+  export:
+    success: Download started
+    failed: Export failed (check the plugin/ai/task/export permission node)
+voice:
+  title: Voices
+  intro: "Voice library: the dashscope_tts driver synthesizes with model + voice; previews go through the backend channel credentials and stream audio without writing anything to disk."
+  searchPlaceholder: Search voice name / model
+  empty: No voices
+  filters:
+    status: Status
+    model: Model
+    query: Query
+    reset: Reset
+  status:
+    on: Enabled
+    off: Disabled
+  format:
+    mp3: MP3
+    wav: WAV
+    opus: OPUS
+    pcm: PCM
+  columns:
+    name: Voice name
+    model: Model
+    voice: Voice id
+    format: Format
+    status: Status
+    remark: Remark
+    createdAt: Created at
+    updatedAt: Updated at
+  actions:
+    edit: Edit
+    delete: Delete
+    preview: Preview
+    deleteConfirm: "Delete voice \"{name}\"?"
+  form:
+    add: New voice
+    edit: Edit voice
+    name: Voice name
+    namePlaceholder: e.g. Xiaochun (support)
+    model: Model
+    modelPlaceholder: e.g. cosyvoice-v2
+    modelTip: Sent to the upstream as the model field
+    voice: Voice id
+    voicePlaceholder: e.g. longxiaochun
+    voiceTip: Upstream voice name (the voice parameter)
+    format: Audio format
+    formatTip: Defaults to mp3; shared by previews and the public audio endpoint
+    status: Status
+    remark: Remark
+    rules:
+      nameRequired: Enter a voice name
+      modelRequired: Enter a model name
+      voiceRequired: Enter a voice id
+  preview:
+    title: "Preview · {name}"
+    text: Preview text
+    placeholder: Leave blank to use the default preview text
+    sample: Hello, this is a speech synthesis preview.
+    play: Play preview
+    playing: Synthesizing
+    stop: Stop
+    failed: Preview failed
+    tip: The upstream synthesizes the audio and it is streamed back; nothing is written to disk on the server
+    empty: Select a voice first
+title: AI Asset Health & Cost Governance
+intro: 'Full-stack read-only governance console: live diagnostics (24 mechanical checks) · cost & cache economics ledger (list vs cache/offpeak savings decomposition & 5D attribution) · multi-tier route topology & circuit breakers · agent policy guards.'
+refresh: Re-check
+failedTip: 'Health check failed: reading the AI asset configuration failed. Check the database and server log, then retry.'
+truncated: 'Asset scan truncated at the hard cap ({faces}): readings are trustworthy up to the cap. Clean up or split the database first.'
+limits: 'Scan caps: vendors {vendors} · models {models} · channels {channels} · bindings {bindings} · agents {agents}'
+emptyFace: No data
+searchPlaceholder: 'Search name / model / ref / driver…'
+onlyAnomalies: Anomalies only
+locate: Locate
+manage: Manage
+viewLogs: Logs
+drillFilter: Filter
+clearFilter: Clear Filters
+yes: 'Yes'
+no: 'No'
+unknown: Unknown
+status: Status
+statusValue:
+  enable: Enabled
+  disable: Disabled
+  unknown: Unknown
+nav:
+  healthConsole: Health Console
+  costPage: Cost Ledger
+  vendors: Vendors
+  channels: Channels
+  models: Models
+  bindings: Bindings
+  agents: Agents
+  logs: Call Logs
+workspace:
+  diagnosis: Diagnostics & Live Posture
+  cost: Cost & Cache Economics
+  topology: Route Topology & Assets
+  governance: Agents & Policy Compliance
+window:
+  h24: Last 24h
+  d7: Last 7d
+  d30: Last 30d
+stats:
+  findings: 'Findings (Err/Warn)'
+  findingsSub: Click to filter diagnostics
+  models: Routable Models
+  modelsSub: 'Priced {priced} / Total {total}'
+  channels: Keyed Channels
+  channelsSub: '{bindings} active bindings'
+  breakers: Breakers & TPM
+  breakersSub: 'Perm {perm} · Open {open} · FailOpen {failOpen}'
+  agents: Routable Agents
+  agentsSub: 'Policy {pass}'
+  costTotal: Window Actual Spend
+  costTotalSub: 'List ¥{list} · {calls} calls'
+  cacheHit: Prefix Cache Hit Rate
+  cacheHitSub: 'Cache saved ¥{saved}'
+  offpeak: Off-peak Call Share
+  offpeakSub: 'Off-peak saved ¥{saved} ({rate}% off)'
+runtime:
+  title: Runtime Health & Policy Guards
+  gate: Concurrency Gate
+  gateInflight: 'Inflight {inflight} / Limit {limit} (Max {max})'
+  gateQueue: 'Queued interactive:{interactive} · eval:{eval} · batch:{batch} · 429 downshifts:{downshifts}'
+  gateDisabled: Disabled
+  budget: TPM Token Bucket Stats
+  budgetSummary: 'Waits {waits} · P95 {p95}ms · Fail-Open {failOpen}'
+  policyFreeze: Model Freeze Whitelist Guard
+  policyOfficial: Official Channel Isolation Guard
+  policyClone: Dialog Twin Clone Sync
+  pass: PASS
+  violated: VIOLATED
+findings:
+  title: 'Findings (24 mechanical checks)'
+  filterAll: All
+  catAll: All Categories
+  catTopology: Route & Assets
+  catPricing: Pricing & Cost
+  catRuntime: Breaker & TPM
+  catPolicy: Agent & Policy
+  errors: 'Blocking {count}'
+  warnings: 'Warnings {count}'
+  severity: Severity
+  item: Check
+  ref: Asset coordinate
+  detail: Facts & Evidence
+  action: Action
+  empty: 'No anomalies found (all 24 mechanical checks passed)'
+severity:
+  error: Blocking
+  warning: Warning
+  info: Info
+finding:
+  model_price_missing: Model price missing
+  model_price_partial: 'Model partial price missing (input or output price is 0)'
+  model_peak_windows_invalid: Model peak windows JSON invalid
+  model_offpeak_dead: 'Model has offpeak ratio configured without peak windows (never triggers)'
+  channel_key_missing: Channel key missing
+  channel_base_url_missing: Channel and vendor both missing effective BaseURL
+  channel_vendor_disabled: 'Enabled channel belongs to a disabled vendor (silently dropped by router)'
+  vendor_dangling: Asset references a missing or soft-deleted vendor
+  driver_unsupported: LLM driver not registered
+  rerank_driver_incompatible: Rerank model bound to a channel driver without native rerank support
+  model_unbound: Model not bound to any channel
+  model_binding_inactive: No routable active bindings for model
+  channel_unbound: Channel not bound to any model
+  binding_dangling: Binding points to a missing asset
+  channel_breaker_permanent: 'Channel permanently tripped (account balance/arrearage auto-parked)'
+  channel_breaker_open: Channel circuit breaker open (cooling down)
+  channel_breaker_half_open: Channel circuit breaker half-open (probing)
+  tpm_budget_fail_open: TPM token bucket wait timeout or DB error triggered fail-open
+  agent_model_unroutable: Enabled agent references an unroutable model
+  agent_model_type_mismatch: Agent type mismatches bound model type
+  policy_model_freeze_violation: Workspace model freeze whitelist violated
+  policy_official_channel_violation: Official direct channel isolation or twin clone rule violated
+  cost_unpriced_calls: 'Model has live calls & token usage with 0 cost (unpriced calls)'
+  scan_truncated: Asset scan truncated
+cost:
+  pageTitle: AI Cost & Cache Economics Ledger
+  pageIntro: '5-dimensional cost attribution & cross-filtering by Vendor, Channel, Model, Agent, and Call Source; live list price vs prefix cache and off-peak discount decomposition (ActualCost + CacheSaved + OffpeakSaved = ListCost).'
+  equationTitle: 'Cost & Cache/Off-peak Economics Identity (ActualCost + CacheSaved + OffpeakSaved = ListCost)'
+  filteredTip: 'Cross-filter active ({buckets} buckets matched): all summary metrics and dimensional leaderboards below are dynamically recomputed'
+  filterVendor: All Vendors
+  filterChannel: All Channels
+  filterModel: All Models
+  filterAgent: All Agents
+  filterSource: All Sources
+  actualCost: Actual Settlement Spend
+  listCost: List Price Baseline
+  cacheSaved: Prefix Cache Saved
+  offpeakSaved: Off-peak Discount Saved
+  totalSaved: Total Saved
+  savedRate: Overall Savings Rate
+  callsCard: Calls & Success Rate
+  callsCardSub: 'OK {success} · Fail {failed} ({rate}%)'
+  tokensCard: Total Token Throughput
+  tokensCardSub: 'In {input} · Out {output}'
+  tokensBreakdown: 'Input {input} · Cache Hit {hit} ({hitRate}%) · Output {output} · Avg Latency {latency}ms'
+  tabByVendor: By Vendor
+  tabByChannel: By Channel
+  tabByModel: By Model
+  tabByAgent: By Agent
+  tabBySource: By Call Source
+  tabCrossBuckets: 5D Cross Buckets
+  colVendor: Vendor
+  colDriver: Driver
+  colAssets: Active Ch / Models
+  colModel: Model
+  colAgent: Agent
+  colChannel: Channel
+  colSource: Source
+  colCalls: Calls
+  colSuccessRate: Success Rate
+  colLatency: Avg Latency
+  colInputTokens: Input Tokens
+  colCacheHit: Cache Hit (Rate)
+  colOutputTokens: Output Tokens
+  colTotalTokens: Total Tokens
+  colOffpeak: Off-peak (Rate)
+  colActualCost: Actual Cost
+  colListCost: List Cost
+  colSaved: 'Saved (Cache / Offpeak)'
+  colSavedRate: Savings Rate
+  colCostPer1k: Cost / 1k Calls
+  colShare: Cost Share
+face:
+  models: Models & Route Topology
+  channels: Channels, Breakers & TPM
+  bindings: Bindings
+  agents: Agents & Compliance
+  vendors: Vendors
+vendor:
+  name: Name
+  title: Title
+  driver: Default Driver
+  baseUrl: Default BaseURL
+  models: Models
+  channels: 'Channels (active/total)'
+binding:
+  model: Model
+  channel: Channel
+  upstream: Effective Upstream
+  driver: Effective Driver
+  priorityWeigh: Effective Priority / Weigh
+  routable: Routable
+  blockReason: Block Reason
+agent:
+  name: Agent Name
+  title: Title
+  type: Type
+  model: Bound Model
+  typeMatch: Type Match
+  routable: Routable
+  compliance: Policy Compliance
+
+col:
+  vendor: Vendor
+  driver: Effective Driver
+  breaker: Breaker State
+  type: Type

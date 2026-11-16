@@ -1,0 +1,72 @@
+{
+  "active_assertions": 0,
+  "config": {
+    "db": "<DB>",
+    "egress": "loopback-only",
+    "llm": {
+      "base_url": "https://api.openai.com/v1",
+      "key": {
+        "configured": false,
+        "source": "none"
+      },
+      "model": "gpt-4o-mini",
+      "provider": "none"
+    },
+    "log": "<LOG>",
+    "mode": "local",
+    "path": "<CFG>",
+    "reader": "deliverable",
+    "recall": {
+      "activation_rank": false,
+      "activation_record": true,
+      "alias_expand": true,
+      "bands": 5,
+      "budget_ms": 500,
+      "chars": 16000,
+      "hook_bands": 3,
+      "hook_chars": 1500,
+      "hook_nodes": 12,
+      "mention_backfill": true,
+      "nodes": 50,
+      "relative_tag": false,
+      "token_correct": false
+    },
+    "scope": "mem:golden:208",
+    "sync": {
+      "auto": false,
+      "base_url": "",
+      "enabled": false,
+      "key": {
+        "configured": false,
+        "source": "none"
+      }
+    }
+  },
+  "conflicts_proposed": 0,
+  "counts": {
+    "assertion": 0,
+    "event": 3,
+    "mention": 0,
+    "meta_edge": 0,
+    "node": 0,
+    "node_alias": 0,
+    "schema_version": 1,
+    "trace": 3,
+    "vector": 0
+  },
+  "db": "<DB>",
+  "db_size_bytes": 0,
+  "egress": "loopback-only",
+  "last_replay": null,
+  "llm_warning": null,
+  "mode": "local",
+  "pending_traces": 3,
+  "private_assertions": 0,
+  "retracted_assertions": 0,
+  "schema_version": 1,
+  "scope": "mem:golden:208",
+  "sessions": 1,
+  "superseded_assertions": 0,
+  "vector_warning": null,
+  "version": "0.0.1"
+}

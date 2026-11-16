@@ -1,0 +1,9 @@
+adminId: 管理员ID
+username: 管理员用户名
+url: 操作URL
+title: 日志标题
+data: 请求数据
+ip: IP
+userAgent: User Agent
+operationLog: 操作日志
+expandData: 点击展开

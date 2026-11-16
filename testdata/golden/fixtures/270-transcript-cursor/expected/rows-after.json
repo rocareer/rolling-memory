@@ -1,0 +1,59 @@
+{
+  "trace": [
+    {
+      "audience": "shared",
+      "author": "user",
+      "hash": "3f0d90bf0da29adca135ce4f8b421aff",
+      "kind": "message",
+      "meta_json": "{\"source\": \"transcript.jsonl\"}",
+      "occurred_at": 1772438400,
+      "processed": 0,
+      "processed_at": null,
+      "recorded_at": 1793102400,
+      "scope": "mem:golden:270",
+      "session": "s-transcript",
+      "text": "老张养了一只猫。",
+      "turn": 1
+    },
+    {
+      "audience": "shared",
+      "author": "assistant",
+      "hash": "17aeb044588e21f5ef9819169ab50326",
+      "kind": "message",
+      "meta_json": "{\"source\": \"transcript.jsonl\"}",
+      "occurred_at": 1772438460,
+      "processed": 0,
+      "processed_at": null,
+      "recorded_at": 1793102400,
+      "scope": "mem:golden:270",
+      "session": "s-transcript",
+      "text": "小白是白色的。",
+      "turn": 2
+    },
+    {
+      "audience": "shared",
+      "author": "user",
+      "hash": "ccb00147f2e4921485f96e0ff3d8d238",
+      "kind": "message",
+      "meta_json": "{\"source\": \"transcript.jsonl\"}",
+      "occurred_at": 1772438520,
+      "processed": 0,
+      "processed_at": null,
+      "recorded_at": 1793102400,
+      "scope": "mem:golden:270",
+      "session": "s-transcript",
+      "text": "老张喜欢咖啡。",
+      "turn": 3
+    }
+  ],
+  "transcript_cursor": [
+    {
+      "mtime": 1793102400.0,
+      "offset": 5,
+      "path": "transcript.jsonl",
+      "session": "s-transcript",
+      "size": 852,
+      "updated_at": 1793102400
+    }
+  ]
+}

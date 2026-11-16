@@ -1,0 +1,230 @@
+{
+  "algorithm": {
+    "assertion_hash": "12 segments joined by 0x1f, sha256 hex, [:32]",
+    "assertion_node_id": "a_ + identity_hash[:20]",
+    "node_id": "n_ + sha256(\"\\x1f\".join((scope, kind, norm_label, qualifier)))[:16]",
+    "sha256": "UTF-8 (surrogatepass) hex digest",
+    "trace_hash": "sha256(\"\\x1f\".join((scope, session, str(turn), text)))[:32]"
+  },
+  "assertion_hashes": [
+    {
+      "args": {
+        "anchor_trace_hash": "5c25827e052667b484ba5c50d5858cf3",
+        "audience": "shared",
+        "bare": false,
+        "carrier": "real",
+        "holder_id": "n_1111111111111111",
+        "locus": "北京",
+        "object_key": "id:n_9d5f7b8c1e2a3b4c",
+        "rel_id": "n_805a7ad3bf7a0d59",
+        "scope": "mem:golden:010",
+        "subject_key": "id:n_50bea4783d5726e9",
+        "warrant": "referential",
+        "world": "actual"
+      },
+      "expected": "3b549dc4271b1e837aefa97e0f760099",
+      "name": "referential-shared"
+    },
+    {
+      "args": {
+        "anchor_trace_hash": "00000000000000000000000000000000",
+        "audience": "private",
+        "bare": true,
+        "carrier": null,
+        "holder_id": null,
+        "locus": null,
+        "object_key": "lit:30",
+        "rel_id": "n_805a7ad3bf7a0d59",
+        "scope": "mem:golden:010",
+        "subject_key": "lit:老张",
+        "warrant": "experiential",
+        "world": null
+      },
+      "expected": "491116424a4c2ca8b822dfdb238c48cb",
+      "name": "literal-bare-private"
+    }
+  ],
+  "assertion_node_ids": [
+    {
+      "expected": "a_60003cdc43eb87a06b2f",
+      "identity_hash": "60003cdc43eb87a06b2f9c92dcffc2b5",
+      "name": "identity"
+    },
+    {
+      "expected": "a_b79be9482979618aeda5",
+      "identity_hash": "b79be9482979618aeda5c80ef44ae84a",
+      "name": "literal"
+    }
+  ],
+  "audience": [
+    {
+      "left": "shared",
+      "narrower": "private",
+      "right": "private"
+    },
+    {
+      "audiences": [
+        "private"
+      ],
+      "reader": "owner",
+      "visible": true
+    },
+    {
+      "audiences": [
+        "shared",
+        "group"
+      ],
+      "reader": "deliverable",
+      "visible": true
+    },
+    {
+      "audiences": [
+        "shared",
+        "private"
+      ],
+      "reader": "deliverable",
+      "visible": false
+    }
+  ],
+  "keys": [
+    {
+      "expected": "id:n_abc",
+      "literal": null,
+      "node": "n_abc"
+    },
+    {
+      "expected": "lit:老张",
+      "literal": " 老张。 ",
+      "node": null
+    }
+  ],
+  "node_ids": [
+    {
+      "expected": "n_e09d704d50227e4c",
+      "kind": "referent",
+      "name": "basic-cjk",
+      "norm_label": "老张",
+      "qualifier": "",
+      "scope": "mem:golden:010"
+    },
+    {
+      "expected": "n_d600e700cfce39e0",
+      "kind": "relation_type",
+      "name": "relation",
+      "norm_label": "养",
+      "qualifier": "",
+      "scope": "mem:golden:010"
+    },
+    {
+      "expected": "n_c5f4474cea0afd07",
+      "kind": "referent",
+      "name": "fullwidth-casefold",
+      "norm_label": "alice",
+      "qualifier": "",
+      "scope": "mem:golden:090"
+    },
+    {
+      "expected": "n_f705d87df73637e9",
+      "kind": "incarnation",
+      "name": "qualifier",
+      "norm_label": "老张",
+      "qualifier": "2026",
+      "scope": "mem:golden:010"
+    },
+    {
+      "expected": "n_ddb5d058f4936d4c",
+      "kind": "referent",
+      "name": "literal-style",
+      "norm_label": "project-a",
+      "qualifier": "",
+      "scope": "mem:self"
+    }
+  ],
+  "render_assertion": [
+    {
+      "expected": "我 —养→ 猫",
+      "o": "猫",
+      "s": "我",
+      "x": "养"
+    },
+    {
+      "expected": "Alice —likes→ SQLite",
+      "o": "SQLite",
+      "s": "Alice",
+      "x": "likes"
+    }
+  ],
+  "sha256": [
+    {
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "input": ""
+    },
+    {
+      "expected": "bb5ef0bde4e79c00933c599d37ffb4257c89b8ea12e15b03ed656a679768b6f5",
+      "input": "老张"
+    },
+    {
+      "expected": "f04cdced9736a69da6103f08a4daaf8c485dd481217d218a1b4993c8c3968e13",
+      "input": "a\u001fb"
+    }
+  ],
+  "stable_json": [
+    {
+      "expected": "{\"a\":\"老张\",\"m\":[1,null,true],\"z\":1}",
+      "input": {
+        "a": "老张",
+        "m": [
+          1,
+          null,
+          true
+        ],
+        "z": 1
+      }
+    }
+  ],
+  "trace_hashes": [
+    {
+      "expected": "767410466b87adde6519af226c8db775",
+      "name": "default-turn",
+      "scope": "mem:golden:010",
+      "session": "default",
+      "text": "老张养了一只猫。",
+      "turn": 0
+    },
+    {
+      "expected": "035173c7de77840e3293faa036a32983",
+      "name": "session-turn",
+      "scope": "mem:golden:020",
+      "session": "raw",
+      "text": "项目使用 SQLite 和 FTS5 做本地检索。",
+      "turn": 7
+    },
+    {
+      "expected": "608f3b85f2bc2aff2f2e2cc4c86534ae",
+      "name": "turn-zero",
+      "scope": "mem:golden:031",
+      "session": "s1",
+      "text": "老张养了一只猫。",
+      "turn": 0
+    }
+  ],
+  "turn_normalization": [
+    {
+      "expected": 7,
+      "input": "7"
+    },
+    {
+      "expected": -1,
+      "input": "-1"
+    },
+    {
+      "expected": 0,
+      "input": "x"
+    },
+    {
+      "expected": 0,
+      "input": ""
+    }
+  ],
+  "version": 1
+}

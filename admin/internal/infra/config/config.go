@@ -1,0 +1,210 @@
+package config
+
+import (
+	"bytes"
+	"fmt"
+	"io/fs"
+	"os"
+	"strings"
+	"sync"
+
+	assets "github.com/ai-go-hub/ai-go-admin"
+	"github.com/spf13/viper"
+)
+
+// 应用配置
+type App struct {
+	Name     string
+	Timezone string
+}
+
+// 服务配置
+type Server struct {
+	Host               string
+	Port               int
+	TrustedProxies     []string `mapstructure:"trusted_proxies"`
+	AdminBaseRoutePath string   `mapstructure:"admin_base_route_path"`
+}
+
+// 单个数据库连接配置
+type DatabaseSource struct {
+	Host            string
+	Port            int
+	User            string
+	Password        string
+	DBName          string `mapstructure:"dbname"`
+	SSLMode         string `mapstructure:"sslmode"`
+	MaxOpenConns    int    `mapstructure:"max_open_conns"`
+	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
+	ConnMaxLifetime int    `mapstructure:"conn_max_lifetime"`
+}
+
+// 读库配置，额外包含 enabled 字段控制是否启用读库
+type ReadConfig struct {
+	Enabled        bool
+	DatabaseSource `mapstructure:",squash"`
+}
+
+// 令牌过期时间配置
+type TokenExpireConfig struct {
+	Admin         int `mapstructure:"admin"`
+	AdminRemember int `mapstructure:"admin_remember"`
+}
+
+// 令牌配置
+type TokenConfig struct {
+	Driver string            `mapstructure:"driver"`
+	Expire TokenExpireConfig `mapstructure:"expire"`
+}
+
+// 图标元数据配置
+type IconConfig struct {
+	EnName string `mapstructure:"en_name"`
+	CnName string `mapstructure:"cn_name"`
+}
+
+// 验证码开关配置，按接口控制是否启用人机验证
+type CaptchaSwitches struct {
+	AdminLogin bool `mapstructure:"admin_login"`
+}
+
+// 验证码配置
+type CaptchaConfig struct {
+	Switches        CaptchaSwitches `mapstructure:"switches"`
+	Elements        []string        `mapstructure:"elements"`
+	Length          int             `mapstructure:"length"`
+	ConfusionLength int             `mapstructure:"confusion_length"`
+	Expire          int             `mapstructure:"expire"`
+	FontPath        string          `mapstructure:"font_path"`
+	BackgroundDir   string          `mapstructure:"background_dir"`
+	IconDir         string          `mapstructure:"icon_dir"`
+	Icons           []IconConfig    `mapstructure:"icons"`
+}
+
+// 跨域配置
+type CORSConfig struct {
+	Origins []string
+	Methods []string
+	Headers []string
+	MaxAge  int `mapstructure:"max_age"`
+}
+
+// CDN 配置
+type CDNConfig struct {
+	URL       string `mapstructure:"url"`
+	URLParams string `mapstructure:"url_params"`
+}
+
+// 上传配置
+type UploadConfig struct {
+	Dir         string   `mapstructure:"dir"`
+	URLPrefix   string   `mapstructure:"url_prefix"`
+	MaxSize     int      `mapstructure:"max_size"`
+	Filename    string   `mapstructure:"filename"`
+	AllowSuffix []string `mapstructure:"allow_suffix"`
+}
+
+// 数据库配置
+type DatabaseConfig struct {
+	Type   string
+	Prefix string
+	Write  DatabaseSource
+	Read   ReadConfig
+}
+
+// 接口节流配置
+type ThrottleConfig struct {
+	Enabled            bool                `mapstructure:"enabled"`
+	Max                float64             `mapstructure:"max"`
+	Burst              int                 `mapstructure:"burst"`
+	ExpirationTTL      int                 `mapstructure:"expiration_ttl"`
+	IgnoreURL          bool                `mapstructure:"ignore_url"`
+	Methods            []string            `mapstructure:"methods"`
+	Headers            map[string][]string `mapstructure:"headers"`
+	StatusCode         int                 `mapstructure:"status_code"`
+	Message            string              `mapstructure:"message"`
+	MessageContentType string              `mapstructure:"message_content_type"`
+}
+
+// 聚合配置
+type Config struct {
+	App      App
+	Server   Server
+	Token    TokenConfig
+	CORS     CORSConfig
+	Captcha  CaptchaConfig
+	Database DatabaseConfig
+	Upload   UploadConfig
+	CDN      CDNConfig
+	Throttle ThrottleConfig
+}
+
+var (
+	vip    *viper.Viper
+	config = new(Config)
+	mu     sync.RWMutex
+)
+
+// 初始化配置系统
+func Init() error {
+	if vip == nil {
+		vip = viper.New()
+		vip.SetConfigType("yaml")
+
+		// 从嵌入资源读取 config 目录下所有 yaml 文件
+		names, err := fs.Glob(assets.FS, "config/*.yaml")
+		if err != nil {
+			return fmt.Errorf("get embedded config files: %w", err)
+		}
+		for _, name := range names {
+			data, err := fs.ReadFile(assets.FS, name)
+			if err != nil {
+				return fmt.Errorf("read embedded config file %s: %w", name, err)
+			}
+			if err := vip.MergeConfig(bytes.NewReader(data)); err != nil {
+				return fmt.Errorf("merge embedded config file %s: %w", name, err)
+			}
+		}
+
+		// 加载根目录 .env.yaml 环境配置文件（读取外置文件覆盖，并非嵌入了二进制的文件）
+		if f, err := os.Open(".env.yaml"); err == nil {
+			defer f.Close()
+			if err := vip.MergeConfig(f); err != nil {
+				return fmt.Errorf("merge config file .env.yaml: %w", err)
+			}
+		}
+
+		// 支持环境变量覆盖
+		vip.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+		vip.AutomaticEnv()
+
+		// 解析到结构体
+		if err := vip.Unmarshal(config); err != nil {
+			return fmt.Errorf("unmarshal config: %w", err)
+		}
+
+		// 登录验证码缺省值跟随记忆引擎运行模式：本地模式默认关闭，云端/公网默认开启；
+		// captcha 未显式配置 admin_login（含 CAPTCHA_SWITCHES_ADMIN_LOGIN 环境变量）时按模式解析。
+		if !vip.IsSet("captcha.switches.admin_login") {
+			config.Captcha.Switches.AdminLogin = AdminLoginCaptchaDefault()
+		}
+	}
+	return nil
+}
+
+// 返回全局配置副本
+func Get() Config {
+	mu.RLock()
+	defer mu.RUnlock()
+	return *config
+}
+
+// 获取 Viper 全局单例
+func Viper() *viper.Viper {
+	return vip
+}
+
+// 是否已经初始化
+func Initialized() bool {
+	return vip != nil
+}

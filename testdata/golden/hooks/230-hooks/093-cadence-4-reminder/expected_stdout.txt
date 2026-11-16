@@ -1,0 +1,1 @@
+{"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": "[Rolling-Memory 4轮节律锚点] 盘中遇报错/盲搜无果或需核对前序决策与文件入口时，请直接带具体 cue 调 MCP `recall`（回忆即记忆，命中证据后自动巩固结晶 L3 Noetic，无需手动写记忆）。"}}

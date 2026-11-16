@@ -1,0 +1,71 @@
+# plugin: kb v1.0.0
+# 知识库插件的英文语言包（源：plugins/kb/web/lang/en.yaml；落位副本：web/src/lang/en/plugin/kb.yaml，逐字节一致）。
+# 键前缀 plugin.kb.* 由落位路径的物理分段生成；插件不改写宿主语言包。
+# 结构与 zh-cn 侧逐键对齐（tag / tag.group / tag.rule 的文案仍为字段名占位符，见 README 的移植范围）。
+library:
+  name: Library name
+  nameHint: Unique per owner (type + id); reusable after soft delete
+  ownerKind: Owner type
+  ownerKindSystem: System
+  ownerKindUser: User
+  ownerId: Owner user
+  ownerLocked: Owner cannot be changed after creation; there is no transfer entry in the admin UI yet — contact operations to change it (audited)
+  description: Description
+  chunkConfig: Chunk config
+  chunkConfigPlaceholder: Leave empty for unset (inherit global)
+  chunkConfigHint: JSON object; the library layer overrides global▷library▷document; unknown keys are rejected on write
+  chunkConfigInvalid: Chunk config must be a valid JSON object
+  statusConfirm: Disabling hides this library from every read path (including granted users). Switch the status?
+  importDoc: Import document
+  importLibrary: Target library
+  importName: Document name
+  importText: Text content
+  importTextPlaceholder: Paste the text to ingest (Markdown / plain text)
+  importFile: File
+  importFileHint: Optional; a selected file is ingested by bytes (the file wins when text is filled too)
+  importPick: Choose file
+  importContentRequired: Fill in the text or choose a file
+  importSucceeded: Imported (document {id}, chunking job queued)
+  importDuplicated: An identical document already exists in this library (document {id}, nothing duplicated)
+  importHint: Chunking is queued right after import; whether the embedding stage runs follows the plugin config
+  grantPanel: Grant panel
+  grantSubjectKind: Subject
+  grantSubjectAll: Public
+  grantSubjectTeam: Team
+  grantSubjectUser: User
+  grantSubjectId: Subject ID
+  grantSubjectRequired: Please select a subject
+  grantPerm: Permission
+  grantPermRead: Read
+  grantPermWrite: Write
+  grantAdd: Grant
+  grantRemove: Revoke
+  grantRemoveConfirm: Revoke this grant (soft delete takes effect immediately, audited)
+  grantedBy: Granted by
+  grantHint: Grants are the single source of visibility; public = one subject "Public" row; revocation takes effect immediately and changes are audited in the same transaction
+  grantLoadFailed: Failed to load grants (plugin/kb/grant/read permission node required)
+team:
+  groupName: Group Name
+  displayName: Display Name
+  statusConfirm: Disabling excludes this team from read-view checks (existing grants remain but no longer take effect). Switch the status?
+tag:
+  groupId: group_id
+  name: name
+  group:
+    scope: scope
+    'scope platform': platform
+    'scope library': library
+    libraryId: library_id
+    name: name
+  rule:
+    libraryId: library_id
+    name: name
+    enabled: enabled
+    matchType: match_type
+    'matchType path_glob': path_glob
+    'matchType filename_regex': filename_regex
+    'matchType suffix': suffix
+    'matchType meta_eq': meta_eq
+    pattern: pattern
+    tagId: tag_id
+    priority: priority

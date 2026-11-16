@@ -1,0 +1,17 @@
+{
+  "bare_assertions": 0,
+  "conflicts_proposed": 0,
+  "counts": {
+    "assertion": 0,
+    "event": 3,
+    "mention": 0,
+    "meta_edge": 0,
+    "node": 0,
+    "node_alias": 0,
+    "schema_version": 1,
+    "trace": 3,
+    "vector": 0
+  },
+  "issues": [],
+  "ok": true
+}

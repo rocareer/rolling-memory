@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rolling-memory hook recall --json",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "version": "atmbench-official-v1",
+  "source": "memqa/qa_agent_baselines/MMRag/{config.py::PROMPTS,mmrag_utils.py::build_text_messages}",
+  "system_prompt": "You are a memory QA assistant. Use ONLY the provided evidence to answer. If the evidence is insufficient, answer 'Unknown'. Respond with only the answer. If the question asks to recall or list items (photos/emails/videos), respond with the corresponding evidence IDs only, comma-separated, with no extra text.",
+  "user_template": "Question: {question}\n\nEvidence:\n{evidence}\n\nProvide the answer based solely on the evidence.",
+  "system_sha256": "a37d23628001dd46227f338c336ac736ed89c8869adbf335dd863be86e9d962f",
+  "user_template_sha256": "deeb8f7399181a77d9bbde0814c3fc1abd01163dbf192f613449e84bad4a8336",
+  "cases": [
+    {
+      "id": "single-text",
+      "question": "How much did I pay for the hotel?",
+      "evidence_chunks": [
+        "ID: email202411160004\nTimestamp: 2024-11-16 22:00:00\nSummary: The email confirms a hotel reservation for a stay at Hilton Glasgow from November 24 to November 28, 2024."
+      ],
+      "system": "You are a memory QA assistant. Use ONLY the provided evidence to answer. If the evidence is insufficient, answer 'Unknown'. Respond with only the answer. If the question asks to recall or list items (photos/emails/videos), respond with the corresponding evidence IDs only, comma-separated, with no extra text.",
+      "user": "Question: How much did I pay for the hotel?\n\nEvidence:\nEvidence 1:\nID: email202411160004\nTimestamp: 2024-11-16 22:00:00\nSummary: The email confirms a hotel reservation for a stay at Hilton Glasgow from November 24 to November 28, 2024.\n\nProvide the answer based solely on the evidence.",
+      "system_sha256": "a37d23628001dd46227f338c336ac736ed89c8869adbf335dd863be86e9d962f",
+      "user_sha256": "545e786102024ace1fad66a1177471057023fa9967b93cb5dc67caa4c9f6fe1b"
+    },
+    {
+      "id": "multi-3",
+      "question": "Which hotels did I stay at in Greater Cairo?",
+      "evidence_chunks": [
+        "ID: email202503100001\nTimestamp: 2025-03-10 20:22:08\nSummary: The hotel in Cairo was booked for two nights at 210 dollars per night.",
+        "ID: 20250310_202208\nType: image\nTimestamp: 2025-03-10 20:22:08\nCaption: A hotel lobby with a marble floor.",
+        "ID: email202502110008\nTimestamp: 2025-02-11 09:00:00\nSummary: A reservation confirmation for Conrad Cairo."
+      ],
+      "system": "You are a memory QA assistant. Use ONLY the provided evidence to answer. If the evidence is insufficient, answer 'Unknown'. Respond with only the answer. If the question asks to recall or list items (photos/emails/videos), respond with the corresponding evidence IDs only, comma-separated, with no extra text.",
+      "user": "Question: Which hotels did I stay at in Greater Cairo?\n\nEvidence:\nEvidence 1:\nID: email202503100001\nTimestamp: 2025-03-10 20:22:08\nSummary: The hotel in Cairo was booked for two nights at 210 dollars per night.\nEvidence 2:\nID: 20250310_202208\nType: image\nTimestamp: 2025-03-10 20:22:08\nCaption: A hotel lobby with a marble floor.\nEvidence 3:\nID: email202502110008\nTimestamp: 2025-02-11 09:00:00\nSummary: A reservation confirmation for Conrad Cairo.\n\nProvide the answer based solely on the evidence.",
+      "system_sha256": "a37d23628001dd46227f338c336ac736ed89c8869adbf335dd863be86e9d962f",
+      "user_sha256": "0623dd77b659a46c607efbc0832b53aa87513dac5c50d7889a1ec8ea77b4eaaf"
+    },
+    {
+      "id": "ten-items",
+      "question": "List all photos I took during the Porto trip.",
+      "evidence_chunks": [
+        "ID: 20250220_130200\nType: image\nTimestamp: 2025-02-20 13:02:00\nCaption: A steel bridge in Porto, view 0.",
+        "ID: 20250221_130201\nType: image\nTimestamp: 2025-02-21 13:02:01\nCaption: A steel bridge in Porto, view 1.",
+        "ID: 20250222_130202\nType: image\nTimestamp: 2025-02-22 13:02:02\nCaption: A steel bridge in Porto, view 2.",
+        "ID: 20250223_130203\nType: image\nTimestamp: 2025-02-23 13:02:03\nCaption: A steel bridge in Porto, view 3.",
+        "ID: 20250224_130204\nType: image\nTimestamp: 2025-02-24 13:02:04\nCaption: A steel bridge in Porto, view 4.",
+        "ID: 20250225_130205\nType: image\nTimestamp: 2025-02-25 13:02:05\nCaption: A steel bridge in Porto, view 5.",
+        "ID: 20250226_130206\nType: image\nTimestamp: 2025-02-26 13:02:06\nCaption: A steel bridge in Porto, view 6.",
+        "ID: 20250227_130207\nType: image\nTimestamp: 2025-02-27 13:02:07\nCaption: A steel bridge in Porto, view 7.",
+        "ID: 20250228_130208\nType: image\nTimestamp: 2025-02-28 13:02:08\nCaption: A steel bridge in Porto, view 8.",
+        "ID: 20250229_130209\nType: image\nTimestamp: 2025-02-29 13:02:09\nCaption: A steel bridge in Porto, view 9."
+      ],
+      "system": "You are a memory QA assistant. Use ONLY the provided evidence to answer. If the evidence is insufficient, answer 'Unknown'. Respond with only the answer. If the question asks to recall or list items (photos/emails/videos), respond with the corresponding evidence IDs only, comma-separated, with no extra text.",
+      "user": "Question: List all photos I took during the Porto trip.\n\nEvidence:\nEvidence 1:\nID: 20250220_130200\nType: image\nTimestamp: 2025-02-20 13:02:00\nCaption: A steel bridge in Porto, view 0.\nEvidence 2:\nID: 20250221_130201\nType: image\nTimestamp: 2025-02-21 13:02:01\nCaption: A steel bridge in Porto, view 1.\nEvidence 3:\nID: 20250222_130202\nType: image\nTimestamp: 2025-02-22 13:02:02\nCaption: A steel bridge in Porto, view 2.\nEvidence 4:\nID: 20250223_130203\nType: image\nTimestamp: 2025-02-23 13:02:03\nCaption: A steel bridge in Porto, view 3.\nEvidence 5:\nID: 20250224_130204\nType: image\nTimestamp: 2025-02-24 13:02:04\nCaption: A steel bridge in Porto, view 4.\nEvidence 6:\nID: 20250225_130205\nType: image\nTimestamp: 2025-02-25 13:02:05\nCaption: A steel bridge in Porto, view 5.\nEvidence 7:\nID: 20250226_130206\nType: image\nTimestamp: 2025-02-26 13:02:06\nCaption: A steel bridge in Porto, view 6.\nEvidence 8:\nID: 20250227_130207\nType: image\nTimestamp: 2025-02-27 13:02:07\nCaption: A steel bridge in Porto, view 7.\nEvidence 9:\nID: 20250228_130208\nType: image\nTimestamp: 2025-02-28 13:02:08\nCaption: A steel bridge in Porto, view 8.\nEvidence 10:\nID: 20250229_130209\nType: image\nTimestamp: 2025-02-29 13:02:09\nCaption: A steel bridge in Porto, view 9.\n\nProvide the answer based solely on the evidence.",
+      "system_sha256": "a37d23628001dd46227f338c336ac736ed89c8869adbf335dd863be86e9d962f",
+      "user_sha256": "dc7eb9c9edc4852a4b52dbc7338f0c07cb405d27f0dbd0efc7fdc22af0335d05"
+    },
+    {
+      "id": "empty-evidence",
+      "question": "What did I eat in Lisbon?",
+      "evidence_chunks": [],
+      "system": "You are a memory QA assistant. Use ONLY the provided evidence to answer. If the evidence is insufficient, answer 'Unknown'. Respond with only the answer. If the question asks to recall or list items (photos/emails/videos), respond with the corresponding evidence IDs only, comma-separated, with no extra text.",
+      "user": "Question: What did I eat in Lisbon?\n\nEvidence:\n\n\nProvide the answer based solely on the evidence.",
+      "system_sha256": "a37d23628001dd46227f338c336ac736ed89c8869adbf335dd863be86e9d962f",
+      "user_sha256": "9cfe49ea1e74e5111edee88f81b8c34224644b233ca3aa3fa8f278508ca82f46"
+    },
+    {
+      "id": "multiline",
+      "question": "Summarize the email.",
+      "evidence_chunks": [
+        "ID: email1\nSummary: line one\nline two\n\nline four\n"
+      ],
+      "system": "You are a memory QA assistant. Use ONLY the provided evidence to answer. If the evidence is insufficient, answer 'Unknown'. Respond with only the answer. If the question asks to recall or list items (photos/emails/videos), respond with the corresponding evidence IDs only, comma-separated, with no extra text.",
+      "user": "Question: Summarize the email.\n\nEvidence:\nEvidence 1:\nID: email1\nSummary: line one\nline two\n\nline four\n\n\nProvide the answer based solely on the evidence.",
+      "system_sha256": "a37d23628001dd46227f338c336ac736ed89c8869adbf335dd863be86e9d962f",
+      "user_sha256": "823022783332fbb09e7669e13625e6125d47b58c5715d7eee08abee326e3f361"
+    },
+    {
+      "id": "special-chars",
+      "question": "What about {evidence} and $100 / `code`? 中文 🚀 %s",
+      "evidence_chunks": [
+        "ID: x\nSummary: braces {question} $ € £ `tick` 中文か 100%\nSecond line"
+      ],
+      "system": "You are a memory QA assistant. Use ONLY the provided evidence to answer. If the evidence is insufficient, answer 'Unknown'. Respond with only the answer. If the question asks to recall or list items (photos/emails/videos), respond with the corresponding evidence IDs only, comma-separated, with no extra text.",
+      "user": "Question: What about {evidence} and $100 / `code`? 中文 🚀 %s\n\nEvidence:\nEvidence 1:\nID: x\nSummary: braces {question} $ € £ `tick` 中文か 100%\nSecond line\n\nProvide the answer based solely on the evidence.",
+      "system_sha256": "a37d23628001dd46227f338c336ac736ed89c8869adbf335dd863be86e9d962f",
+      "user_sha256": "4c53e89703915b29071bfd70ad2f3b66464106b49fbd2ada80a7999e5d6d587b"
+    },
+    {
+      "id": "question-braces",
+      "question": "Does {question} appear literally?",
+      "evidence_chunks": [
+        "ID: y\nSummary: literal {evidence} and {question} text"
+      ],
+      "system": "You are a memory QA assistant. Use ONLY the provided evidence to answer. If the evidence is insufficient, answer 'Unknown'. Respond with only the answer. If the question asks to recall or list items (photos/emails/videos), respond with the corresponding evidence IDs only, comma-separated, with no extra text.",
+      "user": "Question: Does {question} appear literally?\n\nEvidence:\nEvidence 1:\nID: y\nSummary: literal {evidence} and {question} text\n\nProvide the answer based solely on the evidence.",
+      "system_sha256": "a37d23628001dd46227f338c336ac736ed89c8869adbf335dd863be86e9d962f",
+      "user_sha256": "f0038ab4484b835ae488570cfb355cbc74d0ae18463850be704a292f523b96c3"
+    }
+  ]
+}

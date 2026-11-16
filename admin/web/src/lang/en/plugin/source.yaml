@@ -1,0 +1,274 @@
+# Copy for the repository-source and plugin-catalog pages (web/src/views/admin/plugin/source/**,
+# catalog/**). Namespace is derived from the physical path: this file lives at
+# web/src/lang/en/plugin/source.yaml ⇒ prefix plugin.source.*. Do not add a plugin/source key.
+title: Repository sources
+subtitle: Where catalogs are hosted (local file / HTTP URL); every source uses the same catalog format
+tips:
+    format: Every source accepts only the ai-go-plugin-catalog/v1 format. The source type decides where the catalog is read from; it never changes fields, the parser or the install flow.
+searchPlaceholder: Search source name or title
+empty: No repository sources yet (create one, then sync its catalog)
+# Cross-page jump guard (source page ⇄ catalog page ⇄ plugin manager): target routes come from the menu table
+routeMissing: 'The target page is not registered (migration not applied, or this account lacks that menu permission). Check in "Menu rules" that the menus under "Plugin Center" are published and granted.'
+actions:
+    create: Add source
+    test: Test
+    toggle: Enable/disable
+    enableConfirm: 'Enable source "{name}"? It will take part in the default sync.'
+    disableConfirm: 'Disable source "{name}"? It stops taking part in the default sync and cannot be installed from; installed plugins are unaffected.'
+    deleteConfirm: 'Delete source "{name}"? Its catalog snapshot is deleted too; installed plugins are unaffected.'
+columns:
+    name: Source key
+    title: Title
+    type: Type
+    location: Catalog location
+    enabled: Status
+    syncStatus: Sync status
+    syncedAt: Last synced
+type:
+    local: Local file
+    http: HTTP
+    git: Git repository
+enabled:
+    'on': Enabled
+    'off': Disabled
+syncStatus:
+    ok: OK
+    error: Failed
+    never: Never synced
+dialog:
+    createTitle: Add source
+    editTitle: Edit source
+    snapshotCleared: Type, location or a security switch changed, so the catalog snapshot was cleared. Re-sync it on the Plugin catalog page.
+form:
+    name: Source key
+    namePlaceholder: e.g. internal-mirror
+    nameTip: Starts with a lowercase letter; only lowercase letters, digits and hyphens; 2-32 characters. Immutable after creation (CLI, audit and snapshots rely on it).
+    title: Title
+    titlePlaceholder: e.g. Internal mirror
+    type: Type
+    location: Catalog location
+    locationLocalPlaceholder: Path relative to the repository root, e.g. catalog/catalog.yaml
+    locationHttpPlaceholder: https://example.com/plugins/catalog.yaml
+    locationLocalTip: Relative paths must stay inside the repository root; absolute paths require "Allow absolute paths".
+    locationHttpTip: 'HTTPS only; plain HTTP requires the explicit switch. URLs must not carry userinfo, query or fragment.'
+    locationGitPlaceholder: https://github.com/org/repo.git#main!catalog/catalog.yaml
+    locationGitTip: 'Syntax: <repo URL>[#<ref>][!<in-repo catalog path>]. Public repositories over http(s) only (no ssh or credential-bearing URLs); defaults to catalog.yaml at the repository root; shallow single-branch clone, re-cloned on every sync and package fetch.'
+    enabled: Enabled
+    allowInsecureHttp: Allow plain HTTP
+    allowInsecureHttpTip: HTTP sources only; private-host checks still apply and enabling it is audited.
+    allowPrivateHosts: Allow private hosts
+    allowPrivateHostsTip: HTTP sources only; permits RFC1918/loopback mirrors but still rejects cloud metadata and link-local addresses; enabling it is audited.
+    allowAbsolutePaths: Allow absolute paths
+    allowAbsolutePathsTip: Local sources only; permits absolute catalog and package paths and is audited.
+    weigh: Weight
+    remark: Remark
+    rules:
+        nameRequired: Enter the source key
+        namePattern: 'The source key must start with a lowercase letter, contain only lowercase letters, digits and hyphens, and be 2-32 characters long'
+        titleRequired: Enter the title
+        typeRequired: Select the source type
+        locationRequired: Enter the catalog location
+        locationUrl: An HTTP source must be an absolute http(s) URL
+        locationGit: A Git source must be an http(s) address shaped as <repo URL>[#<ref>][!<in-repo catalog path>]
+test:
+    title: Source test
+    ok: Catalog valid, {entries} entries
+    schema: Schema
+    entries: Entries
+    sha256: Catalog digest
+    generatedAt: Generated at
+    errors: Error details
+    goCatalog: Open plugin catalog
+catalog:
+    title: Plugin catalog
+    subtitle: Entries aggregated from all sources; one row per (source, uid, version)
+    searchPlaceholder: Search uid, title or version
+    loading: Loading catalog
+    installNow: Install
+    syncOk: 'Synced {total} sources'
+    syncPartial: 'Some sources failed to sync ({failed}/{total}); successful sources kept their new snapshots'
+    sourceErrorUnknown: Sync failed (the server returned no detail)
+    sourceErrorHint: Check the source address and network, then press "Sync catalog" again. If the catalog is invalid, fix it to ai-go-plugin-catalog/v1 and re-sync.
+    editSource: Edit source
+    empty:
+        noSources: No repository sources yet
+        goSource: Configure sources
+        goSync: Sync catalog
+        noMatch: 'No catalog entry matches "{keyword}": try another keyword or clear the search; if the source has never been synced, press "Sync catalog" first.'
+    tips:
+        trust: Plugin code runs with host privileges and no isolation layer. Installs only come from configured source catalogs; a catalog digest proves transport integrity, not trust.
+    tabs:
+        all: All
+    toolbar:
+        refresh: Refresh
+        sync: Sync catalog
+        syncTip: Sync snapshots for all enabled sources (serial, per-source result)
+    kind:
+        code: Source plugin
+        declarative: Declarative plugin
+        mixed: Mixed plugin
+    card:
+        installed: 'Installed v{version}'
+        conflict: Source conflict
+        sameContent: Same content from multiple sources
+        sourceDisabled: Source disabled
+        empty: No catalog entries for this source
+    version:
+        version: Version
+        source: Source
+        size: Package size
+        sha256: Package sha256
+        signed: Signed flag
+        signedYes: Signed
+        signedNo: Unsigned
+        action: Install state
+    detail:
+        title: Plugin detail
+        uid: Plugin uid
+        version: Version
+        kind: Kind
+        hostApi: Mechanism API range
+        frameworkReq: Framework version range
+        requires: Required plugins
+        license: License
+        source: Source
+        size: Package size
+        signed: Signed flag
+        syncedAt: Snapshot time
+        sha256: Package sha256
+        catalogSha256: Catalog sha256
+        preflight: Preflight
+        versions: Available versions
+        versionsLoadFailed: Failed to load versions; showing the current entry only
+        noDescription: This entry has no description
+        empty: The entry does not exist or was removed by a sync
+    dialog:
+        preflightTitle: Install preflight
+        installingTitle: Installing
+        preflightLoading: Downloading and verifying the package, building the install plan
+        installLoading: Verifying and installing; do not submit again
+        doneTitle: Installation complete
+        failedTitle: Operation failed
+    preflight:
+        report: Preflight report (same pipeline as a real install; nothing written to disk or the database)
+        confirmInstall: Confirm install
+        allowUnsigned: I accept an unsigned package for this install only
+        allowUnsignedUnverified: I accept a package whose signature cannot be verified locally, for this install only
+    signature:
+        trustedKeysInvalid: 'Trusted-key configuration is invalid: this is not "not configured"; fix plugin.trusted_keys first'
+        unsigned: 'The package is unsigned: tick the confirmation below before installing'
+        noTrustedKeys: The package is signed, but no trusted public key is configured locally, so it cannot be verified
+        verified: The signature was verified with a locally trusted public key
+        unverified: The package is signed, but this preflight did not verify it
+    conflict:
+        title: The following targets already exist; catalog installs never overwrite
+        target: Target path
+        hint: Resolve these files manually (confirm ownership or remove them), then preflight again. This flow offers no backup-and-overwrite or discard option.
+        items: Other conflicts (rule names/paths, entity tables)
+        itemsHint: The backend reports only the first conflict category per preflight; resolve it, then preflight again.
+    failed:
+        cleanup: If the install failed halfway, clean up with aigo plugin uninstall --force <uid> and reconcile with aigo plugin list; do not retry blindly.
+    done:
+        title: Installation complete
+        subtitle: Recorded in the ledger; code/declarative plugins take effect only after rebuild + restart
+        name: Plugin name
+        version: Version
+        status: Ledger status
+        effect: Effect
+        checksum: Package sha256
+        signedBy: Signing key fingerprint
+        catalogSha256: Catalog sha256
+        rebuildRequired: 'effect=rebuild_required: rebuild and restart the service before the plugin routes exist.'
+        reconcile: "Check the ledger and wiring on the Plugins page; the install source label is catalog:<source>:<uid>{'@'}<version>."
+        goPlugins: Open plugins
+errors:
+    invalid_input:
+        message: Invalid input
+        hint: Check the name, type, catalog location and security switches, then retry.
+    catalog_invalid:
+        message: Invalid catalog format
+        hint: Ensure the catalog uses ai-go-plugin-catalog/v1 with no unknown keys, duplicate keys or duplicate (uid, version), then test or sync again.
+    network_blocked:
+        message: Source unreachable (blocked by network policy)
+        hint: Check the address, DNS and egress policy; private mirrors require "Allow private hosts" on the source.
+    upstream_error:
+        message: Source unreachable (upstream error)
+        hint: Confirm the source service is available and the URL has no userinfo, query or fragment, then retry.
+    repo_root_unavailable:
+        message: The service is not running inside a source checkout
+        hint: Point plugin.root at a source root containing go.mod, then retry. It never degrades to writing the ledger only.
+    package_not_found:
+        message: Package not found
+        hint: Ensure the catalog package.path/url points at a real zip that is readable or downloadable.
+    entry_not_found:
+        message: Catalog entry not found
+        hint: This (uid, version) was removed from the current source catalog; sync the catalog, refresh, then preflight/install again.
+    package_size_mismatch:
+        message: Package size mismatch
+        hint: Re-export the package and regenerate size and sha256 with the catalog builder.
+    package_sha_mismatch:
+        message: sha256 mismatch
+        hint: The package content changed; the author must bump the version and regenerate the catalog instead of mutating a published version.
+    package_signed_mismatch:
+        message: Signed flag does not match the package
+        hint: Reconcile package.signed with the signature entry inside the package, then regenerate the catalog.
+    unsigned_not_allowed:
+        message: Unsigned or unverified package not confirmed
+        hint: To accept the risk, tick "allow unsigned/unverified" in the preflight dialog; it applies to this install only.
+    signature_invalid:
+        message: Invalid signature
+        hint: The package may have been tampered with; refuse the install and ask the author to sign it again.
+    manifest_mismatch:
+        message: Catalog does not match package metadata
+        hint: uid/version/kind/host_api/requires must match the package metadata (ini.yaml for standard packages; plugin.yaml for the current compatible package).
+    conflict:
+        message: Install conflict
+        hint: Resolve rule name/path, entity table or target file conflicts first, then preflight again.
+    existing_targets:
+        message: Target files already exist
+        hint: A catalog install never overwrites existing files; confirm and remove the old files, or use an uninstalled uid and preflight again.
+    rule_name_collision:
+        message: Menu rule name collision
+        hint: Rename the plugin rules or remove the same-named host rules, then preflight again.
+    rule_path_collision:
+        message: Menu path collision
+        hint: Change the plugin menu path or remove the same-path host rules, then preflight again.
+    entity_table_exists:
+        message: Entity table already exists
+        hint: Rename the entity table or remove the old table, then preflight again (plugin-managed migration tables are outside this check).
+    trusted_keys_invalid:
+        message: Trusted-key configuration is invalid
+        hint: Fix the public keys in plugin.trusted_keys, then preflight again; this is not a "not configured" state.
+    already_installed:
+        message: Already installed
+        hint: This version supports neither upgrade nor reinstall; check the ledger on the Plugins page. Upgrading needs a separate design.
+    plugin_failed:
+        message: A half-installed state exists
+        hint: Clean up with aigo plugin uninstall --force <uid> first, then install again.
+    downgrade_not_supported:
+        message: Downgrade not supported
+        hint: Install a higher version; to downgrade, confirm the uninstall and data-retention policy manually.
+    upgrade_not_supported:
+        message: Upgrade/reinstall not supported
+        hint: Check the ledger on the Plugins page; upgrading requires uninstall-then-install or a future upgrade orchestration.
+    source_not_found:
+        message: Source not found
+        hint: Refresh the source list and confirm the source was not deleted.
+    source_disabled:
+        message: Source disabled
+        hint: Enable the source on the Repository sources page, sync again, then retry.
+    catalog_not_synced:
+        message: Catalog not synced
+        hint: Press "Sync catalog" on the catalog page before preflight/install.
+    catalog_stale:
+        message: Catalog changed (snapshot stale)
+        hint: Sync the catalog again and preflight against the new snapshot.
+    lifecycle_forbidden:
+        message: Installation/uninstallation is forbidden in production
+        hint: 'This runtime is judged to be production (plugin.env=prod is set, or no source checkout was detected without an explicit plugin.env). Run the lifecycle command in a development environment, or set plugin.env=dev explicitly and restart the service.'
+    install_failed:
+        message: Install failed
+        hint: Follow the message to clean up the half-installed state (aigo plugin uninstall --force <uid>), reconcile with aigo plugin list, then retry.
+    unknown:
+        message: Operation failed
+        hint: Check the server message and logs, then retry; if the install already started, refresh the plugin list to reconcile first.

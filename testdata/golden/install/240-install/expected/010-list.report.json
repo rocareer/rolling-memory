@@ -1,0 +1,112 @@
+[
+  {
+    "detect": "<HOME>/.zcode",
+    "detected": true,
+    "hooks": "<HOME>/.zcode/cli/config.json",
+    "id": "zcode",
+    "instructions": "<HOME>/.zcode/AGENTS.md",
+    "label": "ZCode",
+    "mcp": "<HOME>/.zcode/cli/config.json",
+    "notes": "user config: mcp.servers + hooks.events (hooks.enabled must be true)",
+    "skill": "<HOME>/.zcode/skills"
+  },
+  {
+    "detect": "<HOME>/.claude",
+    "detected": true,
+    "hooks": "<HOME>/.claude/settings.json",
+    "id": "claude-code",
+    "instructions": "<HOME>/.claude/CLAUDE.md",
+    "label": "Claude Code",
+    "mcp": "<HOME>/.claude.json",
+    "notes": "project scope uses .mcp.json (committable)",
+    "skill": "<HOME>/.claude/skills"
+  },
+  {
+    "detect": "<HOME>/.codex",
+    "detected": true,
+    "hooks": "-",
+    "id": "codex",
+    "instructions": "<HOME>/.codex/AGENTS.md",
+    "label": "Codex",
+    "mcp": "<HOME>/.codex/config.toml",
+    "notes": "no hooks; skills live next to the built-in .system/ dir",
+    "skill": "<HOME>/.codex/skills"
+  },
+  {
+    "detect": "<HOME>/.dsh",
+    "detected": true,
+    "hooks": "-",
+    "id": "dsh",
+    "instructions": "<HOME>/.dsh/AGENTS.md",
+    "label": "DeepSeek Harness (dsh)",
+    "mcp": "<HOME>/.dsh/profiles/web/cordis.patch.yml",
+    "notes": "MCP goes into the profile patch; per-profile, effective for new sessions",
+    "skill": "<HOME>/.dsh/skills"
+  },
+  {
+    "detect": "<HOME>/.codebuddy",
+    "detected": true,
+    "hooks": "-",
+    "id": "codebuddy",
+    "instructions": "-",
+    "label": "CodeBuddy (WorkBuddy)",
+    "mcp": "<HOME>/.codebuddy/mcp.json",
+    "notes": "no verified hook surface; instruction file is project-level CODEBUDDY.md",
+    "skill": "<HOME>/.codebuddy/skills"
+  },
+  {
+    "detect": "<HOME>/.cursor",
+    "detected": false,
+    "hooks": "-",
+    "id": "cursor",
+    "instructions": "<HOME>/.cursor/AGENTS.md",
+    "label": "Cursor",
+    "mcp": "<HOME>/.cursor/mcp.json",
+    "notes": "user config ~/.cursor/mcp.json; project config .cursor/mcp.json",
+    "skill": "<HOME>/.cursor/skills"
+  },
+  {
+    "detect": "<HOME>/.codeium/windsurf",
+    "detected": false,
+    "hooks": "-",
+    "id": "windsurf",
+    "instructions": "<HOME>/.codeium/windsurf/AGENTS.md",
+    "label": "Windsurf",
+    "mcp": "<HOME>/.codeium/windsurf/mcp_config.json",
+    "notes": "user config ~/.codeium/windsurf/mcp_config.json",
+    "skill": "<HOME>/.codeium/windsurf/skills"
+  },
+  {
+    "detect": "<HOME>/.cline",
+    "detected": false,
+    "hooks": "-",
+    "id": "cline",
+    "instructions": "-",
+    "label": "Cline / Roo Code",
+    "mcp": "<HOME>/.cline/mcp_settings.json",
+    "notes": "MCP settings under ~/.cline/mcp_settings.json; project rules in .clinerules",
+    "skill": "<HOME>/.cline/skills"
+  },
+  {
+    "detect": "<HOME>/.workbuddy",
+    "detected": false,
+    "hooks": "-",
+    "id": "workbuddy",
+    "instructions": "-",
+    "label": "WorkBuddy",
+    "mcp": "<HOME>/.workbuddy/mcp.json",
+    "notes": "user config ~/.workbuddy/mcp.json (WorkBuddy connector docs); dotted ~/.workbuddy/.mcp.json also written for hosts that read it; no session hooks",
+    "skill": "<HOME>/.workbuddy/skills"
+  },
+  {
+    "detect": "<HOME>/Doubao",
+    "detected": false,
+    "hooks": "-",
+    "id": "doubao",
+    "instructions": "-",
+    "label": "Doubao",
+    "mcp": "-",
+    "notes": "dual skill roots (client-reported local_skill_paths); MCP projected by the host manifest",
+    "skill": "<HOME>/Doubao/skills"
+  }
+]

@@ -1,0 +1,277 @@
+{
+  "cases": [
+    {
+      "default": 0,
+      "expected": 0,
+      "input": null,
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 0,
+      "input": "",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 0,
+      "input": true,
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 0,
+      "input": false,
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1793102400,
+      "input": 1793102400,
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1793102400,
+      "input": 1793102400000,
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1793102400,
+      "input": "1793102400",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1793102400,
+      "input": "1793102400000",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1772409600,
+      "input": "2026-03-02",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1772409600,
+      "input": "2026/3/2",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1772409600,
+      "input": "2026年3月2日",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1772409600,
+      "input": "3月2日",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1792972800,
+      "input": "昨天",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1792972800,
+      "input": "昨日",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1792886400,
+      "input": "前天",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1793059200,
+      "input": "今天",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1793145600,
+      "input": "明天",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1793232000,
+      "input": "后天",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1792800000,
+      "input": "3天前",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1791849600,
+      "input": "2周前",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1792454400,
+      "input": "last week",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1793059200,
+      "input": "this week",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1793664000,
+      "input": "next week",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1792713600,
+      "input": "last friday",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1792800000,
+      "input": "this past weekend",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1790467200,
+      "input": "last month",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1793059200,
+      "input": "this month",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1795737600,
+      "input": "next month",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1761523200,
+      "input": "last year",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1767225600,
+      "input": "this year",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1798761600,
+      "input": "next year",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1772440200,
+      "input": "2026-03-02T08:30:00",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1772440200,
+      "input": "2026-03-02T08:30:00Z",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1772411400,
+      "input": "2026-03-02T08:30:00+08:00",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1709164800,
+      "input": "2024-02-29",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 0,
+      "input": "2026-02-30",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 0,
+      "input": "not-a-date",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1767225600,
+      "input": "今年",
+      "time_ref": 1793102400
+    },
+    {
+      "default": 0,
+      "expected": 1798761600,
+      "input": "明年",
+      "time_ref": 1793102400
+    }
+  ],
+  "format_time": [
+    {
+      "epoch": 0,
+      "expected": "unknown"
+    },
+    {
+      "epoch": 1772409600,
+      "expected": "2026-03-02"
+    },
+    {
+      "epoch": 1793102400,
+      "expected": "2026-10-27"
+    }
+  ],
+  "temporal_class": [
+    {
+      "epoch": 0,
+      "expected": "unknown",
+      "time_ref": 1793102400
+    },
+    {
+      "epoch": 1772409600,
+      "expected": "past",
+      "time_ref": 1793102400
+    },
+    {
+      "epoch": 1793102400,
+      "expected": "present",
+      "time_ref": 1793102400
+    },
+    {
+      "epoch": 1793188800,
+      "expected": "future",
+      "time_ref": 1793102400
+    }
+  ],
+  "time_ref": 1793102400,
+  "timezone": "UTC",
+  "version": 1
+}

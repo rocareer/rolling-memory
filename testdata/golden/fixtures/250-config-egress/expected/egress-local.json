@@ -1,0 +1,38 @@
+{
+  "allow_loopback_llm": true,
+  "cases": [
+    {
+      "denied": false,
+      "url": "http://127.0.0.1:11434/v1/chat/completions"
+    },
+    {
+      "denied": false,
+      "url": "http://localhost:8080/v1"
+    },
+    {
+      "denied": false,
+      "url": "http://[::1]:8080/v1"
+    },
+    {
+      "denied": true,
+      "error": "local mode blocks non-loopback egress to api.example.com; switch to cloud mode explicitly if this is intended",
+      "url": "https://api.example.com/v1/chat/completions"
+    },
+    {
+      "denied": true,
+      "error": "local mode blocks non-loopback egress to 203.0.113.10; switch to cloud mode explicitly if this is intended",
+      "url": "http://203.0.113.10:9/v1"
+    },
+    {
+      "denied": true,
+      "error": "unsupported scheme for 'ftp://127.0.0.1/x'",
+      "url": "ftp://127.0.0.1/x"
+    },
+    {
+      "denied": true,
+      "error": "local mode blocks non-loopback egress to unknown host; switch to cloud mode explicitly if this is intended",
+      "url": "http://"
+    }
+  ],
+  "mode": "local"
+}

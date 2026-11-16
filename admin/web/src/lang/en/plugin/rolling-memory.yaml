@@ -1,0 +1,576 @@
+# plugin: rolling-memory v0.0.58
+# Rolling-Memory plugin English language pack (source → web/src/lang/en/plugin/rolling-memory.yaml, byte-identical).
+# Key prefix plugin.rolling-memory.* (derived from the copy's physical path).
+title: Rolling Memory
+refresh: Refresh Now
+widget:
+    status: Status
+    online: Online
+    offline: Offline
+    assertions: Active Units
+    conflicts: Stale Noetic
+    lastEvent: Last Event
+    latency: Latency
+    boot: Boot Context
+    ledger: Recall Ledger
+    scope: Scope
+    bgTask: Task
+    clickTerminal: ⌘ Click to open Live CLI Terminal
+background:
+    selectAndMount: Select Folder & Mount
+    waitingForPicker: Waiting for System Picker
+    mounting: Mounting & Syncing
+    nativeHint: The picker selects a folder on the computer running Admin. For remote access, the system panel opens on the server.
+    manualFallback: The system folder picker is unavailable; enter the path manually instead
+    manualTitle: Mount a Server Folder Manually
+    manualPrompt: Enter a folder path on the computer running Admin. Absolute paths and ~/ paths are supported; nested folders are scanned recursively.
+    manualPlaceholder: '/Users/name/Documents, C:\Users\name\Documents, or ~/Documents'
+    mountAndSync: Mount & Sync
+    cancelled: Folder selection cancelled
+    pickerBusy: A system folder picker is already open. Finish that selection first.
+    mountSuccess: Folder mounted; documents read and chunks synced
+    mountFailed: Mount failed
+    badge: L1 · Docs & Code
+    tag: Multi-folder / nested-folder in-place reads
+    dirsLabel: 'Mounted folders: '
+    dirsUnit: ''
+    filesLabel: 'Scanned files: '
+    filesUnit: ''
+    chunksLabel: 'Document chunks: '
+    chunksUnit: ''
+    mountTitle: L1 Background Local Multi-Folder Mount (nested folders supported)
+    formatPrefix: 'Pure-Go streaming in-place readers: '
+    formatSuffix: 'source code (nested folders are scanned recursively; .git and node_modules are skipped)'
+    empty: No local folder mounted yet. Use "Select Folder & Mount" in the top-right corner to add one.
+    colPath: Local Folder Path
+    colFileCount: Files
+    colChunkCount: Chunks
+    colAction: Action
+    removeBtn: Remove
+    removeConfirm: Remove mounted folder "{path}" and its derived background chunks?
+    removeConfirmTitle: Confirm Removal
+    removeSuccess: Mounted folder removed
+    removeKeptFiles: Kept {count} files still covered by another mounted folder (not purged, no re-upload)
+    syncSummary: 'Sync complete: {scanned} files scanned, {ingested} added/updated, {unchanged} unchanged'
+    syncDone: Sync complete
+    pageTitle: L1 Docs & Code · Local Folder Mount & Chunk Browser
+    pageSub: 'Built only from local folders you mount yourself: read text in place → chunk into L1. Harness dialogue records never enter this layer (dialogues belong to L2 Sessions)'
+    reconcileSuccess: 'L1 aligned: +{bg} mounted-document chunks (this layer contains no Harness dialogue records)'
+    reconcileSuccessLocal: 'L1 locally aligned: +{bg} mounted-document chunks (local mode makes zero cloud requests)'
+    reconcileResult: 'L1 sync result: {files} files processed, {chunks} chunks pushed'
+    syncBtn: Sync Now
+    manualBtn: Enter Path Manually
+    manualHint: When the native folder picker is unavailable (e.g. remote access), type the server-side path directly; mounting triggers an incremental sync.
+    colAddedAt: Mounted At
+    browseBtn: Browse Files
+    filesTitle: Files Inside Mounted Folders (click "View Chunks" to filter the list below)
+    filesEmpty: No files yet (the first sync after mounting builds the file inventory)
+    colRelPath: Relative Path
+    colSize: Size
+    colUpdatedAt: File Modified At
+    chunksBtn: View Chunks
+    clearFilterBtn: Clear File Filter
+    unitsTitle: Document Chunks (L1)
+episodic:
+    badge: L2 · Sessions
+    tag: Day-to-day harness dialogue stream
+    cellsLabel: 'Memory addresses: '
+    cellsUnit: ''
+    totalLabel: 'Memory units: '
+    totalUnit: ''
+    pageTitle: L2 Sessions · Dialogue Units & Local Harness Sync
+    pageSub: 'Built only from Harness dialogue records: background auto-sync + historical session reconcile. Local folder files never enter this layer (files belong to L1 Docs & Code)'
+    reconcileResult: 'L2 sync result: {har} harness turns imported, {epi} entries pushed'
+    reconcileSuccess: 'L2 aligned: +{har} Harness turns imported · +{epi} synced (Harness dialogue stays in L2, never L1)'
+    reconcileSuccessLocal: 'L2 locally aligned: +{har} Harness turns imported (local mode makes zero cloud requests)'
+    unitsTitle: Session Units (L2)
+    syncActiveHarnessBtn: 'Sync Active Harness ({name})'
+    syncAllHarnessesBtn: Sync All Local Harnesses
+    syncThisBtn: Sync Harness
+    indexProgressTitle: Historical Pointer Index Backfill & Streaming Scan Progress
+    indexStatusRunning: Scanning
+    indexStatusPaused: Paused
+    indexStatusReady: Ready
+    indexCompatibleLbl: Indexed
+    indexMissingLbl: Pending / Missing Source
+    indexBackfillCursorLbl: Backfill Cursor
+    indexScanCursorLbl: Scan Position
+    pauseSyncBtn: Pause Scan
+    resumeSyncBtn: Resume Scan
+    stepSyncBtn: Step Once (+60)
+    syncPausedToast: Paused background scan and index backfill (cursors preserved)
+    syncResumedToast: Resumed background scan and index backfill
+    syncSteppedToast: 'Advanced one pass: +{indexed} indexed ({scanned} scanned)'
+noetic:
+    badge: L3 · Recall Trail
+    tag: Agent recall cues + cited evidence
+    citedLabel: 'Cited evidence: '
+    citedUnit: ''
+    staleLabel: 'Stale: '
+    staleUnit: ''
+    unit: ''
+    pageTitle: L3 Recall Trail · Agent Cues & Cited Evidence
+    pageSub: 'Recorded automatically from every Agent recall that returned evidence (the cue + the evidence units it cited), written at recall time; it never absorbs Harness dialogues or local folder files. Use "Replay in Debugger" on a row to reproduce exactly what the Agent saw'
+    reconcileResult: 'L3 sync result: {noe} recall entries pushed'
+    reconcileSuccess: 'L3 aligned: +{noe} recall entries (Agent cue + cited evidence)'
+    reconcileSuccessLocal: 'L3 needs no reconcile in local mode: recall entries are written locally by Agent recall (zero cloud requests)'
+    unitsTitle: Recall Trail (L3)
+    purgeStaleBtn: 'Purge Stale ({n})'
+    purgeStaleConfirm: 'Permanently remove all {n} stale recall entries?'
+    purgeStaleSuccess: Purged all stale entries
+    goRecallBtn: Open Recall Debugger
+    replayBtn: Replay in Debugger
+overview:
+    heroTitleSuffix: Memory Overview
+    heroSub: Rolling Autonoetic Memory Engine · live distribution of the three layers (L1 Docs & Code / L2 Sessions / L3 Recall Trail) with a cross-layer aggregate list
+    syncBtn: Sync All Mounted Folders (L1)
+    reloadBtn: Refresh Data
+    jumpHint: Open this layer's dedicated page
+    aggregateTitle: Cross-Layer Aggregate List (All Memory Units)
+    envLabel: Active Harness
+    healthLabel: Memory Health
+    reconcileAllBtn: Reconcile All 3 Layers
+    reconcileLayerBtn: Reconcile Layer
+    checkHealthBtn: Re-check
+    harnessesTitle: Coding Harness Environment Detection & Dialogue Scan (Claude Code / ZCode / Codex)
+    healthChecksTitle: 5-Dimension Memory Health & Local ⇄ Cloud 3-Layer Alignment
+    healthChecksTitleLocal: 5-Dimension Memory Health & Local 3-Layer Vault
+    localVaultLbl: Local Vault
+    remoteCloudLbl: Remote Cloud
+    pendingSyncLbl: Pending Sync
+    harnessUnsyncedLbl: Unimported Turns
+    alignedTag: Aligned
+    pendingTag: Pending Sync
+    unknownStatus: Status unknown
+    healthUnavailable: Health status unavailable; check again
+    progressTitle: Checking environment & memory health
+    progressHint: Results will appear automatically once ready
+    progressElapsed: '{s}s elapsed'
+    progressRefreshing: Refreshing · {s}s
+    progressUpdatedAt: Updated at {time} ({s}s)
+    progressSessions: '{done} sessions checked'
+    progressTurns: '{turns}/{cap} turns'
+    progressStageVault: Local vault stats
+    progressStageWiring: Harness wiring check
+    progressStageScan: Conversation history scan
+    progressStageIndex: Memory index diagnostics
+    progressError: Check did not complete; retry below
+    progressRetry: Retry
+    refreshFailed: Re-check did not complete; try again
+    reconcileResult: 'Sync result: {har} harness turns imported · {files} L1 files processed · pushed L2 {epi} / L1 {bg} / L3 {noe}'
+    reconcileWarnings: 'Sync reported warnings; results may be incomplete:'
+    reconcileNoReport: No sync report returned; status unknown
+    autoSyncModeLbl: Auto Watch Sync
+    manualSyncModeLbl: Manual Sync Mode
+    syncModeSwitchedAuto: 'Switched to Auto Watch Sync mode (L1 chunk-delta + L2 quiescent turn auto-sync)'
+    syncModeSwitchedManual: 'Switched to Manual Sync mode (sync runs only when triggered manually)'
+    reconcileSuccess: 'Reconciled: +{har} harness turns · L2 +{epi} · L1 +{bg} · L3 +{noe} (Health {score}%)'
+    reconcileSuccessLocal: 'Locally reconciled: +{har} harness turns · L1 +{bg} mounted chunks (Health {score}% · zero cloud requests)'
+browser:
+    title: Memory Unit List
+    contentTitle: Unit Content
+    countText: Showing {shown} / {total} in this layer
+    refreshBtn: Refresh
+    statusAll: All statuses
+    statusActive: active
+    statusStale: stale
+    colStatus: Status
+    colFileChunk: File · Chunk
+    empty: No memory units yet (mount folders in L1 Docs & Code; L3 fills automatically from Agent recalls)
+    emptySearch: No memory units match the current search
+    emptyLoadFailed: Load failed (request timed out or the backend did not answer) — click Refresh to retry
+    reloadBody: Reload chunk text
+preview:
+    copyRaw: Copy raw
+    copied: Copied
+filters:
+    all: 'All ({n})'
+    searchPlaceholder: Search ID / content / path...
+    colLayer: Layer
+    colUnit: Unit ID
+    colContent: Memory Content
+    colAddr: Memory Address / Cited Evidence
+    colTime: Time
+    citedPrefix: 'Cited: '
+    cellAddress: 'Memory address:'
+    citedHandles: 'Cited evidence:'
+layers:
+    background: L1 Docs
+    episodic: L2 Sessions
+    noetic: L3 Trail
+manage:
+    colCell: Memory Address
+    colLayer: Layer
+    colObject: Plaintext
+    colConfidence: Weight / Conf
+    colAction: Action
+    detailBtn: Provenance
+    confAll: All Confidence (≥ 0)
+    drawerTitle: Memory Unit Provenance (Local Plaintext Vault)
+    verbatimAnchorTitle: Source Span
+    fullTraceTitle: Full Source Plaintext
+recallPage:
+    title: Recall Debugger · the same recall path your Agent uses
+    subtitle: Run recall with a cue and inspect results grouped as bands. Read-only by default (nothing is written to L3); a workspace anchor participates in the query and prioritizes matching project evidence. You can choose a different display order below.
+    backManageBtn: Back to Overview
+    runBtn: Run Recall
+    queryPlaceholder: Enter a cue (same as the cue an Agent passes to recall), press Enter
+    cueLbl: Cue
+    workspaceAll: All workspaces
+    recentCuesLbl: Recent Agent Recalls
+    recentCuesEmpty: None yet (Agent recalls that return evidence show up here automatically)
+    citedUnit: cited evidence
+    crystallizeLbl: Write to L3
+    minRelLbl: Min relative strength
+    relOptAll: All (no relative cut)
+    relOptAtLeast: Relative ≥ {v}
+    relStrengthHint: Relative strength is an item's weight relative to the candidate peak in the same source family. Families are normalized separately, and the peak candidate may not be displayed. It is not confidence or relevance and cannot be compared across searches or families. Cue coverage measures atom overlap for the first candidate only, not retrieval success or per-item relevance.
+    sortByLbl: Sort Results By
+    sortByDelivery: Delivery Order
+    sortByScore: By Score (not comparable across sources)
+    sortByRel: By Relative Strength
+    sortByTime: By Time
+    includeRawLbl: Include Raw Hits
+    kpiBandsHits: Bands / Hits Delivered
+    kpiCoverage: First Candidate Cue Atom Overlap
+    kpiWorkspace: Workspace Anchor
+    kpiLatency: Latency · Mode
+    modeReadOnly: read-only
+    modeWrite: written to L3
+    tabHitsTable: Hits
+    tabBandsTree: Grouped by Band (what the Agent sees)
+    tabRawJson: Raw Hits & JSON
+    colBandChain: Band
+    colFact: Recalled Content
+    colRelStrength: Relative Strength
+    colRelTag: Rel.
+    colScore: Score
+    colCoord: Status / Workspace / Time
+    emptyBands: No match (adjust the cue or clear the workspace anchor)
+eval:
+    title: LoCoMo × Backboard Long-Horizon Memory Evaluation Lab
+    goLeaderboardBtn: View LoCoMo-Backboard Leaderboard
+    corpusTag: 'Corpus: LoCoMo10 (5,882 turns)'
+    protocolBoardTag: 'Protocol & Leaderboard: locomo-backboard'
+    isolatedScopeTag: Isolated Scope
+    configProtocolBtn: Model & Protocol Config
+    importRaw: Import LoCoMo Corpus (5,882 turns)
+    importRule: Import & Extract Memory Units
+    clearEval: Clear Eval Scope
+    intro1Title: '1. Authoritative Benchmark Corpus: LoCoMo 10 Long-Horizon Dialogues (ACL 2024)'
+    intro1Badge: 'SHA256 Locked'
+    intro1Body: "Evaluation uses Maharana et al.'s 10 multi-session dialogues (5,882 turns) and the upstream-official Cat 1–4 question set (1,540 Qs: Cat 4 Single-hop 841 · Cat 2 Temporal 321 · Cat 1 Multi-hop 282 · Cat 3 Open-domain 96, with official evidence). The benchmark corpus is released upstream under CC BY-NC 4.0 and is not bundled: run rmem eval --fetch locomo --accept-upstream-license to fetch and rebuild the official set locally, or import your own locomo10.json; every run verifies the SHA-256 digests. ATM-Bench data is likewise one command away: rmem eval --fetch atm --accept-upstream-license."
+    intro2Title: '2. Zero-Bias Protocol: locomo-backboard Frozen Pair'
+    intro2Badge: '3 SHA1 Pins Locked'
+    intro2Body: 'Replicates the official local-qa-judge (locomo-frozen-2026-10-11) protocol stack byte-for-byte — locomo-answer and locomo-judge (1,694-byte prompt emitting CORRECT / WRONG) — verified via 3 fail-closed SHA1 pins. Run 0-LLM retrieval verification at $0 cost offline, or configure your own LLM (at your own token cost) to reproduce end-to-end QA judge scores.'
+    intro3Title: '3. Personal Memory Safety: Physical Scope Isolation'
+    intro3Badge: '100% Zero Contamination'
+    userScopeTag: User Memory Scope
+    evalScopeTag: Eval Isolated Scope
+    statTraces: Traces
+    statNodes: Nodes
+    statAssertions: Memory Units
+    chart1Title: Baselines vs Evaluation Run History (Click any bar to inspect category breakdown)
+    legendEv: Evidence Hit Rate
+    legendJdg: Judge Accuracy
+    oracleLine: 'Historical reference: single-turn gold Oracle ceiling (archived tier, no longer provided)'
+    baselineShort: Base
+    runShort: Run
+    chart2Title: 4-Category Score Breakdown
+    baselineBadge: Reference Baseline
+    runBadge: Eval Run
+    catEvLabel: Evidence Hit
+    catJdgLabel: Judge Acc
+    cat4Label: Cat 4 · Single-hop Factual
+    cat2Label: Cat 2 · Temporal Reasoning
+    cat1Label: Cat 1 · Multi-hop Reasoning
+    cat3Label: Cat 3 · Open-domain Reasoning
+    notePrefix: Note
+    newRunLabel: Launch Evaluation Run
+    tierSetSuffix: Set
+    questionsUnit: Qs
+    agentsSwitchOn: Enable locomo-backboard Dual-Agent Eval (Answer + Judge)
+    agentsSwitchOff: 0-LLM Mechanical Retrieval Only
+    evalCountLabel: Question Count
+    runBatchBtn: Run Evaluation & Record to Ledger
+    tabLedger: Baselines & Run History Ledger
+    tabQuestions: LoCoMo Question Browser & Single-Query Debugger
+    tabProtocol: AI Model Channel & locomo-backboard Frozen Protocol
+    colType: Type
+    typeBaseline: Baseline
+    typeRun: Eval Run
+    colLabel: Batch Name
+    colTime: Timestamp
+    colTier: Question Set
+    colModel: Model
+    colEv: Evidence Hit
+    colAic: Answer in Context
+    colJudge: Judge Accuracy
+    noJudgeText: 0-LLM (Judge Off)
+    colCats: Category Breakdown (Cat 4 Single / Cat 2 Temp / Cat 1 Multi)
+    colNote: Notes
+    filterCatPlaceholder: Filter by Category (Cat 1–4)
+    filterKwPlaceholder: Search question / gold answer / ID
+    colCategory: Category
+    colQuestion: Question
+    colGold: Gold Answer
+    colEvidence: Gold Evidence
+    poolEvidenceHint: (Tier-1540 full set is scored via the Answer × Judge protocol)
+    colAction: Action
+    probeBtn: Debug Recall
+    protoSec1Title: '1. Evaluation Model Channel Configuration (for locomo-answer & locomo-judge Agents)'
+    saveModelBtn: Save Model Config
+    lblBaseUrl: Endpoint Base URL
+    lblApiKey: API Key
+    keyConfiguredHint: Key configured (leave blank to keep existing key, or enter a new key to overwrite)
+    keyEmptyHint: Enter API Key (use 'ollama' for local Ollama)
+    lblAnswerModel: Answer Agent Model
+    lblJudgeModel: Judge Agent Model
+    lblMaxTokens: Max Output Tokens
+    lblTimeout: Timeout (sec)
+    protoSec2Title: '2. locomo-backboard Official Frozen Protocol Pair (locomo-frozen-2026-10-11 · 3 Read-Only SHA1 Pins)'
+    pinVerifiedTag: '✓ SHA1 Pin Verified'
+    pinDriftTag: '✗ SHA1 Pin Drift'
+    lblRole: Agent Role
+    lblBoundModel: Bound Model
+    lblProtocol: Protocol ID
+    lblSysSha1: System Prompt SHA1 Pin
+    lblTplSha1: User Template SHA1 Pin
+    lblSysPrompt: Frozen System Prompt
+    lblUserTpl: Frozen User Payload Template
+    drawerTitle: Single-Question Live Recall & Dual-Agent Sandbox (Rolling Autonoetic Memory Engine)
+    lblQuestionId: Question ID
+    lblRealtimeRecall: Live Recall Output from Isolated Scope
+    presetLabel: Quick Presets
+    presetSmoke0: ⚡ Fast 0-LLM Smoke (20 Qs)
+    presetStd0: 🎯 Official 1,540 Standard 0-LLM
+    presetAgent100: 🤖 Official 1,540 Answer + Judge
+    presetOracle: 🏆 Oracle Ceiling Check (20 Qs)
+    armModeLabel: Retrieval Arm
+    armRaw: Hybrid Raw+Graph Arm (raw)
+    armRule: Rule Memory-Unit Arm (rule)
+    armOracle: Gold Evidence Ceiling (oracle)
+    rawLimitLabel: Window
+    workersLabel: Workers
+    catScopeAll: All Categories (Cat 1–4)
+    customLabelPlaceholder: 'Optional: Custom batch label'
+    stopEvalBtn: Stop Eval
+    stopAndSaveBtn: Stop & Save Completed
+    livePanelTitle: Live Streaming Evaluation Console (WS Per-Question Feed)
+    liveFeedTab: Live Question Stream
+    liveLogTab: Live Console Log
+    tabRunDetail: Batch Per-Question Breakdown & Error Diagnosis
+    inspectRunBtn: Breakdown
+    deleteRunBtn: Delete
+    testConnBtn: 🔌 Test Model Connection (Ping Answer & Judge)
+    aiReadyTag: '✓ Model Channel Ready'
+    aiNotReadyTag: '⚠️ Model Config Incomplete (API Key Required)'
+    modalAiBlockTitle: '⚠️ Pre-flight Guide: Configure Your Own LLM Channel (BYO-LLM · User-Paid)'
+    modalAiBlockDesc: "You enabled 'locomo-backboard Dual-Agent End-to-End Eval (Answer + Judge)', which makes 1 Answer call + 1 Judge call per question. Because this open-source software does not bundle paid API keys, please configure your own LLM endpoint below (DeepSeek / OpenAI or local key-free Ollama at your own token cost), or click the bottom-left button to switch to '0-LLM Mechanical Retrieval ($0 cost, runs offline in seconds)'."
+    modalCorpusEmptyTitle: '⚠️ Pre-flight Guide: Isolated Eval Scope Needs Corpus Data'
+    modalCorpusEmptyDesc: 'The isolated evaluation scope does not yet hold the benchmark corpus (your personal workspace memories are never touched). Click below to prepare the corpus and start the evaluation automatically.'
+    modalSaveAndContinueBtn: Save My Model Config & Continue
+    modalFallback0LlmBtn: ⚡ Skip LLM & Run Free 0-LLM Mechanical Retrieval
+    modalImportAndRunBtn: Prepare Corpus & Start Evaluation
+    probeRun0LlmBtn: ⚡ Run 0-LLM Mechanical Recall
+    probeRunFullBtn: 🤖 Full Pipeline Test (Recall + Answer + Judge)
+    pluginChannelsTitle: One-click Import from AI Router Plugin Channels (reuse channel keys & probe results)
+    pluginChannelsRoutable: '{n} routable'
+    pluginChannelsManage: Manage Channels →
+    pluginChannelsEmpty: No channels configured in the AI Router plugin yet (add vendor / channel / model bindings there first)
+    pluginChannelsKeySet: Key configured
+    pluginChannelsModels: Models served
+    pluginChannelsApply: Apply This Channel
+leaderboard:
+    title: LoCoMo-Backboard Leaderboard (Comparative Reference)
+    backEvalLabBtn: Back to Evaluation Lab
+    protocolBadge: 'Built-in Protocol: locomo-backboard (locomo-frozen-2026-10-11)'
+    boardBadge: 'Comparative Benchmark: locomo-backboard Leaderboard'
+    pinsVerifiedBadge: '✓ 3 SHA1 Protocol Pins Verified'
+    pillText: 'COMPARATIVE REFERENCE · 1:1 PROTOCOL'
+    bannerTitle: 'Comparative Reference: Built-in locomo-backboard frozen protocol for multi-session dialogue comparison (Primary benchmark: Cambridge ATM-Bench)'
+    bannerDesc: 'Alongside our primary benchmark (University of Cambridge ATM-Bench), Rolling Memory includes LoCoMo (ACL 2024) under the open-source locomo-backboard harness (https://github.com/Backboard-io/Backboard-Locomo-Benchmark) as a comparative conversational reference. The evaluation module replicates the official Answer Agent (locomo-answer) and Judge Agent (locomo-judge) prompts with three read-only SHA-1 digests.'
+    card1Title: '1. Protocol Alignment (locomo-backboard)'
+    card1Tag: '1:1 Protocol Parity'
+    card1Body: 'Uses numbered memory lines + blank line + direct question for answering, and the 1,694-byte semantic judge prompt emitting JSON CORRECT / WRONG, matching the evaluation protocol used for Backboard, Zep, Mem0, Memobase, LangMem, and OpenAI Memory.'
+    card2Title: '2. Read-Only SHA-1 Prompt Digests'
+    card2Tag: 'Integrity Verification'
+    card2Body: '1) Answer System SHA-1 0d591628…; 2) Judge System SHA-1 497f7892…; 3) Judge User Template SHA-1 38f9b6a1… (1,694 bytes). Protocol digests are verified before each evaluation run.'
+    card3Title: '3. Historical Architecture: LLM + Vector Heavyweight Route (92.79%)'
+    card3Tag: 'Historical · Early Heavyweight Architecture'
+    card3Body: 'Historical result: our early heavyweight architecture (LLM extraction + vector retrieval + graph/relational augmentation) on the full LoCoMo 1,540-question set: 92.79% overall (GPT-4.1 temp 0.1 judge; Single-hop 89.10%, Multi-hop 88.40%, Open-domain 81.30%, Temporal 94.40%, Evidence Hit 98.90%). This route is no longer provided; the current engine is the 0-Vector / 0-LLM on-device deterministic retriever (latest full 1,540 run: 85.26%, see our board row).'
+    kpi1Label: 'Evaluation Protocol & Reference'
+    kpi1Value: 'locomo-backboard'
+    kpi1Sub: 'Frozen Stack locomo-frozen-2026-10-11 · 3 SHA1 Pins'
+    kpi2Label: 'Latest Full 1,540 Reading (On-Device)'
+    kpi2Value: '85.26% (1313/1540)'
+    kpi2Sub: '0-Vector · 0-LLM · deepseek-v4.1-flash judge · 2026-11-16'
+    kpi3Label: 'Single / Temporal / Multi-Hop'
+    kpi3Value: '91.0% / 87.2% / 70.6%'
+    kpi3Sub: 'Cat 4 Single 90.96% · Cat 2 Temporal 87.23% · Cat 1 Multi 70.57% · Cat 3 Open 71.88%'
+    kpi4Label: 'Historical Architecture (LLM + Vector)'
+    kpi4Value: '92.79%'
+    kpi4Sub: 'Full 1,540 · GPT-4.1 (temp 0.1) judge · early heavyweight route'
+    chartLeftTitle: 'locomo-backboard Overall Score Ladder (Click any system to inspect 4-category breakdown)'
+    chartRightTitle: '4-Category Score Breakdown (Cat 4 Single / Cat 1 Multi / Cat 3 Open / Cat 2 Temporal)'
+    legendOurs: 'Our Systems (Same-Protocol Eval)'
+    legendPublic: 'External Commercial Leaderboard (Backboard Official)'
+    leaderLineTip: 'External Commercial #1 Backboard Reference (90.00%)'
+    vsLeaderPrefix: 'vs External #1 Backboard (90.00%)'
+    judgePrefix: 'Judge'
+    filterAll: 'All Systems (Ours + External Commercial)'
+    filterPublic: '1,540-Q Official Same-Scale Leaderboard'
+    filterOurs: 'Our Rolling Autonoetic Memory Engine Only'
+    sortOverall: 'Sort: Overall Score (DESC)'
+    sortSingleHop: 'Sort: Cat 4 Single-hop (DESC)'
+    sortMultiHop: 'Sort: Cat 1 Multi-hop (DESC)'
+    sortOpenDomain: 'Sort: Cat 3 Open-domain (DESC)'
+    sortTemporal: 'Sort: Cat 2 Temporal (DESC)'
+    tableSectionTitle: 'Full locomo-backboard Leaderboard Table (Click any row to switch the breakdown chart above)'
+    colRank: 'Rank'
+    colSystem: 'Memory System / Lineage'
+    colVendor: 'Team & Architecture'
+    colProtocol: 'Protocol / Question Set / Judge'
+    colSingleHop: 'Cat 4 Single'
+    colMultiHop: 'Cat 1 Multi'
+    colOpenDomain: 'Cat 3 Open'
+    colTemporal: 'Cat 2 Temporal'
+    colOverall: 'Overall Score'
+    colNote: 'Key Findings & Methodology Notes'
+    tagOurs: 'Ours'
+    tagPublic: 'Commercial Board'
+    leaderCrown: '#1 Leader'
+    catLeaderBadge: 'Beats External #1'
+    protoDetailTitle: 'Built-in locomo-backboard Protocol Stack & Leaderboard Harness Parity Checklist'
+    lblBuiltinProto: 'Built-in Protocol Name'
+    lblTargetBoard: 'Benchmark Leaderboard Name'
+    lblCorpusSpec: 'Standard Corpus Scale'
+    lblAnswerSpec: 'Answer Payload Spec (locomo-answer)'
+    lblJudgeSpec: 'Judge Verdict Spec (locomo-judge)'
+    lblCatMap: 'Official Category Mapping'
+    lblFairNotice: 'Same-Scale Comparison Statement'
+    siblingAtmTitle: 'Primary Benchmark: University of Cambridge ATM-Bench Leaderboard'
+    siblingAtmDesc: '11,034 SGM email/photo/video memories · Main-1013 & Hard-31 boards · atmbench-official-v1 protocol verification'
+    siblingAtmBtn: 'Open Cambridge ATM-Bench (Primary) →'
+atmLeaderboard:
+    title: 'Cambridge ATM-Bench Leaderboard (Primary Benchmark · Multimodal Memory)'
+    protocolBadge: 'Built-in Protocol: atmbench-official-v1 (QS)'
+    corpusBadge: '11,034 SGM Multimodal Memories'
+    pinsVerifiedBadge: '✓ Official Protocol Pins Verified'
+    goLocomoBtn: 'LoCoMo Reference'
+    backEvalLabBtn: 'Back to Evaluation Lab'
+    copyReproBtn: 'Copy Repro CLI'
+    benchmarkFallback: 'University of Cambridge ATM-Bench (Long-Term Personalized Multimodal Memory)'
+    kpi1Label: 'Official Corpus Scale (4-Year Span)'
+    kpi1Sub: '6,742 emails + 3,759 GPS/OCR photos + 533 videos · SHA-256 verified'
+    kpi2Label: 'ATM-Bench-Hard (31 Qs) Reading'
+    kpi2SubFallback: 'No Hard reading recorded'
+    kpi3Label: "ATM-Bench Main (1,013 Qs R{'@'}10)"
+    kpi3SubFallback: 'No Main reading recorded'
+    kpi4Label: 'Official Protocol & Gold Reference'
+    kpi4Sub: 'Gold-evidence reference ceiling QS {qs}%'
+    kpi4SubFallback: 'Official MMRag Top-10 payload + hybrid QS scoring'
+    ladderTitle: 'Rolling Autonoetic Memory Engine Benchmark Ledger'
+    ladderHint: 'Vector-Free · LLM-Free deterministic retrieval & end-to-end records'
+    refTitle: 'Recorded Baselines & External Comparative References'
+    judgeCorrect: '{correct}/{scored} correct'
+    copyBtn: 'Copy CLI'
+    protoDetailTitle: 'Built-in atmbench-official-v1 Protocol Stack & Official Evaluator Checklist'
+cloudAccount:
+    title: Rolling Memory Cloud Account & API Key Center (Application Preview)
+    serverLabel: 'Cloud Server:'
+    connected: Connected
+    applyIntro: 'Cloud mode is application-based and opens progressively. Online registration is closed; please contact us via the application email.'
+    applyNote: 'Tell us your use case and expected scale; once approved we will issue a trial account, then sign in here to bind it.'
+    applyBtn: Send Application Email
+    applyContact: 'Application email:'
+    supportContact: 'Support email:'
+    tabLogin: Sign In
+    tabApply: Apply for Trial
+    username: Username
+    password: Password
+    rotateOnLogin: Rotate and fetch a fresh plaintext Memory API Key upon sign-in
+    signInBtn: Sign In & Bind Cloud Memory
+    keyMask: 'Key Mask:'
+    colKeyMask: Key Mask
+    signedKeyMask: 'Data-Plane Signed Key:'
+    signedKeyExpires: 'Expires:'
+    signedKeyErrorTitle: Signed-key exchange failed (the only memory-plane credential)
+    keyFile: 'Saved:'
+    rotateDefaultKey: Rotate Default Key
+    signOut: Sign Out
+    freshKeyTitle: 'New API Key Issued (auto-saved to local cloud.key):'
+    copy: Copy
+    tabMemory: Cloud Memory Management
+    statActiveUnits: Active Memory Units
+    statNodes: Graph Nodes
+    statTraces: Raw Traces
+    statConflicts: Open Conflicts
+    refresh: Refresh
+    recallPlaceholder: Enter cue to recall from the local memory service...
+    recallBtn: Recall
+    subjectS: Subject (S)
+    predicateX: Predicate (X)
+    objectO: Object (O)
+    addToCloud: + Add to Cloud
+    actions: Actions
+    forgetConfirm: Retract/delete this memory in Cloud?
+    delete: Delete
+    tabDevices: API Keys & Devices
+    deviceNamePlaceholder: New device / client name
+    createKey: Create Key
+    device: Device
+    kind: Kind
+    status: Status
+    statusActive: Active
+    statusRevoked: Revoked
+    rotate: Rotate
+    revoke: Revoke
+    msgSignedIn: Signed in to Cloud Memory!
+    msgSignedOut: Signed out
+    msgKeyRotated: API Key rotated and saved!
+    msgFillAll: Please fill in Subject (S), Predicate (X), and Object (O)
+    msgSaved: Saved to Cloud Memory!
+    msgRetracted: Memory retracted in Cloud
+    msgCopied: Copied!
+
+recall:
+    readerOwner: owner (audience restrictions may not cover all sources)
+    readerDeliverable: deliverable (audience restrictions may not cover all sources)
+    modeFull: full (with citation chain)
+    modeProbe: probe
+
+systemUpdate:
+    openBtn: Version & Update
+    dialogTitle: Version & Online Self-Update (SHA-256 Verified · Git-Free)
+    safetyNotice: Opening this dialog only reads local SHA-256 digests (zero network requests); the release channel is contacted only when you click "Check for Updates" or "Update Now". Updating replaces binaries, web assets, and host wiring in place and never touches or overwrites your local SQLite vault (memory.db).
+    currentVerLbl: Installed Version
+    latestVerLbl: Channel Latest Version
+    notCheckedYet: Not checked yet (click "Check for Updates" below)
+    upToDateTag: Up to Date
+    updateAvailTag: Update Available
+    channelLbl: Release Channel / Mirror URL
+    channelPlaceholder: Default official GitHub Releases channel (or custom mirror URL)
+    compCol: Component
+    assetCol: Release Asset / Local Path
+    localShaCol: Local SHA-256
+    remoteShaCol: Remote SHA-256
+    statusCol: Status
+    compCli: CLI & MCP Engine Binary
+    compAdmin: Web Console Backend
+    compWeb: Web Console Frontend
+    statusUpToDate: Up to date
+    statusNeedsUpdate: Update available
+    statusLocalOnly: Local only
+    forceOpt: Force reinstall (re-download even when SHA-256 digests already match)
+    withConsoleOpt: Also update local Web Console assets (backend + web-dist)
+    refreshHarnessOpt: Refresh host harness integrations after update (install --with-hooks)
+    checkBtn: Check for Updates (SHA256SUMS)
+    applyBtn: Update Now (SHA-256 Verified)
+    cliHintTitle: 'Equivalent CLI commands (run anytime in a terminal):'
+    checkSuccessUpToDate: All components are up to date (SHA-256 digests match)
+    checkSuccessAvail: Update available — click "Update Now" to install in place
+    applySuccessUpdated: 'Update complete: replaced {components}'
+    applySuccessNoop: All components are already up to date
+    restartingNotice: Console assets updated; restarting console and reloading page...
+

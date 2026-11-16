@@ -1,0 +1,81 @@
+# Welcome bar
+welcomeTip: 'Rolling Memory Live Console — Real-time telemetry for the 3-layer local plaintext vault (L1 Background / L2 Episodic / L3 Noetic), addressable provenance anchors, and the MCP recall fact ledger (default ⚡ Stream 0-poll WS, switchable 1s / 5s / 1m).'
+workTimerLabel: Session monitor active for
+workRest: Pause timer
+workContinue: Resume timer
+hours: h
+minutes: m
+seconds: s
+greetingNight: Good night
+greetingMorning: Good morning
+greetingNoon: Good noon
+greetingAfternoon: Good afternoon
+greetingEvening: Good evening
+liveConsole: LIVE Console
+engineOnline: Engine Online
+engineOffline: Engine Offline
+refreshNow: Refresh
+dbSize: DB Size
+conflicts: Stale Noetic
+modeLabel: Mode
+cloudPulse: Cloud Pulse
+localPlain: Local Plain (local_plain)
+cloudPulseTip: Cloud Pulse Mode active.
+localPlainTip: Local Plaintext Vault (local_plain) — 100% on-device SQLite FTS5 + BM25 + Shannon continuous gain, zero cloud requests.
+pulsePreviewTip: Pulse plain (pulse_plain) and pulse cipher (pulse_cipher) are not included in this release.
+previewDetails: Preview details
+
+# KPI cards
+totalUsers: Active Memory Units
+todayOrders: Graph Nodes / Traces
+salesAmount: Recall Latency (ms)
+pageVisits: MCP Recalls / Hits
+vsLastWeek: Index Readiness
+kpiSubAssertions: L2 Index Readiness
+kpiSubNodes: Addressable Provenance
+kpiSubLatency: vs 20-call avg
+kpiSubHooks: Effective Hit Rate · Fact Ledger (MCP recall)
+
+# Charts
+accessTrend: Memory Throughput & Recall Trend (L1–L3 Asset Growth)
+trendAssertions: Total (L1+L2+L3)
+trendL1: L1 Background
+trendL2: L2 Episodic
+trendL3: L3 Noetic
+trendRecalls: Recall Triggers
+trendTraces: L2 Episodic
+trendActivity: Recall & Ingest
+last1Hour: Last 1 hour
+last1Day: Last 1 day
+last7Days: Last 7 days
+last30Days: Last 30 days
+trafficSource: 3-Layer Memory Asset Distribution (L1 / L2 / L3)
+today: LIVE
+searchEngine: Referential
+directAccess: Experiential
+socialMedia: Procedural
+referralLink: Performative
+other: Conflicts & Topology Edges
+categorySales: Top 6 Active Workspaces (Locus)
+thisMonth: Active Graph
+digital: Define
+clothing: BelongsTo
+home: Is
+food: Reading
+beauty: LocatedAt
+books: Status
+serverLoad: Vault Engineering Health
+stable: All Noetic Fresh
+cpuUsage: Health Score
+capabilityRadar: ATM-Bench 5D Capability Radar
+latest: Local Live
+liveStale: Stale
+radarEmpty: No evaluation readings yet — run rmem eval to populate
+radarNoRun: No runs yet
+stability: "Official R{'@'}10"
+performance: Open-Ended QA
+security: List Recall
+usability: Number EM
+scalability: Hybrid QS
+currentVersion: Rolling Memory (local_plain)
+previousVersion: Cambridge Official (ATM-RAG)

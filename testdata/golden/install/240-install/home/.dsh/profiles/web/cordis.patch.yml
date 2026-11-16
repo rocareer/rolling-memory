@@ -1,0 +1,4 @@
+# dsh web profile patch
+insert:
+  - id: other-client
+    name: '@deepseek-ai/dsh-mcp-client'

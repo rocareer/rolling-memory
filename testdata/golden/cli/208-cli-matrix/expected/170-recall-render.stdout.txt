@@ -1,0 +1,4 @@
+<rolling-memory-recall scope="mem:golden:208" now="2026-10-27 12:00:00 +00:00" results="0" raw="0" absent="true" gaps="1" ms="0">
+缺口: 图面为空 1
+不持有：本地图中没有与该线索相关的记忆；可换更具体的名称，或继续对话，系统会自动记录。
+</rolling-memory-recall>

@@ -1,0 +1,86 @@
+{
+  "cases": [
+    {
+      "input": "What happened in July 2023?",
+      "month": 7,
+      "window": [
+        1688169600,
+        1690848000,
+        "2023-07"
+      ]
+    },
+    {
+      "input": "On October 13, 2023 Mel painted.",
+      "month": 10,
+      "window": [
+        1697155200,
+        1697241600,
+        "2023-10-13"
+      ]
+    },
+    {
+      "input": "13 October 2023",
+      "month": 10,
+      "window": [
+        1697155200,
+        1697241600,
+        "2023-10-13"
+      ]
+    },
+    {
+      "input": "What happened in 2022?",
+      "month": 0,
+      "window": [
+        1640995200,
+        1672531200,
+        "2022"
+      ]
+    },
+    {
+      "input": "no date here",
+      "month": 0,
+      "window": [
+        0,
+        0,
+        ""
+      ]
+    },
+    {
+      "input": "Cyberpunk 2077 is a game",
+      "month": 0,
+      "window": [
+        3376684800,
+        3408220800,
+        "2077"
+      ]
+    },
+    {
+      "input": "2026-03-02",
+      "month": 0,
+      "window": [
+        1772409600,
+        1772496000,
+        "2026-03-02"
+      ]
+    },
+    {
+      "input": "in July",
+      "month": 7,
+      "window": [
+        0,
+        0,
+        ""
+      ]
+    },
+    {
+      "input": "When did Melanie go camping in July?",
+      "month": 7,
+      "window": [
+        0,
+        0,
+        ""
+      ]
+    }
+  ],
+  "version": 1
+}

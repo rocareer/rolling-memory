@@ -1,0 +1,65 @@
+package common
+
+import (
+	"github.com/ai-go-hub/ai-go-admin/internal/infra/config"
+	"github.com/ai-go-hub/ai-go-admin/internal/infra/upload"
+	"github.com/ai-go-hub/ai-go-admin/internal/kit/httpx"
+	"github.com/ai-go-hub/ai-go-admin/internal/middleware"
+
+	"github.com/gin-gonic/gin"
+)
+
+// UploadHandler 上传控制器
+type UploadHandler struct {
+	upload *upload.Service
+}
+
+// NewUploadHandler 创建上传控制器实例
+func NewUploadHandler(up *upload.Service) *UploadHandler {
+	return &UploadHandler{upload: up}
+}
+
+// Upload 处理文件上传
+func (h *UploadHandler) Upload(c *gin.Context) {
+	// 身份判定先于任何表单读取：本路由挂的是 AdminAuthOptional（未登录也进控制器），
+	// 若先解析 body，未认证请求同样会让服务端落 multipart 临时文件、按字段上限占用内存与磁盘
+	admin := middleware.GetAdmin(c)
+	if admin == nil {
+		httpx.Fail(c, httpx.WithMessage("请先登录"))
+		return
+	}
+
+	// 请求体硬上限（max_size + multipart 开销）：必须在任何表单 / multipart 解析之前挂上，
+	// 否则超大请求体会在解析阶段被整体读入（含未认证请求）
+	upload.LimitRequestBody(c.Writer, c.Request, config.Get().Upload.MaxSize)
+
+	topic := c.DefaultPostForm("topic", "default")
+	driver := c.DefaultPostForm("driver", "local")
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		if upload.IsRequestTooLarge(err) {
+			httpx.Fail(c, httpx.WithMessage("上传请求体超过大小限制"))
+			return
+		}
+		httpx.Fail(c, httpx.WithMessage("没有文件被上传: "+err.Error()))
+		return
+	}
+
+	// 上传用户信息
+	userId := admin.ID
+	userType := "admin"
+
+	res, err := h.upload.Upload(c.Request.Context(), file, driver, topic, userId, userType)
+	if err != nil {
+		httpx.Fail(c, httpx.WithMessage(err.Error()))
+		return
+	}
+
+	httpx.Success(c, httpx.WithData(res))
+}
+
+// RegisterRoutes 注册上传路由
+func (h *UploadHandler) RegisterRoutes(group *gin.RouterGroup) {
+	group.POST("/upload", middleware.AdminAuthOptional(), h.Upload)
+}

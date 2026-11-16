@@ -1,0 +1,106 @@
+{
+  "binary": "<CASE>/bin/rolling-memory",
+  "cases": [
+    {
+      "argv": [
+        "install",
+        "--list",
+        "--json"
+      ],
+      "id": "010-list",
+      "note": "detection table for the five harnesses"
+    },
+    {
+      "argv": [
+        "install",
+        "--json",
+        "--dry-run",
+        "--with-hooks",
+        "--with-instructions",
+        "--binary",
+        "<CASE>/bin/rolling-memory"
+      ],
+      "id": "020-dry-run",
+      "note": "planned actions, nothing written"
+    },
+    {
+      "argv": [
+        "install",
+        "--json",
+        "--with-hooks",
+        "--with-instructions",
+        "--binary",
+        "<CASE>/bin/rolling-memory"
+      ],
+      "id": "030-install",
+      "note": "zcode instruction half-marker and codex foreign entry conflict"
+    },
+    {
+      "argv": [
+        "install",
+        "--json",
+        "--with-hooks",
+        "--with-instructions",
+        "--binary",
+        "<CASE>/bin/rolling-memory"
+      ],
+      "id": "040-install-again",
+      "note": "idempotent -> unchanged"
+    },
+    {
+      "argv": [
+        "install",
+        "--json",
+        "--force",
+        "--with-hooks",
+        "--with-instructions",
+        "--binary",
+        "<CASE>/bin/rolling-memory"
+      ],
+      "id": "050-force",
+      "note": "--force overwrites the foreign codex entry"
+    },
+    {
+      "argv": [
+        "install",
+        "--check",
+        "--json",
+        "--with-hooks",
+        "--with-instructions",
+        "--binary",
+        "<CASE>/bin/rolling-memory"
+      ],
+      "id": "060-check",
+      "note": "static registration + live MCP handshake against the launcher binary"
+    },
+    {
+      "argv": [
+        "install",
+        "--uninstall",
+        "--json",
+        "--with-hooks",
+        "--with-instructions",
+        "--binary",
+        "<CASE>/bin/rolling-memory"
+      ],
+      "id": "070-uninstall",
+      "note": "removes exactly what install wrote"
+    }
+  ],
+  "env": {
+    "HOME": "<HOME>",
+    "ROLLING_MEMORY_CONFIG": "<CFG>",
+    "ROLLING_MEMORY_DB": "<DB>",
+    "ROLLING_MEMORY_LOG": "<LOG>",
+    "ROLLING_MEMORY_MODE": "local",
+    "ROLLING_MEMORY_SCOPE": "mem:golden:240",
+    "TMPDIR": "<TMP>/tmp",
+    "XDG_CONFIG_HOME": "<HOME>/.config",
+    "XDG_DATA_HOME": "<HOME>/.local/share",
+    "XDG_STATE_HOME": "<HOME>/.local/state"
+  },
+  "home_template": "install/240-install/home",
+  "runner": "cli.main(argv) in-process, cwd=<CASE>, HOME=<HOME>",
+  "scenario": "240-install",
+  "scope": "mem:golden:240"
+}

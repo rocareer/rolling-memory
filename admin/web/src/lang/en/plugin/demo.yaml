@@ -1,0 +1,18 @@
+# plugin: demo v1.0.0
+# Demo plugin language pack (source → copy web/src/lang/en/plugin/demo.yaml, byte-identical,).
+# Key prefix plugin.demo.* (derived from the copy's physical path); must not touch host language packs.
+title: Demo Plugin
+tag: "kind: mixed"
+intro: "This page is the custom UI of an L1 source plugin: backend in plugins/demo/plugin.go, frontend source in plugins/demo/web/views/index.vue. The values below come from the plugin's own endpoint (POST /admin/plugin/demo/overview)."
+fields:
+  name: Name
+  version: Version
+  kind: Kind
+  hostApi: Host API
+  hostVersion: Host version
+  entityTable: L2 entity table
+  entity: L2 entity
+  note: Migration-owned table (latest row)
+  pageHint: Plugin config key
+entityHint: "Items (L2 engine: list / create / update / soft delete / drag sort)"
+refresh: Refresh

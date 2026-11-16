@@ -1,0 +1,100 @@
+# plugin: demo v1.0.0
+# 示例插件：kind: mixed ——
+# 1 个 L2 实体（items：结构由 L2 引擎按 spec 建）+ 1 个 L1 自定义页（web/views/index.vue）+ 1 个插件自管迁移（migrations/）。
+#
+# 出厂未安装：文件在仓 ≠ 已安装。未安装 = 本目录在、register_gen.go 为空骨架、
+# admin_rules 无本插件行、无迁移记录。回到该态：`aigo plugin uninstall --keep-files demo`。
+#
+# 键集闭集（未知键拒装）；本文件可作 `aigo plugin scaffold` 产物的样板。
+# 机制与纪律见 plugins/README.md。
+name: demo
+title: 示例插件
+version: 1.0.0
+kind: mixed
+host_api: ">=1 <2"
+framework_req: ">=0.1 <1"
+menus:
+  # ① 分组目录（pid 空 = 根；weigh 排在宿主菜单之后；目录规则不产生前端路由，只作侧栏分组）
+  - title: 示例插件
+    type: dir
+    name: plugin/demo
+    path: plugin/demo
+    icon: lucide-puzzle
+    weigh: 100
+  # ② L1 自定义页：菜单 component 必须落 /src/views/admin/plugin/**（F7：精确查表，落错位置静默查不到）
+  - title: 示例插件
+    type: menu
+    name: plugin/demo/index
+    path: plugin/demo/index
+    component: /src/views/admin/plugin/demo/index.vue
+    pid: plugin/demo
+    weigh: 100
+  - title: 查看
+    type: node
+    name: plugin/demo/index/read
+    pid: plugin/demo/index
+  # L1 页自身的数据端点（插件包 mount 的 POST /overview）：节点名 = 该路由 FullPath 经 BuildCheckPath 的推导结果。
+  # 插件包对该路由显式挂了 AdminAuth + AdminPermission（宿主只给「子组 + 运行时闸」，节点鉴权须插件自挂——
+  # 见 plugins/demo/plugin.go 的 mount 注释与 internal/plugin/l2/router.go 的同款写法），故本节点是真鉴权点。
+  - title: 概览数据
+    type: node
+    name: plugin/demo/overview
+    pid: plugin/demo/index
+  # ③ L2 实体页（items）的菜单/节点**不在这里声明**：把它们划给**安装器按公式代写**
+  #    （menu path=plugin/demo/items、component=/src/views/admin/plugin/render/index.vue、keepalive=0、
+  #     pid=plugin/demo；节点 = plugin/demo/items/{read,create,update,delete,sort，sort 因 drag_sort: true}）。
+  #    在此重复声明只会造成同名行写两次（安装链已实现代写并会拒装与公式不符的声明）。
+entities:
+  # L2 实体：ddl_owner 缺省即 engine ⇒ 引擎管建表/加列/删表，升级/复装的基线是**表结构自省**。
+  # 长度预算：len(demo)=4 + len(items)=5 = 9 ≤ 42−len(表前缀)（前缀为空时宽松无虞）。
+  - entity: items
+    title_zh: 条目
+    title_en: Items
+    drag_sort: true
+    ddl_owner: engine
+    fields:
+      # 文本列（required + 默认空串 ⇒ NOT NULL DEFAULT ''）
+      - name: title
+        type: string
+        title_zh: 标题
+        title_en: Title
+        required: true
+        length: 128
+        default: ""
+        list: true
+        sort: true
+        search: {op: ILIKE}
+        quickSearch: true
+        form: input
+      # 二值状态列：type bool ⇒ PG smallint 0/1（AGENTS「新表二值状态默认 0/1」）；
+      # 列表用 switch 渲染、表单用 switch 控件（显式 active/inactive 由宿主通用页写死，控件映射）
+      - name: status
+        type: bool
+        title_zh: 状态
+        title_en: Status
+        required: true
+        default: 1
+        list: true
+        search: {op: eq}
+        form: switch
+      # 唯一列：unique ⇒ 部分唯一索引（WHERE deleted_at IS NULL，随软删走）
+      - name: code
+        type: string
+        title_zh: 编码
+        title_en: Code
+        required: true
+        length: 32
+        default: ""
+        unique: true
+        list: true
+        search: {op: eq}
+        form: input
+web:
+  # 源（本目录）是唯一事实源，落位副本是产物：
+  #   web/views/index.vue → web/src/views/admin/plugin/demo/index.vue
+  #   web/lang/*.yaml     → web/src/lang/<语言>/plugin/demo.yaml（语言包键前缀 plugin.demo.*）
+  views: [web/views]
+  lang: [web/lang/zh-cn.yaml, web/lang/en.yaml]
+configs:
+  # 自带配置键（安装器写 configs 的 plugin.demo 分组，复用既有配置页）：落库名 plugin_demo_page_hint
+  - {name: page_hint, title: 页面提示, type: string, value: "示例插件：表走 L2 引擎、交互走 L1 页面"}

@@ -1,0 +1,90 @@
+{
+  "autojunk_default": true,
+  "cases": [
+    {
+      "left": "",
+      "name": "empty",
+      "ratio": 1.0,
+      "ratio_no_autojunk": 1.0,
+      "right": ""
+    },
+    {
+      "left": "",
+      "name": "one-empty",
+      "ratio": 0.0,
+      "ratio_no_autojunk": 0.0,
+      "right": "老张"
+    },
+    {
+      "left": "老张养猫",
+      "name": "identical",
+      "ratio": 1.0,
+      "ratio_no_autojunk": 1.0,
+      "right": "老张养猫"
+    },
+    {
+      "left": "老张",
+      "name": "prefix",
+      "ratio": 0.6666666666666666,
+      "ratio_no_autojunk": 0.6666666666666666,
+      "right": "老张养猫"
+    },
+    {
+      "left": "养猫",
+      "name": "suffix",
+      "ratio": 0.6666666666666666,
+      "ratio_no_autojunk": 0.6666666666666666,
+      "right": "老张养猫"
+    },
+    {
+      "left": "Alice",
+      "name": "case",
+      "ratio": 0.8,
+      "ratio_no_autojunk": 0.8,
+      "right": "alice"
+    },
+    {
+      "left": "老张养猫",
+      "name": "cjk",
+      "ratio": 0.75,
+      "ratio_no_autojunk": 0.75,
+      "right": "老张养狗"
+    },
+    {
+      "left": "小白🐱",
+      "name": "emoji",
+      "ratio": 0.6666666666666666,
+      "ratio_no_autojunk": 0.6666666666666666,
+      "right": "小白🐶"
+    },
+    {
+      "left": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+      "name": "repeat",
+      "ratio": 0.9950248756218906,
+      "ratio_no_autojunk": 0.9950248756218906,
+      "right": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+    },
+    {
+      "left": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+      "name": "autojunk-199",
+      "ratio": 0.995,
+      "ratio_no_autojunk": 0.995,
+      "right": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac"
+    },
+    {
+      "left": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+      "name": "autojunk-200",
+      "ratio": 0.9950248756218906,
+      "ratio_no_autojunk": 0.9950248756218906,
+      "right": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac"
+    },
+    {
+      "left": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+      "name": "autojunk-201",
+      "ratio": 0.995049504950495,
+      "ratio_no_autojunk": 0.995049504950495,
+      "right": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac"
+    }
+  ],
+  "version": 1
+}

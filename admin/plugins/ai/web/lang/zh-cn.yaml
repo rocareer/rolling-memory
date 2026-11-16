@@ -1,0 +1,1015 @@
+common:
+  globalDefault: 全局默认
+  defaultHint: "0 = 跟随插件设置（默认 {value}）"
+  copy: 复制
+  copied: 已复制
+  seconds: 秒
+  ms: 毫秒
+  times: 次
+  none: "-"
+  unknown: 未知
+  yes: 是
+  no: 否
+  detail: 详情
+  query: 查询
+  reset: 重置
+  all: 全部
+  start: 开始时间
+  end: 结束时间
+  dateRange: 时间范围
+  loading: 加载中
+overview:
+  title: AI 总览
+  intro: "近 24 小时的调用、成功率、Token 与成本；趋势为近 7 个自然日。数据只读，每 30 秒自动刷新。"
+  autoRefresh: 自动刷新（30 秒）
+  refresh: 刷新
+  updatedAt: 数据时间
+  windowH24: 近 24 小时
+  windowD7: 近 7 日
+  kpi:
+    calls: 近 24 小时调用
+    successRate: 成功率
+    tokens: 近 24 小时 Token
+    cost: 近 24 小时成本
+    avgLatency: 平均延迟
+    callsHint: "成功 {success} / 失败 {fail}"
+  trend:
+    title: 近 7 日趋势
+    calls: 调用次数
+    tokens: Token
+    cost: 成本
+    empty: 暂无趋势数据
+  channels:
+    title: 渠道健康
+    total: 渠道总数
+    enabled: 启用渠道
+    circuitOpen: 熔断中
+    circuitHalfOpen: 半开探针
+    problems: 异常渠道
+    noProblems: 无异常渠道
+  models:
+    title: 模型
+    total: 模型总数
+    enabled: 启用模型
+  topModels:
+    title: Top 模型
+    model: 模型
+    calls: 调用
+    tokens: Token
+    cost: 成本
+    empty: 暂无调用数据
+  recentFails:
+    title: 最近失败
+    time: 时间
+    model: 模型
+    channel: 渠道
+    status: 状态
+    error: 错误
+    empty: 暂无失败记录
+  recentBreakers:
+    title: 最近熔断
+    time: 时间
+    channel: 渠道
+    event: 事件
+    failures: 连续失败
+    error: 最近错误
+    empty: 暂无熔断事件
+  service:
+    title: 服务状态
+    db: 数据库
+    gatewayKey: 网关密钥
+    keySet: 已配置
+    keyMissing: 未配置（公开面将返回 503）
+    ok: 正常
+    down: 异常
+    time: 服务器时间
+  settings:
+    open: 接入设置
+    title: 接入设置
+    hint: "插件设置由本页自管：宿主配置页不会为插件分组生成 tab。密钥留空表示不修改；清除后公开面立即返回 503。"
+    apiKey: 网关密钥（Bearer）
+    apiKeyConfigured: "当前已配置：{masked}"
+    apiKeyNotConfigured: 当前未配置（公开面将返回 503）
+    apiKeyPlaceholder: 留空表示不修改
+    clearKey: 清除密钥
+    clearConfirm: 清除后 /ai/v1/* 将立即返回 503，确定清除？
+    clearMarked: 已标记清除，保存后生效
+    failThreshold: 熔断失败阈值
+    cooldownSeconds: 熔断冷却（秒）
+    requestTimeout: 请求超时（秒）
+    streamTimeout: 流式超时（秒）
+    currency: 币种
+    allowPrivateHosts: 允许私网上游
+    allowPrivateHostsTip: 本机 ollama 等自建上游需开启，否则出站护栏会拦下
+    sseTitle: 流式上限（SSE）
+    sseMaxLineBytes: SSE 单行上限（MiB）
+    sseMaxFrameBytes: SSE 单帧上限（MiB）
+    sseMaxAccumulatedBytes: SSE 累积上限（MiB）
+    sseTip: 以 MiB 输入，保存时换算为字节（1 MiB = 1048576）。超限按上游协议异常终止并停止读取（不可重试），不静默截断为成功。
+    bytesValue: 当前生效值：{bytes} 字节（约 {mib} MiB）
+    rateTitle: 公开面按 Key 限流
+    rateLimitRpm: 每分钟请求上限（RPM）
+    rateLimitBurst: 突发桶容量（Burst）
+    rateLimitMaxInflight: 在飞并发上限
+    rateTip: 0 = 不限制。API Key 页的 rate_limit 覆盖优先；未通过鉴权的请求不占配额（与源一致）。
+    gateTitle: 渠道 Gate 缺省
+    gateRpm: 渠道 RPM 缺省
+    gateTpm: 渠道 TPM 缺省
+    gateTip: 0 = 不限。渠道自身的 rpm_limit / tpm_limit 优先，为 0 时用这里的缺省；单实例进程内预算，TPM 为事后扣减。
+    taskTitle: 异步任务 worker
+    taskPollSeconds: 轮询间隔（秒）
+    taskMaxAttempts: 最大尝试次数
+    taskTip: 轮询间隔下界 1 秒（0 回落缺省 5，避免忙等）；插件停用时 worker 只空转不领活。
+    save: 保存
+    saveSuccess: 设置已保存
+  events:
+    open: 自动熔断
+    close: 自动恢复
+    manualOpen: 人工熔断
+    manualClose: 人工恢复
+channel:
+  title: 渠道管理
+  intro: "渠道是上游端点：driver 决定协议（空 = OpenAI 兼容），挂厂商后留空的地址与凭证在运行时继承厂商。密钥出口始终脱敏；编辑时留空或保持掩码表示不修改。"
+  searchPlaceholder: 搜索渠道名
+  empty: 暂无渠道
+  filters:
+    status: 状态
+    vendor: 厂商
+    query: 查询
+    reset: 重置
+    allStatus: 全部状态
+    allVendor: 全部厂商
+  stats:
+    circuitOpen: 熔断中
+    circuitHalfOpen: 半开探针
+    problem: 异常渠道
+    fail1h: 近 1 小时失败
+  columns:
+    name: 渠道名
+    vendor: 厂商
+    driver: 驱动
+    supplier: 厂商
+    baseUrl: 上游地址
+    model: 上游模型
+    apiKey: API Key
+    status: 状态
+    circuit: 熔断状态
+    timeout: 超时（秒）
+    priority: 优先级
+    weight: 权重
+    rpm: RPM 上限
+    tpm: TPM 上限
+    failThreshold: 失败阈值
+    cooldown: 冷却（秒）
+    consecutiveFailures: 连续失败
+    totalCalls: 累计成功
+    totalFailures: 累计失败
+    totalTokens: 累计 Token
+    lastSuccess: 最后成功
+    lastProbe: 最近探活
+    lastProbeResult: 探活结果
+    lastProbeLatency: 探活延迟（毫秒）
+    lastProbeError: 探活错误
+    probeFailStreak: 探活连续失败
+    lastError: 最近错误
+    remark: 备注
+    createdAt: 创建时间
+    updatedAt: 更新时间
+  vendor:
+    openai: OpenAI
+    deepseek: DeepSeek
+    qwen: 通义千问
+    moonshot: Moonshot
+    zhipu: 智谱
+    ollama: Ollama
+    other: 其他
+  driver:
+    inherit: 默认（OpenAI 兼容）
+    openai: OpenAI 兼容
+    responses: OpenAI Responses
+    deepseek: DeepSeek
+    dashscope: 通义千问（DashScope）
+    dashscope_tts: 通义语音合成（TTS）
+    tip: 空 = 默认（OpenAI 兼容）。协议分派由后端驱动注册表决定；未知驱动会被明确拒绝，不静默回落。
+    freeInputTip: 下拉为内置候选；后端注册表新增驱动时可直接输入名称。
+  supplierPick:
+    placeholder: 选择厂商（可留空）
+    none: 独立渠道（不挂厂商）
+    inheritTip: 留空即继承厂商的上游地址与凭证；渠道显式填写时以渠道值为准。
+    loadFailed: 厂商列表加载失败（当前账号可能缺厂商读权限），可直接手填厂商 ID
+    unknown: "厂商 #{id}（当前不在列表内）"
+  status:
+    on: 启用
+    off: 停用
+  circuit:
+    closed: 正常
+    open: 熔断中
+    half_open: 半开
+  probe:
+    ok: "探活成功（{latency} ms，{models} 个模型）"
+    fail: "探活失败：{reason}"
+    okShort: 成功
+    failShort: 失败
+    never: 从未
+  actions:
+    edit: 编辑
+    delete: 删除
+    toggle: 启停
+    enable: 启用
+    disable: 停用
+    breakerOpen: 手动熔断
+    breakerClose: 恢复
+    probe: 探活
+    breakerDetail: 熔断详情
+    deleteConfirm: "确定删除渠道「{name}」？该渠道的模型绑定会一并清除。"
+    enableConfirm: "确定启用渠道「{name}」？"
+    disableConfirm: "确定停用渠道「{name}」？停用后不再参与调度。"
+    openConfirm: "确定手动熔断渠道「{name}」？熔断期间不再参与调度。"
+    closeConfirm: "确定恢复渠道「{name}」？"
+  form:
+    add: 新增渠道
+    edit: 编辑渠道
+    name: 渠道名
+    namePlaceholder: 如 openai-main
+    vendor: 厂商标签
+    vendorTip: 仅用于展示与筛选，不影响协议
+    driver: 驱动（协议）
+    driverTip: 决定上游协议；空 = OpenAI 兼容（与历史渠道逐字一致）
+    supplier: 厂商
+    baseUrlInheritTip: 挂厂商时可留空：运行时继承厂商地址
+    apiKeyInheritTip: 挂厂商时可留空：运行时继承厂商凭证；出口始终脱敏
+    rpm: RPM 上限
+    rpmTip: 每分钟请求数上限；0 = 跟随插件设置的「渠道 RPM 缺省」（0 = 不限）
+    tpm: TPM 上限
+    tpmTip: 每分钟 Token 上限；0 = 跟随插件设置（0 = 不限）。单实例进程内预算 + 事后扣减
+    baseUrl: 上游地址
+    baseUrlPlaceholder: "https://api.openai.com/v1"
+    baseUrlTip: 私网地址会被出站护栏拦下；本机上游请在接入设置中开启「允许私网上游」
+    apiKey: API Key
+    apiKeyPlaceholder: 请输入上游凭证（允许留空，调用时 fail-closed）
+    apiKeyTip: 编辑时留空或保持掩码即不修改；出口始终脱敏，掩码永不回写
+    model: 上游模型名
+    modelPlaceholder: 如 gpt-4o-mini
+    modelTip: 调用时写入请求体的 model 字段
+    timeout: 超时（秒）
+    timeoutTip: "0 = 跟随插件设置；探活另按 clamp(值, 3, 15) 秒"
+    priority: 优先级
+    priorityTip: 数值越小越优先
+    weight: 权重
+    weightTip: weighted 策略取 max(1, weight)
+    status: 状态
+    failThreshold: 失败阈值
+    failThresholdTip: "0 = 跟随插件设置（默认 5）"
+    cooldown: 冷却（秒）
+    cooldownTip: "0 = 跟随插件设置（默认 60）"
+    remark: 备注
+    rules:
+      nameRequired: 请输入渠道名
+      baseUrlRequired: 请输入上游地址（未挂厂商时必填；挂厂商可留空，运行时继承）
+      baseUrlInvalid: 上游地址必须是 http(s) URL
+      modelRequired: 请输入上游模型名
+      timeoutRange: 超时必须在 0 到 600 秒之间
+      nonNegative: 不能小于 0
+  breaker:
+    title: "熔断详情 · {name}"
+    circuit: 状态
+    openedAt: 状态开始时间
+    cooldownRemaining: 冷却剩余
+    cooldownRemainingValue: "{seconds} 秒"
+    cooldownExpired: 冷却已结束，下次请求将进入半开探针
+    cooldownGlobalTip: 渠道未配置冷却，按插件默认 60 秒估算
+    consecutive: 连续失败
+    threshold: 生效阈值
+    totalCalls: 累计成功
+    totalFailures: 累计失败
+    totalTokens: 累计 Token
+    lastError: 最近错误
+    lastSuccess: 最后成功时间
+    events: 最近熔断事件
+    eventTime: 时间
+    eventType: 事件
+    eventFailures: 连续失败
+    eventThreshold: 阈值
+    eventCooldown: 冷却（秒）
+    eventError: 错误
+    eventsEmpty: 暂无熔断事件
+    globalDefault: 全局默认
+  name: 渠道名
+  rerankCap: 原生重排
+  priorityWeigh: 优先级 / 权重
+  tpmBudget: TPM 限额 / 实时桶余量
+  tpmUnlimited: 不限
+  key: 密钥已配
+  callsFailures: 累计调用 / 失败
+  bindings: 生效/总绑定
+  breakerValue:
+    closed: 正常（关）
+    open: 开路冷却
+    half_open: 半开探测
+    permanent: 永久熔断（欠费摘渠）
+model:
+  title: 模型管理
+  intro: "模型是对外统一名；绑定渠道决定调度顺序与权重。删除模型会一并清除绑定。"
+  searchPlaceholder: 搜索模型名
+  empty: 暂无模型
+  filters:
+    type: 类型
+    status: 状态
+    query: 查询
+    reset: 重置
+    allType: 全部类型
+    allStatus: 全部状态
+  type:
+    chat: 对话
+    embedding: 向量
+    tts: 语音合成
+  strategy:
+    priority: 优先级
+    weighted: 加权
+  encoding:
+    off: 关闭
+    tokenz-r: tokenz-r
+  capability:
+    chat: 对话
+    function_calling: 函数调用
+    code: 代码
+  status:
+    on: 启用
+    off: 停用
+  columns:
+    name: 模型名
+    type: 类型
+    strategy: 策略
+    priceInput: 输入单价
+    priceOutput: 输出单价
+    encoding: 本地计数
+    contextWindow: 上下文窗口
+    capabilities: 能力
+    status: 状态
+    boundChannels: 绑定渠道
+    boundCount: 绑定数
+    description: 描述
+    createdAt: 创建时间
+    updatedAt: 更新时间
+  priceUnit: 每百万 token
+  actions:
+    edit: 编辑
+    delete: 删除
+    bind: 绑定渠道
+    deleteConfirm: "确定删除模型「{name}」？该模型的全部渠道绑定会一并清除。"
+  form:
+    add: 新增模型
+    edit: 编辑模型
+    name: 模型名
+    namePlaceholder: 对外统一模型名，如 gpt-4o-mini
+    nameTip: 唯一；公开面 /ai/v1/models 列出的就是这个名字
+    type: 类型
+    typeTip: 对话 / 向量 / 语音合成；tts 模型供语音页音色与公开音频面使用，不参与对话调度
+    strategy: 调度策略
+    priceInput: 输入单价
+    priceOutput: 输出单价
+    priceUnit: 每百万 token
+    encoding: 本地计数
+    encodingTip: 留空 = 关闭本地近似估算与上下文预检；启用时使用内置 tokenz-r 128k BPE 编码
+    contextWindow: 上下文窗口
+    contextWindowTip: "0 = 不预检；超过窗口的请求会在本地拒绝"
+    capabilities: 能力标签
+    capabilitiesTip: 留空 = 未知不拦截；显式非空且不含 function_calling 时，带 tools 的对话请求会被拒绝
+    status: 状态
+    description: 描述
+    descriptionPlaceholder: 选填
+    rules:
+      nameRequired: 请输入模型名
+      nonNegative: 不能小于 0
+  bind:
+    title: "绑定渠道 · {name}"
+    intro: 勾选参与调度的渠道，并设置优先级与权重；保存时全量替换该模型的绑定。
+    empty: 暂无启用中的渠道
+    channel: 渠道
+    priority: 优先级
+    weight: 权重
+    enabled: 启用
+    disabled: 已停用
+    save: 保存绑定
+    saved: 绑定已保存
+    noChannels: 请先在渠道管理中新增并启用渠道
+    unknownChannel: "渠道 #{id}（当前不在启用列表）"
+    loadFailed: 绑定信息加载失败
+  name: 调用名
+  vendor: 归属厂商
+  inputPrice: 输入价（/1M）
+  outputPrice: 输出价（/1M）
+  cachePrice: 缓存命中价（/1M）
+  offpeak: 离峰倍率
+  priced: 定价/峰谷合规
+  bindings: 绑定（生效/总）
+  agents: 启用智能体引用
+  routeTiers: 多级路由拓扑（按 Priority 升序降级 · 层内按 Weigh 加权）
+  noRoute: 无可用路由
+  typeValue:
+    chat: 对话
+    embedding: 向量
+    rerank: 重排
+    unknown: 未知
+usage:
+  title: 用量统计
+  intro: "按模型、业务、来路或自然日聚合；成本为服务端 6 位小数字符串，前端只展示不做算术。"
+  tabs:
+    aggregate: 聚合统计
+    logs: 调用日志
+  filters:
+    model: 模型名
+    bizType: 业务类型
+    source: 来路
+    group: 聚合维度
+    dateRange: 时间范围
+    query: 查询
+    reset: 重置
+    all: 全部
+  group:
+    model: 按模型
+    biz: 按业务
+    source: 按来路
+    bizSource: 按业务 + 来路
+    day: 按天
+  groupColumn:
+    model: 模型
+    biz: 业务类型
+    source: 来路
+    bizSource: 业务 / 来路
+    day: 日期
+  totals:
+    calls: 调用
+    success: 成功
+    fail: 失败（不含超时）
+    timeout: 超时
+    tokens: Token
+    cost: 成本
+  columns:
+    calls: 调用
+    success: 成功
+    fail: 失败
+    timeout: 超时
+    tokens: Token
+    cost: 成本
+  empty: 暂无用量数据
+  log:
+    title: 调用日志
+    intro: "每次真实上游尝试一行；流式请求整个请求一行。时间范围按秒级闭区间过滤。"
+    filters:
+      status: 状态
+      callType: 调用类型
+      bizType: 业务类型
+      source: 来路
+      tokensSource: Token 来源
+      requestId: 请求 ID
+      modelName: 模型名
+      channelName: 渠道名
+      dateRange: 时间范围
+      query: 查询
+      reset: 重置
+      all: 全部
+    columns:
+      time: 时间
+      requestId: 请求 ID
+      model: 模型
+      channel: 渠道
+      callType: 类型
+      bizType: 业务
+      source: 来路
+      status: 状态
+      promptTokens: 输入 Token
+      completionTokens: 输出 Token
+      totalTokens: 总 Token
+      cost: 成本
+      latency: 延迟（毫秒）
+      stream: 流式
+      tokensSource: Token 来源
+      errorClass: 错误分类
+      errorMessage: 错误
+      attempt: 尝试序号
+      billedPartial: 部分计费
+      operate: 操作
+    status:
+      success: 成功
+      fail: 失败
+      timeout: 超时
+      breaker: 熔断
+    callType:
+      chat: 对话
+      embedding: 向量
+      tts: 语音合成
+    errorClass:
+      auth: 认证失败
+      rate_limit: 限流
+      upstream: 服务端错误
+      transport: 传输错误
+      local: 本地错误
+      unknown: 未知
+    tokensSource:
+      usage: 服务端 usage
+      estimate: 近似估算
+      none: 无计数
+    stream:
+      on: 流式
+      off: 非流式
+    billedPartial:
+      yes: 是
+      no: 否
+      tip: 服务端未收尾（中途断流 / 客户端断开）但已按已聚合内容计费；状态仍为失败 / 超时，熔断不计失败。
+    legend:
+      title: 标记说明
+      tokensSource: Token 来源
+      tokensSourceTip: "usage = 服务端 usage 帧；estimate = 本地近似估算；—— = 无计数。部分计费行的 Token 来自未收尾响应里已聚合的内容。"
+      billedPartial: 部分计费
+      keySource: 按 Key 归因
+      keySourceTip: "source = key:<调用方> 表示该次调用来自应用级 API Key（API Key 页的 source 字段）；key:gateway 为插件全局密钥。"
+    detail: 详情
+    empty: 暂无调用日志
+    noRequestId: 该行没有 request_id（渠道直连调试不记账）
+  detail:
+    title: 尝试链详情
+    intro: "同一次请求的所有真实尝试共享 request_id。summary 中 success + fail + timeout = calls；fail 不含 timeout，对账时请用 fail + timeout。"
+    summary:
+      calls: 总尝试
+      success: 成功
+      fail: 失败
+      timeout: 超时
+      tokens: Token
+      cost: 成本
+    columns:
+      attempt: 尝试
+      time: 时间
+      model: 模型
+      channel: 渠道
+      callType: 类型
+      status: 状态
+      promptTokens: 输入 Token
+      completionTokens: 输出 Token
+      totalTokens: 总 Token
+      cost: 成本
+      latency: 延迟（毫秒）
+      stream: 流式
+      tokensSource: Token 来源
+      errorClass: 错误分类
+      errorMessage: 错误
+      source: 来路
+      billedPartial: 部分计费
+    empty: 暂无尝试记录
+    noRequestId: 渠道直连调试不记账
+    loadFailed: 尝试链加载失败
+apikey:
+  title: API Key 管理
+  intro: "应用级 Key：明文只在创建 / 重置回执出现一次，列表只回显前缀；计量归因落在用量页的 source=key:<调用方>。"
+  searchPlaceholder: 搜索应用名 / 调用方标识
+  empty: 暂无 API Key
+  filters:
+    status: 状态
+    query: 查询
+    reset: 重置
+    allStatus: 全部状态
+  status:
+    on: 启用
+    off: 停用
+  columns:
+    name: 应用名
+    source: 调用方标识
+    keyPrefix: Key 前缀
+    modelScope: 模型白名单
+    rateLimit: 限流（次/分）
+    status: 状态
+    expireAt: 过期时间
+    lastUsedAt: 最近使用
+    remark: 备注
+    createdAt: 创建时间
+    updatedAt: 更新时间
+  scope:
+    all: 全部模型
+  rateLimitFollow: 跟随全局
+  neverExpires: 永久有效
+  actions:
+    edit: 编辑
+    reset: 重置 Key
+    toggle: 启停
+    delete: 删除
+    resetConfirm: "确定重置「{name}」的 Key？旧 Key 立即失效，新明文只显示一次。"
+    toggleConfirm: "确定切换「{name}」的启停？停用后该 Key 的请求返回 401。"
+    deleteConfirm: "确定删除「{name}」？删除后该 Key 立即无法调用。"
+  form:
+    add: 新增 API Key
+    edit: 编辑 API Key
+    name: 应用名
+    namePlaceholder: 如 experiment-be
+    source: 调用方标识
+    sourcePlaceholder: 如 experiment
+    sourceTip: "一个调用方一个 Key；最长 24 字符（usage.source 为 varchar(30)，key: 前缀占 4 字符）"
+    sourceLocked: source 随签发固定，不可修改
+    modelScope: 模型白名单
+    modelScopePlaceholder: 每行一个模型名，或用英文逗号分隔
+    modelScopeTip: 留空 = 允许全部模型；白名单外的模型被拒绝（OpenAI 形状）
+    rateLimit: 限流覆盖（次/分钟）
+    rateLimitTip: 0 = 跟随插件全局；大于 0 = 本 Key 覆盖（最小 5）
+    expireAt: 过期时间
+    expireAtTip: 留空 = 永不过期；过期后鉴权返回 401
+    remark: 备注
+    statusTip: 启停请用列表行内的「启停」按钮（status 不在保存入参内）
+  secret:
+    title: 明文 Key（仅显示一次）
+    intro: "这是本次签发 / 重置唯一的一份明文，关闭后无法再次查看；请立即复制到接入方配置。"
+    label: 明文 Key
+    copy: 复制
+    copied: 已复制到剪贴板
+    copyFailed: 复制失败，请手动选择后复制
+    close: 我已保存，关闭
+    createMarked: "Key 已签发（{name}）"
+    resetMarked: "Key 已重置（{name}）"
+  rules:
+    nameRequired: 请输入应用名
+    sourceRequired: 请输入调用方标识
+    sourceInvalid: source 仅允许字母、数字、下划线、冒号、点、短横线（最长 24）
+supplier:
+  title: 厂商管理
+  intro: "厂商持有共享的上游地址与凭证，渠道留空时继承厂商值；仍有渠道引用时不允许删除。"
+  searchPlaceholder: 搜索厂商名
+  empty: 暂无厂商
+  filters:
+    status: 状态
+    query: 查询
+    reset: 重置
+    allStatus: 全部状态
+  status:
+    on: 启用
+    off: 停用
+  columns:
+    name: 厂商名
+    vendor: 厂商标签
+    driver: 驱动
+    baseUrl: 上游地址
+    apiKey: API Key
+    timeout: 超时（秒）
+    channelCount: 引用渠道
+    status: 状态
+    remark: 备注
+    createdAt: 创建时间
+    updatedAt: 更新时间
+  actions:
+    edit: 编辑
+    delete: 删除
+    deleteConfirm: "确定删除厂商「{name}」？仍有渠道引用时后端会拒绝（先解除渠道的厂商挂靠）。"
+  form:
+    add: 新增厂商
+    edit: 编辑厂商
+    name: 厂商名
+    namePlaceholder: 如 aliyun-main
+    vendor: 厂商标签
+    vendorTip: 仅用于展示与筛选
+    driver: 驱动（协议）
+    driverTip: 渠道 driver 留空时继承此值
+    baseUrl: 上游地址
+    baseUrlPlaceholder: "https://api.openai.com/v1"
+    baseUrlTip: 渠道未填地址时继承此值；私网地址需开启「允许私网上游」
+    apiKey: API Key
+    apiKeyPlaceholder: 渠道未填凭证时继承此值
+    apiKeyTip: 编辑时留空或保持掩码即不修改；出口始终脱敏
+    timeout: 超时（秒）
+    timeoutTip: "0 = 跟随插件设置；渠道 timeout=0 时继承此值"
+    status: 状态
+    remark: 备注
+    rules:
+      nameRequired: 请输入厂商名
+      baseUrlRequired: 请输入上游地址
+      baseUrlInvalid: 上游地址必须是 http(s) URL
+      timeoutRange: 超时必须在 0 到 600 秒之间
+task:
+  title: 任务管理
+  intro: "异步任务：提交 chat / 批量 embedding，进程内 worker 领取执行；分片进度与结果可查，导出为 NDJSON 流（服务端不落盘）。"
+  searchPlaceholder: 搜索请求 ID / 来路 / 业务类型 / 模型名
+  empty: 暂无任务
+  filters:
+    taskType: 类型
+    status: 状态
+    keyword: 关键词（请求 ID / 来路 / 业务 / 模型名）
+    query: 查询
+    reset: 重置
+    all: 全部
+    allType: 全部类型
+    allStatus: 全部状态
+  taskType:
+    chat: 对话
+    embedding: 向量
+  status:
+    pending: 排队中
+    processing: 执行中
+    success: 成功
+    failed: 失败
+  columns:
+    id: 任务 ID
+    taskType: 类型
+    status: 状态
+    model: 模型
+    source: 来路
+    bizType: 业务类型
+    requestId: 请求 ID
+    attempt: 尝试
+    progress: 分片进度
+    summary: 摘要
+    error: 错误
+    createdAt: 创建时间
+    updatedAt: 更新时间
+  progress:
+    value: "{done} / {total}"
+    none: "-"
+  actions:
+    detail: 详情
+    exportHint: 导出为 application/x-ndjson（每行一个条目）
+  submit:
+    open: 提交任务
+    title: 提交异步任务
+    taskType: 任务类型
+    model: 模型
+    modelPlaceholder: 选择或输入对外模型名
+    bizType: 业务类型（biz_type）
+    bizTypePlaceholder: 如 batch-index
+    contextTip: biz_type 与 source 都必填（各最长 30 字符），它们是用量统计的两个维度
+    source: 来路（source）
+    sourcePlaceholder: 如 batch-job
+    chatTitle: 对话输入
+    chatTip: "每行一条消息，格式 role:content（如 user:你好），至少一条"
+    chatPlaceholder: "user:你好"
+    embeddingTitle: 批量向量输入
+    embeddingTip: 每行一条文本（建议不超过 1000 条，超过请分批提交）
+    embeddingPlaceholder: 第一段文本
+    count: "已输入 {count} 条"
+    empty: 请至少输入一条内容
+    submit: 提交
+    success: "任务已提交：{id}（{status}）"
+  detail:
+    title: "任务详情 · {id}"
+    payload: 入参（payload）
+    result: 结果（result）
+    entries: 结果条目
+    usage: 累计用量
+    usageValue: "{calls} 次尝试 / {tokens} Token / {cost}"
+  export:
+    success: 已开始下载
+    failed: 导出失败（若无权限请检查节点 plugin/ai/task/export）
+voice:
+  title: 语音音色
+  intro: "音色库：驱动 dashscope_tts 按 model + voice 合成；试听经后端渠道鉴权，音频流直出、服务端不落盘。"
+  searchPlaceholder: 搜索音色名 / 模型
+  empty: 暂无音色
+  filters:
+    status: 状态
+    model: 模型
+    query: 查询
+    reset: 重置
+  status:
+    on: 启用
+    off: 停用
+  format:
+    mp3: MP3
+    wav: WAV
+    opus: OPUS
+    pcm: PCM
+  columns:
+    name: 音色名
+    model: 模型
+    voice: 音色标识
+    format: 格式
+    status: 状态
+    remark: 备注
+    createdAt: 创建时间
+    updatedAt: 更新时间
+  actions:
+    edit: 编辑
+    delete: 删除
+    preview: 试听
+    deleteConfirm: "确定删除音色「{name}」？"
+  form:
+    add: 新增音色
+    edit: 编辑音色
+    name: 音色名
+    namePlaceholder: 如 晓春（客服）
+    model: 模型
+    modelPlaceholder: 如 cosyvoice-v2
+    modelTip: 传给上游的 model 字段
+    voice: 音色标识
+    voicePlaceholder: 如 longxiaochun
+    voiceTip: 上游音色名（百炼 voice 参数）
+    format: 音频格式
+    formatTip: 默认 mp3；试听与公开面音频面共用
+    status: 状态
+    remark: 备注
+    rules:
+      nameRequired: 请输入音色名
+      modelRequired: 请输入模型名
+      voiceRequired: 请输入音色标识
+  preview:
+    title: "试听 · {name}"
+    text: 试听文本
+    placeholder: 留空则使用默认试听文本
+    sample: 你好，这是一段语音合成试听。
+    play: 开始试听
+    playing: 合成中
+    stop: 停止
+    failed: 试听失败
+    tip: 音频由上游合成后流式返回，服务端不落盘
+    empty: 请先选择一条音色
+title: AI 资产体检与成本治理中心
+intro: 全栈只读治理台：实时体检诊断（24 项机械判据）· 成本与缓存经济学账本（原价/缓存节省/离峰节省恒等分解与五维归因）· 多级路由拓扑与熔断/TPM · 智能体策略守卫。
+refresh: 重新体检
+failedTip: 体检失败：读取 AI 资产配置失败，请检查数据库与服务日志后重试
+truncated: 资产面触顶已截断（{faces}）：读数可信到硬上限，请先清理或分库
+limits: 扫描硬上限：厂商 {vendors} · 模型 {models} · 渠道 {channels} · 绑定 {bindings} · 智能体 {agents}
+emptyFace: 暂无数据
+searchPlaceholder: 搜索名称 / 模型 / 坐标 / 驱动…
+onlyAnomalies: 只看异常/不可路由
+locate: 定位
+manage: 管理
+viewLogs: 查日志
+drillFilter: 筛选下钻
+clearFilter: 清空筛选
+yes: 是
+no: 否
+unknown: 未知
+status: 状态
+statusValue:
+  enable: 启用
+  disable: 停用
+  unknown: 未知
+nav:
+  healthConsole: 资产体检台
+  costPage: 独立成本账单
+  vendors: 厂商管理
+  channels: 渠道管理
+  models: 模型管理
+  bindings: 绑定管理
+  agents: 智能体列表
+  logs: 调用日志
+workspace:
+  diagnosis: 体检诊断与实时态势
+  cost: 成本与缓存经济学
+  topology: 路由拓扑与资产台账
+  governance: 智能体消费与策略合规
+window:
+  h24: 近 24 小时
+  d7: 近 7 天
+  d30: 近 30 天
+stats:
+  findings: 体检发现（阻断/告警）
+  findingsSub: 点击定位诊断项
+  models: 可路由模型
+  modelsSub: 已定价 {priced} / 总计 {total}
+  channels: 可用密钥渠道
+  channelsSub: 生效绑定 {bindings} 条
+  breakers: 熔断与 TPM
+  breakersSub: 永久 {perm} · 开路 {open} · 放行 {failOpen}
+  agents: 可路由智能体
+  agentsSub: 策略合规 {pass}
+  costTotal: 窗口实际支出
+  costTotalSub: 原价 ¥{list} · 调用 {calls} 次
+  cacheHit: 前缀缓存命中率
+  cacheHitSub: 缓存净省 ¥{saved}
+  offpeak: 离峰调用占比
+  offpeakSub: 离峰净省 ¥{saved}（总省 {rate}%）
+runtime:
+  title: 运行时健康与策略守卫
+  gate: 并发闸门
+  gateInflight: 在飞 {inflight} / 动态限额 {limit}（上限 {max}）
+  gateQueue: 排队 交互:{interactive} · 评测:{eval} · 批处理:{batch} · 429降档:{downshifts}
+  gateDisabled: 未启用
+  budget: TPM 令牌桶统计
+  budgetSummary: 等待 {waits} 次 · P95 {p95}ms · Fail-Open {failOpen} 次
+  policyFreeze: 模型白名单冻结闸
+  policyOfficial: 官网渠道专用隔离闸
+  policyClone: 对话双生体克隆同步
+  pass: 合规
+  violated: 违约
+findings:
+  title: 体检发现（24 项机械判据）
+  filterAll: 全部
+  catAll: 全部分类
+  catTopology: 路由与资产
+  catPricing: 定价与成本
+  catRuntime: 熔断与 TPM
+  catPolicy: 智能体与策略
+  errors: 阻断 {count}
+  warnings: 告警 {count}
+  severity: 级别
+  item: 检查项
+  ref: 资产坐标
+  detail: 事实与证据
+  action: 处置与定位
+  empty: 未发现异常（24 项机械体检全部通过）
+severity:
+  error: 阻断
+  warning: 告警
+  info: 提示
+finding:
+  model_price_missing: 模型缺价
+  model_price_partial: 模型单边半缺价（输入/输出价其一为 0）
+  model_peak_windows_invalid: 模型峰谷窗口 JSON 非法
+  model_offpeak_dead: 模型配置了离峰倍率但未配峰时窗口（折扣永不触发）
+  channel_key_missing: 渠道缺密钥
+  channel_base_url_missing: 渠道与厂商均缺少有效 BaseURL
+  channel_vendor_disabled: 启用渠道归属在已停用厂商下（路由静默丢弃）
+  vendor_dangling: 资产引用的厂商不存在或已软删
+  driver_unsupported: LLM 驱动未注册
+  rerank_driver_incompatible: 重排模型绑定在不支持原生重排的驱动渠道上
+  model_unbound: 模型未绑定渠道
+  model_binding_inactive: 模型绑定无一可路由生效
+  channel_unbound: 渠道未绑定模型
+  binding_dangling: 绑定指向已不存在的资产
+  channel_breaker_permanent: 渠道永久熔断（账号级余额耗尽/欠费自动摘渠）
+  channel_breaker_open: 渠道熔断开路冷却中
+  channel_breaker_half_open: 渠道熔断半开探测中
+  tpm_budget_fail_open: TPM 令牌桶发生等待超时或异常放行（Fail-Open）
+  agent_model_unroutable: 启用智能体引用的模型不可路由
+  agent_model_type_mismatch: 智能体类型与所绑定模型类型不匹配
+  policy_model_freeze_violation: 违反工作区模型冻结白名单策略
+  policy_official_channel_violation: 违反官网直连渠道专用隔离或双生克隆策略
+  cost_unpriced_calls: 模型已产生真实调用与 Token 消耗但费用为 0（漏计费）
+  scan_truncated: 资产面触顶截断
+cost:
+  pageTitle: AI 成本与缓存经济学账单中心
+  pageIntro: 按厂商、渠道、模型、智能体、调用来源五维归因与交叉穿透分析；实时核算标准原价、前缀缓存净省与离峰半价净省（ActualCost + CacheSaved + OffpeakSaved = ListCost）。
+  equationTitle: 成本与缓存/离峰经济学恒等分解（ActualCost + CacheSaved + OffpeakSaved = ListCost）
+  filteredTip: 当前处于多维交叉筛选视图（匹配 {buckets} 个聚合桶）：下方汇总指标与全维度排行榜均已按筛选条件实时重算
+  filterVendor: 全部厂商
+  filterChannel: 全部渠道
+  filterModel: 全部模型
+  filterAgent: 全部智能体
+  filterSource: 全部调用来源
+  actualCost: 实际结算支出
+  listCost: 标准原价基准
+  cacheSaved: 前缀缓存净省
+  offpeakSaved: 离峰半价净省
+  totalSaved: 合计净省金额
+  savedRate: 综合降本率
+  callsCard: 总调用与成功率
+  callsCardSub: 成功 {success} · 失败 {failed}（{rate}%）
+  tokensCard: 总 Token 吞吐
+  tokensCardSub: 输入 {input} · 输出 {output}
+  tokensBreakdown: 输入 {input} · 缓存命中 {hit}（{hitRate}%）· 输出 {output} · 平均耗时 {latency}ms
+  tabByVendor: 按厂商（Vendor）
+  tabByChannel: 按渠道（Channel）
+  tabByModel: 按模型（Model）
+  tabByAgent: 按智能体（Agent）
+  tabBySource: 按调用来源（Source）
+  tabCrossBuckets: 五维交叉明细桶
+  colVendor: 厂商
+  colDriver: 驱动
+  colAssets: 活跃渠道 / 模型
+  colModel: 模型调用名
+  colAgent: 智能体
+  colChannel: 渠道
+  colSource: 调用来源（Source）
+  colCalls: 调用次数
+  colSuccessRate: 成功率
+  colLatency: 平均耗时
+  colInputTokens: 输入 Token
+  colCacheHit: 缓存命中（率）
+  colOutputTokens: 输出 Token
+  colTotalTokens: 总 Token
+  colOffpeak: 离峰调用（率）
+  colActualCost: 实际费用
+  colListCost: 原价基准
+  colSaved: 净省（缓存 / 离峰）
+  colSavedRate: 降本率
+  colCostPer1k: 千次调用均价
+  colShare: 费用占比
+face:
+  models: 模型与路由拓扑
+  channels: 渠道、熔断与 TPM
+  bindings: 绑定明细
+  agents: 智能体消费与合规
+  vendors: 厂商
+vendor:
+  name: 标识
+  title: 名称
+  driver: 默认驱动
+  baseUrl: 默认端点 BaseURL
+  models: 模型数
+  channels: 渠道数（启用有键/总计）
+binding:
+  model: 模型
+  channel: Channel
+  upstream: 生效上游模型名
+  driver: 生效驱动
+  priorityWeigh: 生效优先级 / 权重
+  routable: 路由就绪
+  blockReason: 阻断原因
+agent:
+  name: 智能体标识
+  title: 名称
+  type: 类型
+  model: 绑定模型
+  typeMatch: 类型匹配
+  routable: 可路由
+  compliance: 策略合规（白名单/官网隔离）
+
+col:
+  vendor: 厂商
+  driver: 生效驱动
+  breaker: 熔断状态
+  type: 类型

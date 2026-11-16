@@ -1,0 +1,149 @@
+{
+  "actions": [
+    {
+      "component": "skill",
+      "detail": "",
+      "harness": "zcode",
+      "path": "<HOME>/.zcode/skills/rolling-memory/SKILL.md",
+      "status": "removed"
+    },
+    {
+      "component": "mcp",
+      "detail": "",
+      "harness": "zcode",
+      "path": "<HOME>/.zcode/cli/config.json",
+      "status": "removed"
+    },
+    {
+      "component": "hooks",
+      "detail": "1 entries",
+      "harness": "zcode",
+      "path": "<HOME>/.zcode/cli/config.json",
+      "status": "removed"
+    },
+    {
+      "component": "instructions",
+      "detail": "half marker found; fix by hand",
+      "harness": "zcode",
+      "path": "<HOME>/.zcode/AGENTS.md",
+      "status": "conflict"
+    },
+    {
+      "component": "skill",
+      "detail": "",
+      "harness": "claude-code",
+      "path": "<HOME>/.claude/skills/rolling-memory/SKILL.md",
+      "status": "removed"
+    },
+    {
+      "component": "mcp",
+      "detail": "",
+      "harness": "claude-code",
+      "path": "<HOME>/.claude.json",
+      "status": "removed"
+    },
+    {
+      "component": "hooks",
+      "detail": "1 entries",
+      "harness": "claude-code",
+      "path": "<HOME>/.claude/settings.json",
+      "status": "removed"
+    },
+    {
+      "component": "instructions",
+      "detail": "",
+      "harness": "claude-code",
+      "path": "<HOME>/.claude/CLAUDE.md",
+      "status": "removed"
+    },
+    {
+      "component": "skill",
+      "detail": "",
+      "harness": "codex",
+      "path": "<HOME>/.codex/skills/rolling-memory/SKILL.md",
+      "status": "removed"
+    },
+    {
+      "component": "mcp",
+      "detail": "",
+      "harness": "codex",
+      "path": "<CFG>",
+      "status": "removed"
+    },
+    {
+      "component": "hooks",
+      "detail": "no hook surface",
+      "harness": "codex",
+      "path": "-",
+      "status": "skipped"
+    },
+    {
+      "component": "instructions",
+      "detail": "",
+      "harness": "codex",
+      "path": "<HOME>/.codex/AGENTS.md",
+      "status": "removed"
+    },
+    {
+      "component": "skill",
+      "detail": "",
+      "harness": "dsh",
+      "path": "<HOME>/.dsh/skills/rolling-memory/SKILL.md",
+      "status": "removed"
+    },
+    {
+      "component": "mcp",
+      "detail": "",
+      "harness": "dsh",
+      "path": "<HOME>/.dsh/profiles/web/cordis.patch.yml",
+      "status": "removed"
+    },
+    {
+      "component": "hooks",
+      "detail": "no hook surface",
+      "harness": "dsh",
+      "path": "-",
+      "status": "skipped"
+    },
+    {
+      "component": "instructions",
+      "detail": "",
+      "harness": "dsh",
+      "path": "<HOME>/.dsh/AGENTS.md",
+      "status": "removed"
+    },
+    {
+      "component": "skill",
+      "detail": "",
+      "harness": "codebuddy",
+      "path": "<HOME>/.codebuddy/skills/rolling-memory/SKILL.md",
+      "status": "removed"
+    },
+    {
+      "component": "mcp",
+      "detail": "",
+      "harness": "codebuddy",
+      "path": "<HOME>/.codebuddy/mcp.json",
+      "status": "removed"
+    },
+    {
+      "component": "hooks",
+      "detail": "no hook surface",
+      "harness": "codebuddy",
+      "path": "-",
+      "status": "skipped"
+    },
+    {
+      "component": "shortcut",
+      "detail": "not present",
+      "harness": "*",
+      "path": "<HOME>/Desktop/<SHORTCUT>",
+      "status": "skipped"
+    }
+  ],
+  "binary": "<CASE>/bin/rolling-memory",
+  "dry_run": false,
+  "mode": "uninstall",
+  "name": "rolling-memory",
+  "ok": false
+}

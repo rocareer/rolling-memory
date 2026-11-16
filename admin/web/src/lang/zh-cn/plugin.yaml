@@ -1,0 +1,145 @@
+# 宿主插件管理面文案（管理页 web/src/views/admin/plugin/index.vue 与其详情抽屉，P2 落地）。
+# 命名空间纪律：文件落在 web/src/lang/zh-cn/plugin.yaml ⇒ 前缀 plugin.*（由物理路径生成）；
+# 第一层键取**宿主保留字**（list / get）——插件名被保留字校验排除（render/list/get/read/enable/disable/uninstall），
+# 因此本文件与任何插件的 plugin.<名>.* 子树结构上不可能相撞（见 plugins/README.md）。
+list:
+  empty: 暂无插件（出厂登记态：仓里可以只有文件、没有安装记录）
+  searchPlaceholder: 搜索插件名
+  columns:
+    name: 插件名
+    title: 展示名
+    version: 版本
+    kind: 形态
+    status: 状态
+    entities: 实体数
+    wired: 接线
+    drift: 差异
+    installedAt: 安装时间
+  kind:
+    code: 源码插件
+    declarative: 声明式插件
+    mixed: 混合插件
+  status:
+    failed: 半装
+    installed: 已安装
+    enabled: 启用
+    disabled: 停用
+  wired:
+    wired: 已接线
+    unwired: 待重编译
+    unwiredTip: 台账已记录，但进程内没有该插件：路由要等重编译 + 重启后才存在
+    orphan: 接线悬空
+    orphanTip: 进程内有、台账无：装一次或撤注册行
+    missingRegister: 缺注册行
+    missingRegisterTip: 台账在、注册文件没有该行：重编译后也不生效
+    declarative: 声明式
+    declarativeTip: 声明式插件没有 Go 注册行：实体路由由引擎按元数据在重启后注册
+    declarativeRegister: 不应有注册行
+    declarativeRegisterTip: 声明式插件没有 Go 包：注册行会让 go build 失败，应删掉该行
+  runtime:
+    registryUnavailable: 注册文件不可读（服务不在源码检出内运行）：各行「是否已注册」不显示
+  effect:
+    rebuildRequired: 插件「{name}」台账已置位，但进程内没有它：路由要等重编译 + 重启后才存在
+    declarative: 插件「{name}」是声明式插件：无 Go 注册行，实体路由随重启后注册
+  actions:
+    detail: 详情
+    enable: 启用
+    disable: 停用
+    enableConfirm: 确认启用插件「{name}」？菜单与权限节点将随之下发（最迟一个缓存周期生效，无需重启）
+    disableConfirm: 确认停用插件「{name}」？路由随即返回 404、菜单隐藏（数据与表保留）
+  tips:
+    failedCleanup: 半装现场：详情抽屉「卸载」按强制模式清理（或 CLI：aigo plugin uninstall --force <名>）
+    trust: 源码插件等价于把该段代码 git merge 进仓库：与宿主同权限、无隔离层
+    operatorNote: 操作只记录署名，不构成身份认证；真正的边界在 OS / 部署侧访问控制
+get:
+  title: 插件详情
+  # 详情抽屉动作（管理面写路径）：停用/启用 + 卸载；置灰原因与后端拒绝文案同口径
+  actions:
+    toggleOn: 启用
+    toggleOff: 停用
+    uninstall: 卸载
+    lifecycleForbidden: 生产环境禁止安装与卸载（后端环境门禁）
+  uninstall:
+    title: 卸载插件
+    intro: '即将卸载：{name}（当前状态：{status}）'
+    warning: 卸载不可逆（无补偿回滚）：菜单/权限节点与台账行一并清除；节点 ID 变更后需重新授权
+    enabledTip: 插件处于启用态：确认后将先停用、再卸载（先禁用后卸载是硬门禁，两步各自写审计）
+    failedTip: 插件处于半装（failed）：将以强制模式（--force）清理半装现场
+    purge: 彻底删除（--purge）：回滚插件迁移并删除实体表与迁移版本表
+    purgeTip: 未勾选时表与数据、迁移版本表一律保留（复装即用）
+    purgeAdopted: 该插件以存量库迁移基线（adopt）装入：--purge 需 CLI 三重显式确认，界面不提供
+    keepFiles: 保留源码与落位文件（--keep-files）
+    keepFilesTip: 勾选后只清台账/归属行/注册行，仓库文件原样保留（回到出厂态）
+    confirm: 确认卸载
+    confirmDisableFirst: 停用并卸载
+    done: 卸载完成：{name}
+    effect:
+      rebuildRequired: 注册行已撤：请重编译并重启后端（此前插件请求已由运行时闸按台账拒绝）
+      gateTtl: 无 Go 注册行：运行时闸按台账即时拒绝（无需重启）
+  sections:
+    manifest: manifest 摘要
+    files: 文件清单
+    entities: 实体
+    actions: 动作审计
+  fields:
+    name: 插件名
+    version: 版本
+    kind: 形态
+    status: 状态
+    hostApi: 机制接口版本域
+    hostVersion: 宿主版本
+    frameworkReq: 框架线版本域
+    requires: 依赖插件
+    checksum: 整包 sha256
+    source: 安装来源
+    signedBy: 签名公钥指纹
+    installedAt: 安装时间
+    updatedAt: 更新时间
+    remark: 备注
+    titleZh: 中文标题
+    titleEn: 英文标题
+    tableName: 物理表名
+  files:
+    target: 目标路径
+    bytes: 字节数
+    sha256: sha256
+    conflict: 工作树同名
+    added: 新增
+    unavailable: 读不到插件源目录（不在源码检出内运行，或该插件没有源码，如声明式插件）
+  audit:
+    action: 动作
+    operator: 操作者
+    status: 结果
+    createdAt: 时间
+    detail: 详情
+  empty: 插件不存在或未安装
+# L2 通用页（web/src/views/admin/plugin/render/index.vue，P4）：全部 L2 实体共用本页，字段/实体文案
+# 由后端按 lang 下发（title_zh/title_en 双语元数据），这里只放宿主固定文案。第一层键 render 是宿主
+# 保留字（manifest.ReservedNames），插件名不可能叫 render ⇒ 结构上不与任何插件的 plugin.<名>.* 相撞。
+render:
+  empty: 暂无数据
+  searchPlaceholder: 搜索（实体声明的快速搜索字段）
+  notInstalled: 插件未安装或已停用
+  notInstalledTip: '当前坐标：plugin/{plugin}/{entity}；未安装或已停用一律 404。用 aigo plugin list 核对台账状态，安装 / 启用后重试。'
+  badRoute: 无法从当前路径解析出插件实体坐标（应为 <后台入口>/plugin/<插件名>/<实体名>）
+  loadFailed: 加载失败，请稍后重试
+  retry: 重试
+# 插件频道环境（判定结果 + 依据 + 生产环境的整频道门禁弹窗；插件管理页 / 插件清单页 / 仓库来源页共用，
+# 派生单点 = web/src/views/admin/plugin/usePluginEnv.ts）。
+# 第一层键有意用 camelCase：插件名正则为 ^[a-z][a-z0-9-]{1,31}$（只允许小写开头），
+# 因此 envGate 结构上不可能与任何插件的 plugin.<名>.* 子树相撞，无需占用宿主保留字。
+envGate:
+  name:
+    dev: 开发环境
+    prod: 生产环境
+  allow: 允许安装与卸载
+  forbid: 禁止安装与卸载
+  basisConfig: 已显式配置 plugin.env={value}（只认 dev | prod）
+  basisAutoRoot: 未配置 plugin.env，自动判定：检测到源码检出
+  basisAutoNoRoot: 未配置 plugin.env，自动判定：未检测到源码检出
+  title: 插件频道已封闭
+  headline: 生产环境禁止插件安装与卸载，插件频道整频道封闭
+  why: 安装与卸载是源码树操作（落位文件、改写接线生成物、需重编译），因此只在开发环境开放；后端安装/卸载端点另有同款门禁（拒绝码 lifecycle_forbidden）。
+  howto: 要在生产之外操作插件：把服务跑在源码检出内，或显式配置 plugin.env=dev 后重启；生产环境的插件状态用 aigo plugin list 对账。
+  leave: 返回仪表盘
+

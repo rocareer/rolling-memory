@@ -1,0 +1,23 @@
+# Rolling 品牌包（kind: code）——把 Rolling 基础品牌从核心外置为可装卸插件。
+#
+# 前端品牌面（登录页 / logo / favicon / 欢迎语）走**构建期 overlay**：
+#   plugins/rolling-brand/brand/** 按 web/src/** 的相对路径 1:1 镜像；
+#   宿主 Vite 的 brand-overlay 解析器在 VITE_BRAND=rolling-brand 时优先命中，
+#   未命中回退 web/src/**；空值 = 上游默认。品牌包不覆盖任何核心文件。
+#
+# 后端只提供品牌公开信息（/plugin/rolling-brand/brand.json + 品牌资源），
+# 以及一个插件自管的品牌设置表（migrations/1_init）。不写核心表/核心迁移。
+#
+# 出厂未安装：文件在仓 ≠ 已安装；未安装 = register_gen.go 无本插件行、无菜单/节点/迁移记录。
+name: rolling-brand
+title: Rolling 品牌包
+version: 1.0.0
+kind: code
+host_api: ">=1.2 <2"
+framework_req: ">=0.7.1 <1"
+
+web:
+  # 语言包落位：web/src/lang/<语言>/plugin/rolling-brand.yaml（键前缀 plugin.rolling-brand.*）
+  lang:
+    - web/lang/zh-cn.yaml
+    - web/lang/en.yaml

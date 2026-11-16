@@ -1,0 +1,128 @@
+{
+  "cases": [
+    {
+      "argv": [
+        "hook",
+        "close"
+      ],
+      "id": "010-close",
+      "note": "import + local replay; no stdout without boot_context"
+    },
+    {
+      "argv": [
+        "hook",
+        "start",
+        "--json"
+      ],
+      "id": "020-start-boot",
+      "note": "boot line wrapped as SessionStart additionalContext"
+    },
+    {
+      "argv": [
+        "hook",
+        "recall",
+        "--json"
+      ],
+      "id": "030-recall-json",
+      "note": "UserPromptSubmit never auto-recalls: a prompt the transcript answers stays silent"
+    },
+    {
+      "argv": [
+        "hook",
+        "recall",
+        "--json"
+      ],
+      "id": "040-recall-dedup",
+      "note": "repeat prompt stays silent as well (no ledger, no injection)"
+    },
+    {
+      "argv": [
+        "hook",
+        "recall",
+        "--json"
+      ],
+      "id": "050-recall-no-prompt",
+      "note": "no prompt -> silent"
+    },
+    {
+      "argv": [
+        "hook",
+        "recall"
+      ],
+      "id": "060-recall-text",
+      "note": "plain text (no --json): still silent without auto-recall"
+    },
+    {
+      "argv": [
+        "hook",
+        "recall",
+        "--json"
+      ],
+      "id": "070-fail-open-bad-json",
+      "note": "invalid JSON -> fail-open, fallback log"
+    },
+    {
+      "argv": [
+        "hook",
+        "close"
+      ],
+      "id": "080-close-missing-transcript",
+      "note": "missing transcript -> no import, still exit 0"
+    },
+    {
+      "argv": [
+        "hook",
+        "recall"
+      ],
+      "id": "090-cadence-1",
+      "note": "workspace prompt 1/4: capture only, silent"
+    },
+    {
+      "argv": [
+        "hook",
+        "recall"
+      ],
+      "id": "091-cadence-2",
+      "note": "workspace prompt 2/4: capture only, silent"
+    },
+    {
+      "argv": [
+        "hook",
+        "recall"
+      ],
+      "id": "092-cadence-3",
+      "note": "workspace prompt 3/4: capture only, silent"
+    },
+    {
+      "argv": [
+        "hook",
+        "recall",
+        "--json"
+      ],
+      "id": "093-cadence-4-reminder",
+      "note": "workspace prompt 4/4: four-turn cadence emits the reminder (never recalled material)"
+    }
+  ],
+  "config": {
+    "hooks.boot_context": "true",
+    "hooks.max_traces": "60"
+  },
+  "env": {
+    "HOME": "<HOME>",
+    "ROLLING_MEMORY_CONFIG": "<CFG>",
+    "ROLLING_MEMORY_DB": "<DB>",
+    "ROLLING_MEMORY_LOG": "<LOG>",
+    "ROLLING_MEMORY_MODE": "local",
+    "ROLLING_MEMORY_SCOPE": "mem:golden:230",
+    "TMPDIR": "<TMP>/tmp",
+    "XDG_CONFIG_HOME": "<HOME>/.config",
+    "XDG_DATA_HOME": "<HOME>/.local/share",
+    "XDG_STATE_HOME": "<HOME>/.local/state"
+  },
+  "inputs": [
+    "hooks/230-hooks/input/transcript.jsonl"
+  ],
+  "runner": "hook_main(argv[1:]) with stdin.json on stdin",
+  "scenario": "230-hooks",
+  "scope": "mem:golden:230"
+}

@@ -1,0 +1,253 @@
+{
+  "config": {},
+  "db": "db/250-config-egress.db",
+  "description": "config precedence (flags > env > file), validation errors, secret 0600 gate, public_dict without key material, local egress refusal",
+  "drop_fts": false,
+  "expected": {
+    "egress-cloud": "fixtures/250-config-egress/expected/egress-cloud.json",
+    "egress-local": "fixtures/250-config-egress/expected/egress-local.json",
+    "egress-loopback-off": "fixtures/250-config-egress/expected/egress-loopback-off.json",
+    "load-broken-toml": "fixtures/250-config-egress/expected/load-broken-toml.json",
+    "load-defaults-env": "fixtures/250-config-egress/expected/load-defaults-env.json",
+    "load-invalid-mode": "fixtures/250-config-egress/expected/load-invalid-mode.json",
+    "load-invalid-reader": "fixtures/250-config-egress/expected/load-invalid-reader.json",
+    "load-invalid-scope": "fixtures/250-config-egress/expected/load-invalid-scope.json",
+    "load-priority": "fixtures/250-config-egress/expected/load-priority.json",
+    "load-secret-public": "fixtures/250-config-egress/expected/load-secret-public.json",
+    "secret-env": "fixtures/250-config-egress/expected/secret-env.json",
+    "secret-file-0600": "fixtures/250-config-egress/expected/secret-file-0600.json",
+    "secret-file-0644": "fixtures/250-config-egress/expected/secret-file-0644.json",
+    "secret-file-missing": "fixtures/250-config-egress/expected/secret-file-missing.json",
+    "secret-none": "fixtures/250-config-egress/expected/secret-none.json"
+  },
+  "fixed_now": 1793102400,
+  "frozen_meta": {
+    "db_meta.engine": "rolling-memory",
+    "db_meta.schema_version": "1"
+  },
+  "frozen_time_columns": {
+    "activation.updated_at": [],
+    "assertion.created_at": [],
+    "assertion.t_record": [],
+    "assertion.t_source": [],
+    "assertion.t_valid_from": [],
+    "assertion.t_valid_to": [],
+    "db_meta.created_at": [
+      1793102400
+    ],
+    "event.created_at": [],
+    "injection_ledger.created_at": [],
+    "mention.created_at": [],
+    "meta_edge.created_at": [],
+    "node.created_at": [],
+    "node.retired_at": [],
+    "node_alias.created_at": [],
+    "replay_state.produced_through": [],
+    "replay_state.updated_at": [],
+    "session_cursor.turn_done": [],
+    "session_cursor.updated_at": [],
+    "sync_state.synced_at": [],
+    "trace.occurred_at": [],
+    "trace.processed_at": [],
+    "trace.recorded_at": [],
+    "transcript_cursor.mtime": [],
+    "transcript_cursor.offset": [],
+    "transcript_cursor.size": [],
+    "transcript_cursor.updated_at": [],
+    "vector.updated_at": []
+  },
+  "inputs": [],
+  "ops": [
+    {
+      "args": {
+        "case": "defaults-env",
+        "env": {
+          "ROLLING_MEMORY_DB": "{ROOT}/memory.db",
+          "ROLLING_MEMORY_MODE": "cloud",
+          "ROLLING_MEMORY_SCOPE": "mem:task:demo"
+        }
+      },
+      "op": "config_load",
+      "save": "load-defaults-env"
+    },
+    {
+      "args": {
+        "case": "priority",
+        "config_path": "config.toml",
+        "env": {
+          "ROLLING_MEMORY_DB": "{ROOT}/memory.db",
+          "ROLLING_MEMORY_MODE": "cloud",
+          "ROLLING_MEMORY_READER": "owner",
+          "ROLLING_MEMORY_SCOPE": "mem:env"
+        },
+        "files": {
+          "config.toml": "[core]\ndb = \"memory.db\"\nscope = \"mem:file\"\n\n[mode]\nname = \"cloud\"\n\n[llm]\nprovider = \"openai\"\nbase_url = \"https://api.example.com/v1\"\napi_key_env = \"RM_GOLDEN_KEY\"\n\n[recall]\nbands = 3\n"
+        },
+        "flags": {
+          "mode": "local",
+          "reader": "deliverable"
+        }
+      },
+      "op": "config_load",
+      "save": "load-priority"
+    },
+    {
+      "args": {
+        "case": "invalid-mode",
+        "flags": {
+          "mode": "sideways"
+        }
+      },
+      "op": "config_load",
+      "save": "load-invalid-mode"
+    },
+    {
+      "args": {
+        "case": "invalid-reader",
+        "flags": {
+          "reader": "everyone"
+        }
+      },
+      "op": "config_load",
+      "save": "load-invalid-reader"
+    },
+    {
+      "args": {
+        "case": "invalid-scope",
+        "flags": {
+          "scope": "bad scope"
+        }
+      },
+      "op": "config_load",
+      "save": "load-invalid-scope"
+    },
+    {
+      "args": {
+        "case": "broken-toml",
+        "config_path": "config.toml",
+        "files": {
+          "config.toml": "core = [1,\n"
+        }
+      },
+      "op": "config_load",
+      "save": "load-broken-toml"
+    },
+    {
+      "args": {
+        "case": "secret-public",
+        "env": {
+          "RM_GOLDEN_KEY": "golden-key-value",
+          "ROLLING_MEMORY_MODE": "cloud"
+        }
+      },
+      "op": "config_load",
+      "save": "load-secret-public"
+    },
+    {
+      "args": {
+        "case": "egress-local",
+        "mode": "local",
+        "urls": [
+          "http://127.0.0.1:11434/v1/chat/completions",
+          "http://localhost:8080/v1",
+          "http://[::1]:8080/v1",
+          "https://api.example.com/v1/chat/completions",
+          "http://203.0.113.10:9/v1",
+          "ftp://127.0.0.1/x",
+          "http://"
+        ]
+      },
+      "op": "config_egress",
+      "save": "egress-local"
+    },
+    {
+      "args": {
+        "allow_loopback_llm": false,
+        "case": "egress-loopback-off",
+        "mode": "local",
+        "urls": [
+          "http://127.0.0.1:11434/v1/chat/completions",
+          "http://localhost:8080/v1"
+        ]
+      },
+      "op": "config_egress",
+      "save": "egress-loopback-off"
+    },
+    {
+      "args": {
+        "case": "egress-cloud",
+        "mode": "cloud",
+        "urls": [
+          "https://api.example.com/v1/chat/completions",
+          "http://203.0.113.10:9/v1"
+        ]
+      },
+      "op": "config_egress",
+      "save": "egress-cloud"
+    },
+    {
+      "args": {
+        "case": "secret-env",
+        "env_name": "RM_GOLDEN_KEY",
+        "env_value": "golden-key-value"
+      },
+      "op": "config_secret",
+      "save": "secret-env"
+    },
+    {
+      "args": {
+        "case": "secret-file-0600",
+        "file": "key.txt",
+        "file_text": "golden-key-value\n",
+        "mode": 384
+      },
+      "op": "config_secret",
+      "save": "secret-file-0600"
+    },
+    {
+      "args": {
+        "case": "secret-file-0644",
+        "file": "key.txt",
+        "file_text": "golden-key-value\n",
+        "mode": 420
+      },
+      "op": "config_secret",
+      "save": "secret-file-0644"
+    },
+    {
+      "args": {
+        "case": "secret-file-missing",
+        "file": "missing/key.txt"
+      },
+      "op": "config_secret",
+      "save": "secret-file-missing"
+    },
+    {
+      "args": {
+        "case": "secret-none"
+      },
+      "op": "config_secret",
+      "save": "secret-none"
+    }
+  ],
+  "scenario": "250-config-egress",
+  "scope": "mem:golden:250",
+  "table_digests": {
+    "activation": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "assertion": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "db_meta": "52a0f8c2396c753d1e0677b94a61721ff84f1f38dffec127830e80813c39d597",
+    "event": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "injection_ledger": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "mention": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "meta_edge": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "node": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "node_alias": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "replay_state": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "session_cursor": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "sync_state": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "trace": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "transcript_cursor": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "vector": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "timezone": "UTC"
+}

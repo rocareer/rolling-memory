@@ -1,0 +1,295 @@
+{
+  "cases": [
+    {
+      "argv": [
+        "init",
+        "--json"
+      ],
+      "id": "010-init",
+      "kind": "cli",
+      "note": "create the database and print the paths"
+    },
+    {
+      "argv": [
+        "config",
+        "show",
+        "--json"
+      ],
+      "id": "020-config-show",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "config",
+        "path"
+      ],
+      "id": "030-config-path",
+      "kind": "cli",
+      "note": "plain text, path tokenized"
+    },
+    {
+      "argv": [
+        "config",
+        "set",
+        "recall.bands",
+        "5"
+      ],
+      "id": "040-config-set",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "config",
+        "set",
+        "nokey",
+        "x"
+      ],
+      "id": "050-config-set-bad-key",
+      "kind": "cli",
+      "note": "ConfigError -> stderr text, exit 1"
+    },
+    {
+      "argv": [
+        "mode"
+      ],
+      "id": "060-mode-show",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "mode",
+        "cloud"
+      ],
+      "id": "070-mode-cloud",
+      "kind": "cli",
+      "note": "writes mode.name to the config file"
+    },
+    {
+      "argv": [
+        "recall",
+        "--q",
+        "老张 小白",
+        "--json"
+      ],
+      "id": "150-recall-full",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "recall",
+        "--q",
+        "老张",
+        "--result-mode",
+        "probe",
+        "--json"
+      ],
+      "id": "160-recall-probe",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "recall",
+        "--q",
+        "老张",
+        "--no-raw"
+      ],
+      "id": "170-recall-render",
+      "kind": "cli",
+      "note": "rendered text, ms normalized"
+    },
+    {
+      "argv": [
+        "recall",
+        "--json"
+      ],
+      "id": "180-recall-empty-cue",
+      "kind": "cli",
+      "note": "ValueError -> JSON error object, exit 1"
+    },
+    {
+      "argv": [
+        "recent",
+        "--json"
+      ],
+      "id": "190-recent",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "import",
+        "<CASE>/input/transcript.jsonl",
+        "--session",
+        "cm1",
+        "--json"
+      ],
+      "id": "390-import",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "import",
+        "<CASE>/input/missing.jsonl",
+        "--json"
+      ],
+      "id": "400-import-missing",
+      "kind": "cli",
+      "note": "FileNotFoundError -> JSON error, exit 1"
+    },
+    {
+      "argv": [
+        "export",
+        "--json"
+      ],
+      "id": "410-export",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "export",
+        "--out",
+        "<OUT>/export.json",
+        "--json"
+      ],
+      "id": "420-export-out",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "status",
+        "--json"
+      ],
+      "id": "450-status",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "doctor",
+        "--json"
+      ],
+      "id": "460-doctor",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "check",
+        "--json"
+      ],
+      "id": "470-check-ok",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "id": "480-break-anchor",
+      "kind": "sql",
+      "note": "direct write outside the CLI, so `check` reports an issue",
+      "params": [
+        "a_2fd10b49248dcd516858"
+      ],
+      "sql": "UPDATE assertion SET anchor_end = anchor_end + 999 WHERE node_id = ?"
+    },
+    {
+      "argv": [
+        "check",
+        "--json"
+      ],
+      "id": "490-check-failed",
+      "kind": "cli",
+      "note": "non-ok -> exit 1"
+    },
+    {
+      "argv": [
+        "reindex",
+        "--json"
+      ],
+      "id": "500-reindex",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "install",
+        "--list",
+        "--json"
+      ],
+      "id": "510-install-list",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "install",
+        "--json"
+      ],
+      "id": "520-install-none",
+      "kind": "cli",
+      "note": "no harness detected -> stderr message, exit 1"
+    },
+    {
+      "argv": [
+        "install",
+        "nope",
+        "--json"
+      ],
+      "id": "530-install-unknown-harness",
+      "kind": "cli",
+      "note": "ValueError -> JSON error, exit 1"
+    },
+    {
+      "argv": [
+        "recall",
+        "--q",
+        "老张",
+        "--asof",
+        "2026-01-01",
+        "--json"
+      ],
+      "id": "540-recall-asof",
+      "kind": "cli",
+      "note": ""
+    },
+    {
+      "argv": [
+        "hook",
+        "recall",
+        "--json"
+      ],
+      "id": "550-hook-silent",
+      "kind": "cli",
+      "note": "empty stdin -> silent, exit 0"
+    },
+    {
+      "argv": [
+        "mcp"
+      ],
+      "id": "560-mcp-eof",
+      "kind": "cli",
+      "note": "empty stdin -> server exits 0, no output"
+    }
+  ],
+  "env": {
+    "HOME": "<HOME>",
+    "ROLLING_MEMORY_CONFIG": "<CFG>",
+    "ROLLING_MEMORY_DB": "<DB>",
+    "ROLLING_MEMORY_LOG": "<LOG>",
+    "ROLLING_MEMORY_MODE": "local",
+    "ROLLING_MEMORY_SCOPE": "mem:golden:208",
+    "TMPDIR": "<TMP>/tmp",
+    "XDG_CONFIG_HOME": "<HOME>/.config",
+    "XDG_DATA_HOME": "<HOME>/.local/share",
+    "XDG_STATE_HOME": "<HOME>/.local/state"
+  },
+  "runner": "cli.main(argv) in-process, cwd=<CASE>",
+  "scenario": "208-cli-matrix",
+  "scope": "mem:golden:208"
+}

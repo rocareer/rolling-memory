@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Format check (gofmt)
+        run: test -z "$(gofmt -l cmd internal sdk)"
+
+      - name: Build & Vet
+        run: |
+          go build ./...
+          go vet ./...
+
+      - name: Unit, E2E & Golden Parity Tests
+        run: |
+          go test ./... -count=1
+          go test ./internal/golden -count=1
+          go test -race ./internal/... -count=1
+
+      - name: Admin console build & tests (when present)
+        run: |
+          if [ -d admin ]; then
+            (cd admin && go build ./... && go vet ./internal/rmconsole/... && go test -short ./internal/rmconsole/... -count=1)
+          fi
+          if [ -d admin/web ]; then
+            (cd admin/web && npm ci && npm run build)
+          fi
+
+      - name: Cross-Compile Smoke (5 release targets)
+        run: |
+          for t in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64; do
+            CGO_ENABLED=0 GOOS="${t%/*}" GOARCH="${t#*/}" go build -trimpath -o /dev/null ./cmd/rolling-memory
+          done

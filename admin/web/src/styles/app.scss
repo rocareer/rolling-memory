@@ -1,0 +1,150 @@
+@font-face {
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 600 900;
+    font-stretch: 100%;
+    font-display: swap;
+    src: url('/fonts/Archivo-Latin.woff2') format('woff2');
+}
+
+:root {
+    --rm-brand-font: 'Archivo', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family:
+        Helvetica Neue,
+        Helvetica,
+        PingFang SC,
+        Hiragino Sans GB,
+        Microsoft YaHei,
+        SimSun,
+        sans-serif;
+    color: var(--el-text-color-primary);
+    font-size: var(--el-font-size-base);
+    background-color: var(--ag-bg-color);
+}
+
+.w100 {
+    width: 100%;
+}
+
+.h100 {
+    height: 100%;
+}
+
+.ag-flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.default-main {
+    margin: var(--ag-main-space);
+}
+
+.ai-go-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2147483599;
+}
+
+// ==================== 表格表单 ====================
+.ag-operate-dialog {
+    overflow: hidden;
+    border-radius: var(--el-border-radius-base);
+    padding-bottom: 52px;
+}
+.ag-operate-dialog .el-dialog__header {
+    border-bottom: 1px solid var(--ag-bg-color);
+    .el-dialog__headerbtn {
+        top: 4px;
+    }
+}
+.ag-operate-dialog .el-dialog__body {
+    height: 58vh;
+}
+.ag-operate-dialog .el-dialog__footer {
+    padding: 10px var(--el-dialog-padding-primary);
+    box-shadow: var(--el-box-shadow);
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+}
+.ag-operate-form {
+    padding-top: 20px;
+}
+.block-help {
+    display: block;
+    width: 100%;
+    color: var(--el-color-info);
+    font-size: 13px;
+    line-height: 16px;
+    padding-top: 5px;
+}
+
+// ==================== 页面切换动画 ====================
+.slide-right-enter-active,
+.slide-right-leave-active,
+.slide-left-enter-active,
+.slide-left-leave-active {
+    will-change: transform;
+    transition: all 0.3s ease;
+}
+// slide-right
+.slide-right-enter-from {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+.slide-right-leave-to {
+    opacity: 0;
+    transform: translateX(20px);
+}
+// slide-left
+.slide-left-enter-from {
+    @extend .slide-right-leave-to;
+}
+.slide-left-leave-to {
+    @extend .slide-right-enter-from;
+}
+
+// ==================== 全局动画定义 ====================
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// ==================== 自适应 ====================
+@media screen and (max-width: 768px) {
+    .xs-hidden {
+        display: none;
+    }
+}
+@media screen and (max-width: 1024px) {
+    .ag-operate-dialog {
+        width: 96%;
+    }
+}

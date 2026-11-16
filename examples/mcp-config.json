@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "rolling-memory": {
+      "type": "stdio",
+      "command": "rolling-memory",
+      "args": ["mcp"],
+      "env": {
+        "ROLLING_MEMORY_SCOPE": "mem:self",
+        "ROLLING_MEMORY_DB": "/absolute/path/to/rolling-memory.db"
+      },
+      "timeoutMs": 30000
+    }
+  }
+}

@@ -1,0 +1,1 @@
+{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "Rolling-Memory (local): 0 active memory units · 0 pending traces · 0 conflicts · scope mem:golden:230"}}

@@ -1,0 +1,517 @@
+<div id="rm-brand" class="rm-brand">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Plus+Jakarta+Sans:wght@700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
+
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden">
+    <defs>
+      <!-- 彩虹阴（Dark Surface R7 Rainbow Yin：黑底高亮热区金橙 -> 极光紫品 -> 电光蓝） -->
+      <linearGradient id="g-r7-dark-l0" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FFD60A" />
+        <stop offset="45%" stop-color="#FF9F0A" />
+        <stop offset="100%" stop-color="#FF6482" />
+      </linearGradient>
+      <linearGradient id="g-r7-dark-l1" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FF6482" />
+        <stop offset="55%" stop-color="#BF5AF2" />
+        <stop offset="100%" stop-color="#5E5CE6" />
+      </linearGradient>
+      <linearGradient id="g-r7-dark-l2" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#5E5CE6" />
+        <stop offset="55%" stop-color="#0A84FF" />
+        <stop offset="100%" stop-color="#0040DD" />
+      </linearGradient>
+
+      <!-- 彩虹阳（Light Surface R7 Rainbow Yang：纸白底高浓深琥珀红 -> 皇家紫 -> 深海钴蓝，白底绝不发飘） -->
+      <linearGradient id="g-r7-light-l0" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#E67E00" />
+        <stop offset="48%" stop-color="#D9381E" />
+        <stop offset="100%" stop-color="#C81E5A" />
+      </linearGradient>
+      <linearGradient id="g-r7-light-l1" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#D81B60" />
+        <stop offset="52%" stop-color="#8E24AA" />
+        <stop offset="100%" stop-color="#4527A0" />
+      </linearGradient>
+      <linearGradient id="g-r7-light-l2" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#4527A0" />
+        <stop offset="52%" stop-color="#0066DF" />
+        <stop offset="100%" stop-color="#003BB5" />
+      </linearGradient>
+
+      <filter id="rm-elev" x="-26%" y="-22%" width="152%" height="160%">
+        <feDropShadow dx="0" dy="3.5" stdDeviation="3.4" flood-color="#000" flood-opacity=".20" />
+        <feDropShadow dx="1" dy="1.6" stdDeviation="1" flood-color="#000" flood-opacity=".22" />
+      </filter>
+      <filter id="rm-glow" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="4" stdDeviation="4.6" flood-color="#000" flood-opacity=".55" />
+      </filter>
+
+      <!-- 方案一：F03 · Open WebUI Archivo Black（曲膝刻槽百叶） -->
+      <path id="f3s-glyph" fill-rule="evenodd" d="
+        M 12 16 H 35 V 112 H 12 Z
+        M 40.2 16 H 53 C 72.5 16 83 26 83 43.5 C 83 57.2 75 66.8 62.5 70.2
+        C 70.5 72.4 75.2 78.2 78.5 89.5 L 84.5 112 H 60 L 54.5 91.5
+        C 52.1 82.2 48.2 78.2 40.2 77.6 V 57.5 H 50.5 C 58.5 57.5 63 52.8 63 45 C 63 37.2 58.5 32.5 50.5 32.5 H 40.2 Z
+      " />
+      <path id="f3-glyph" fill-rule="evenodd" d="
+        M 12 16 H 53 C 72.5 16 83 26 83 43.5 C 83 57.2 75 66.8 62.5 70.2
+        C 70.5 72.4 75.2 78.2 78.5 89.5 L 84.5 112 H 60 L 54.5 91.5
+        C 51.8 81.2 47.5 77.5 38.5 77.5 H 35 V 112 H 12 Z
+        M 35 32.5 V 57.5 H 50.5 C 58.5 57.5 63 52.8 63 45 C 63 37.2 58.5 32.5 50.5 32.5 Z
+      " />
+      <path id="f3-hull" d="M 8 15.5 H 54 C 76 15.5 87.5 26.8 87.5 43.5 C 87.5 57.8 79.5 68 68.5 71.8 C 75.5 75.2 79.8 81.5 83 91.5 L 89.5 112.5 H 8 Z" />
+      <mask id="m-f3-1" maskUnits="userSpaceOnUse" x="-20" y="-20" width="168" height="168"><rect x="-20" y="-20" width="168" height="168" fill="#fff" /><use href="#f3-hull" fill="#000" /></mask>
+      <mask id="m-f3-2" maskUnits="userSpaceOnUse" x="-20" y="-20" width="168" height="168"><rect x="-20" y="-20" width="168" height="168" fill="#fff" /><use href="#f3-hull" fill="#000" /><use href="#f3-hull" transform="translate(16 0)" fill="#000" /></mask>
+
+      <!-- 方案二：P03 · Prism 45° 棱镜切面（八角刻槽百叶） -->
+      <path id="p3s-glyph" fill-rule="evenodd" d="
+        M 12 16 H 36 V 112 H 12 Z
+        M 41.2 16 H 66 L 82 32 V 60 L 67 75 L 88 112 H 61 L 41.2 76.5 V 59 H 58 L 64 53 V 39 L 58 33 H 41.2 Z
+      " />
+      <path id="p3-glyph" fill-rule="evenodd" d="
+        M 12 16 H 66 L 82 32 V 60 L 67 75 L 88 112 H 61 L 41 76 H 36 V 112 H 12 Z
+        M 36 33 V 59 H 58 L 64 53 V 39 L 58 33 Z
+      " />
+      <path id="p3-hull" d="M 8 15.5 H 67.9 L 86.5 34.1 V 57.9 L 72.2 74.8 L 93.3 112.5 H 8 Z" />
+      <mask id="m-p3-1" maskUnits="userSpaceOnUse" x="-20" y="-20" width="168" height="168"><rect x="-20" y="-20" width="168" height="168" fill="#fff" /><use href="#p3-hull" fill="#000" /></mask>
+      <mask id="m-p3-2" maskUnits="userSpaceOnUse" x="-20" y="-20" width="168" height="168"><rect x="-20" y="-20" width="168" height="168" fill="#fff" /><use href="#p3-hull" fill="#000" /><use href="#p3-hull" transform="translate(16 0)" fill="#000" /></mask>
+
+      <!-- 方案三：R07 · Grotesk Precision（工业几何圆碗刻槽百叶） -->
+      <path id="f1s-glyph" fill-rule="evenodd" d="
+        M 12 16 H 36 V 112 H 12 Z
+        M 41.2 16 H 52 A 30 30 0 0 1 82 46 A 30 30 0 0 1 63 73.8 L 87 112 H 60 L 41.2 81.2 V 59 H 51 A 13 13 0 0 0 64 46 A 13 13 0 0 0 51 33 H 41.2 Z
+      " />
+      <path id="f1-glyph" fill-rule="evenodd" d="
+        M 12 16 H 52 A 30 30 0 0 1 82 46 A 30 30 0 0 1 63 73.8 L 87 112 H 60 L 38 76 H 36 V 112 H 12 Z
+        M 36 33 V 59 H 51 A 13 13 0 0 0 64 46 A 13 13 0 0 0 51 33 Z
+      " />
+      <path id="f1-hull" d="M 8 15.5 H 52 A 34.5 34.5 0 0 1 86.5 46 A 34.5 34.5 0 0 1 68.3 75.5 L 92.3 112.5 H 8 Z" />
+      <mask id="m-f1-1" maskUnits="userSpaceOnUse" x="-20" y="-20" width="168" height="168"><rect x="-20" y="-20" width="168" height="168" fill="#fff" /><use href="#f1-hull" fill="#000" /></mask>
+      <mask id="m-f1-2" maskUnits="userSpaceOnUse" x="-20" y="-20" width="168" height="168"><rect x="-20" y="-20" width="168" height="168" fill="#fff" /><use href="#f1-hull" fill="#000" /><use href="#f1-hull" transform="translate(16 0)" fill="#000" /></mask>
+
+      <!-- 精密百叶光栅遮罩（L1 密光栅 68% · L2 疏光栅 40%） -->
+      <mask id="m-louver-1" maskUnits="userSpaceOnUse" x="0" y="0" width="128" height="128">
+        <g fill="#fff">
+          <rect x="0" y="16" width="128" height="3.8" /><rect x="0" y="22" width="128" height="3.8" /><rect x="0" y="28" width="128" height="3.8" /><rect x="0" y="34" width="128" height="3.8" /><rect x="0" y="40" width="128" height="3.8" /><rect x="0" y="46" width="128" height="3.8" /><rect x="0" y="52" width="128" height="3.8" /><rect x="0" y="58" width="128" height="3.8" /><rect x="0" y="64" width="128" height="3.8" /><rect x="0" y="70" width="128" height="3.8" /><rect x="0" y="76" width="128" height="3.8" /><rect x="0" y="82" width="128" height="3.8" /><rect x="0" y="88" width="128" height="3.8" /><rect x="0" y="94" width="128" height="3.8" /><rect x="0" y="100" width="128" height="3.8" /><rect x="0" y="106" width="128" height="6" />
+        </g>
+      </mask>
+      <mask id="m-louver-2" maskUnits="userSpaceOnUse" x="0" y="0" width="128" height="128">
+        <g fill="#fff">
+          <rect x="0" y="16" width="128" height="2.4" /><rect x="0" y="22" width="128" height="2.4" /><rect x="0" y="28" width="128" height="2.4" /><rect x="0" y="34" width="128" height="2.4" /><rect x="0" y="40" width="128" height="2.4" /><rect x="0" y="46" width="128" height="2.4" /><rect x="0" y="52" width="128" height="2.4" /><rect x="0" y="58" width="128" height="2.4" /><rect x="0" y="64" width="128" height="2.4" /><rect x="0" y="70" width="128" height="2.4" /><rect x="0" y="76" width="128" height="2.4" /><rect x="0" y="82" width="128" height="2.4" /><rect x="0" y="88" width="128" height="2.4" /><rect x="0" y="94" width="128" height="2.4" /><rect x="0" y="100" width="128" height="2.4" /><rect x="0" y="106" width="128" height="2.4" />
+        </g>
+      </mask>
+    </defs>
+  </svg>
+
+  <!-- 顶部标题与结构控制 -->
+  <header class="rm-head">
+    <div>
+      <h2>Rolling-Memory · 三套字标方案（F03 · P03 · R07）× 每套 4 种形态</h2>
+      <p class="text-small text-muted">
+        全部 SVG 母版位于 <code>assets/brand/svg/</code>（共 3 × 4 = 12 枚）：每套均含 <strong>① 阳（白底深墨） · ② 阴（黑底纯白） · ③ 彩虹阳（白底极光） · ④ 彩虹阴（黑底极光）</strong>
+      </p>
+    </div>
+    <div class="viz-controls">
+      <div class="nav nav-pills" role="tablist" aria-label="几何结构模式" id="rm-struct-tabs">
+        <button class="nav-link active" data-struct="sl" role="tab" aria-selected="true" type="button">刻槽 + 百叶光栅</button>
+        <button class="nav-link" data-struct="s" role="tab" aria-selected="false" type="button">纯刻槽</button>
+        <button class="nav-link" data-struct="solid" role="tab" aria-selected="false" type="button">经典实心</button>
+      </div>
+      <label class="form-check">
+        <input class="form-check-input" type="checkbox" id="rm-grid-toggle" />
+        <span class="form-check-label">参考线</span>
+      </label>
+    </div>
+  </header>
+
+  <!-- 双轨 R7 热区记忆色彩规范条（黑底彩虹阴 + 白底彩虹阳） -->
+  <div class="rm-palette-bar" aria-label="R7 热区记忆双轨色标">
+    <span class="rm-pal-tag">R7 DUAL-SURFACE AURORA</span>
+    <div class="rm-pal-swatches">
+      <span class="rm-chip"><i style="background:linear-gradient(135deg,#FFD60A,#FF9F0A,#FF6482)"></i><strong>L0 Remember</strong> 热态写入锚</span>
+      <span class="rm-chip"><i style="background:linear-gradient(135deg,#FF6482,#BF5AF2,#5E5CE6)"></i><strong>L1 Rolling</strong> 极光流转带</span>
+      <span class="rm-chip"><i style="background:linear-gradient(135deg,#5E5CE6,#0A84FF,#0040DD)"></i><strong>L2 Recall</strong> 深海冷带场</span>
+      <span class="text-small" style="color:#86868b">｜彩虹阴（黑底高亮色标） + 彩虹阳（白底高浓深色标）双版本齐备</span>
+    </div>
+    <div class="rm-grad-bar"></div>
+  </div>
+
+  <!-- 三套终选方案 × 每套 4 种形态（阳 / 阴 / 彩虹阳 / 彩虹阴） -->
+  <div class="rm-archive-stack" id="rm-archive-stack"></div>
+</div>
+
+<style>
+  #rm-brand {
+    --rm-border: light-dark(#e1e2e8, #282a34);
+    --rm-card-bg: light-dark(#f6f6f9, #14151a);
+    display: block;
+  }
+  #rm-brand .rm-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  #rm-brand h2, #rm-brand h3 { margin: 0; }
+  #rm-brand .rm-head p { margin: 4px 0 0; }
+
+  #rm-brand .rm-palette-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #08080b;
+    color: #f5f5f7;
+    border: 1px solid #262730;
+    margin-bottom: 16px;
+  }
+  #rm-brand .rm-pal-tag {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: #FF9F0A;
+    font-weight: 500;
+  }
+  #rm-brand .rm-pal-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+  }
+  #rm-brand .rm-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #d8d8df;
+  }
+  #rm-brand .rm-chip i {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  #rm-brand .rm-grad-bar {
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #FFD60A 0%, #FF9F0A 22%, #FF6482 48%, #BF5AF2 68%, #5E5CE6 84%, #0A84FF 100%);
+  }
+
+  #rm-brand .rm-archive-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  #rm-brand .rm-family-panel {
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid var(--rm-border);
+    background: var(--rm-card-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #rm-brand .rm-family-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  #rm-brand .rm-quad-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
+    gap: 10px;
+  }
+  #rm-brand .rm-edition-card {
+    border-radius: 11px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 206px;
+  }
+  #rm-brand .rm-edition-card.ed-yang {
+    background: #f5f5f7;
+    color: #0f1014;
+    border: 1px solid #dedee6;
+  }
+  #rm-brand .rm-edition-card.ed-yin {
+    background: #0c0d11;
+    color: #f5f5f7;
+    border: 1px solid #252730;
+  }
+  #rm-brand .rm-edition-card.ed-rain-yang {
+    background: radial-gradient(120% 90% at 24% 18%, rgba(255,159,10,.10), rgba(142,36,170,.06) 50%, #f7f7fa 88%), #f7f7fa;
+    color: #0f1014;
+    border: 1px solid #df6e4;
+    border-color: #dcd8e6;
+  }
+  #rm-brand .rm-edition-card.ed-rain-yin {
+    background: radial-gradient(120% 90% at 24% 18%, rgba(255,159,10,.16), rgba(191,90,242,.12) 48%, #060609 86%), #060609;
+    color: #f5f5f7;
+    border: 1px solid #352b38;
+  }
+  #rm-brand .rm-ed-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    opacity: .78;
+  }
+  #rm-brand .rm-ed-svg {
+    width: 124px;
+    height: 124px;
+  }
+  #rm-brand .rm-ed-foot {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(128,128,140,.22);
+  }
+  #rm-brand .rm-ed-lockup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #rm-brand .rm-ed-lockup svg { width: 22px; height: 22px; flex-shrink: 0; }
+  #rm-brand .rm-ed-word {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-size: 13px;
+  }
+  #rm-brand .rm-edition-card.ed-rain-yin .rm-ed-word em {
+    font-style: normal;
+    background: linear-gradient(92deg, #FFD60A 0%, #FF9F0A 28%, #FF6482 58%, #BF5AF2 82%, #0A84FF 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  #rm-brand .rm-edition-card.ed-rain-yang .rm-ed-word em {
+    font-style: normal;
+    background: linear-gradient(92deg, #D9381E 0%, #C81E5A 38%, #8E24AA 70%, #0066DF 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  #rm-brand .rm-edition-card.ed-yang .rm-ed-word em,
+  #rm-brand .rm-edition-card.ed-yin .rm-ed-word em {
+    font-style: normal;
+    opacity: .68;
+  }
+  #rm-brand .rm-ed-scales {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  #rm-brand .rm-ed-scales svg.s24 { width: 24px; height: 24px; }
+  #rm-brand .rm-ed-scales svg.s16 { width: 16px; height: 16px; }
+
+  #rm-brand .rm-guides {
+    display: none;
+    stroke-width: .9;
+    stroke-opacity: .36;
+    stroke-dasharray: 2.5 2.5;
+  }
+  #rm-brand.show-guides .rm-guides { display: inline; }
+</style>
+
+<script>
+  (function () {
+    var root = document.getElementById("rm-brand");
+    var structTabs = document.querySelectorAll("#rm-struct-tabs .nav-link");
+    var gridBox = document.getElementById("rm-grid-toggle");
+    var stackEl = document.getElementById("rm-archive-stack");
+    if (!root || !stackEl) return;
+
+    var FAMILIES = [
+      {
+        key: "f3",
+        code: "方案一 · F03 ARCHIVO BLACK（Open WebUI 品牌曲膝刻槽百叶）",
+        spec: "23u 左柱 + 5.2u 垂直刻槽 + 曲膝垂直落腿 + 后两层疏密百叶光栅",
+        filePrefix: "f03-archivo",
+        font: "'Archivo', system-ui, sans-serif"
+      },
+      {
+        key: "p3",
+        code: "方案二 · P03 PRISM 45°（八角光学棱镜刻槽百叶）",
+        spec: "24u 左柱 + 5.2u 垂直刻槽 + 45° 光学倒角字碗 + 28° 直斜腿 + 后两层疏密百叶光栅",
+        filePrefix: "p03-prism",
+        font: "'Space Grotesk', system-ui, sans-serif"
+      },
+      {
+        key: "f1",
+        code: "方案三 · R07 GROTESK STENCIL（01 工业几何圆碗刻槽百叶）",
+        spec: "24u 左柱 + 5.2u 垂直刻槽 + R30/R13 偏心圆碗 + 28° 直斜腿 + 后两层疏密百叶光栅",
+        filePrefix: "r07-grotesk",
+        font: "'Plus Jakarta Sans', system-ui, sans-serif"
+      }
+    ];
+
+    var state = { struct: "sl", guides: false };
+
+    function buildMark(family, mode, structMode) {
+      // mode: 'yang' | 'yin' | 'rain-yang' | 'rain-yin'
+      var useStencil = structMode !== "solid";
+      var useLouver = structMode === "sl";
+      var glyphId = "#" + family + (useStencil ? "s" : "") + "-glyph";
+      var m1 = "m-" + family + "-1";
+      var m2 = "m-" + family + "-2";
+      var dx = 16;
+
+      var guidesMarkup =
+        '<g class="rm-guides" fill="none" stroke="currentColor">' +
+        '<line x1="0" y1="16" x2="128" y2="16"/><line x1="0" y1="74" x2="128" y2="74"/><line x1="0" y1="112" x2="128" y2="112"/>' +
+        '<line x1="12" y1="0" x2="12" y2="128"/><line x1="83" y1="0" x2="83" y2="128"/>' +
+        '</g>';
+
+      function wrapLouver(level, inner) {
+        if (!useLouver) return inner;
+        return '<g mask="url(#m-louver-' + level + ')">' + inner + '</g>';
+      }
+
+      if (mode === "yang") {
+        var c1 = useLouver ? "#2c2e38" : "#4a4d5c";
+        var c2 = useLouver ? "#686c7e" : "#8c90a4";
+        return guidesMarkup +
+          '<g filter="url(#rm-elev)">' +
+          '<g mask="url(#' + m2 + ')">' + wrapLouver(2, '<use href="' + glyphId + '" transform="translate(' + (dx * 2) + ' 0)" fill="' + c2 + '"/>') + '</g>' +
+          '<g mask="url(#' + m1 + ')">' + wrapLouver(1, '<use href="' + glyphId + '" transform="translate(' + dx + ' 0)" fill="' + c1 + '"/>') + '</g>' +
+          '<use href="' + glyphId + '" fill="#0f1014"/>' +
+          '</g>';
+      }
+
+      if (mode === "yin") {
+        var y1 = useLouver ? "#bfc2d0" : "#a0a4b8";
+        var y2 = useLouver ? "#6e7285" : "#585c6e";
+        return guidesMarkup +
+          '<g filter="url(#rm-glow)">' +
+          '<g mask="url(#' + m2 + ')">' + wrapLouver(2, '<use href="' + glyphId + '" transform="translate(' + (dx * 2) + ' 0)" fill="' + y2 + '"/>') + '</g>' +
+          '<g mask="url(#' + m1 + ')">' + wrapLouver(1, '<use href="' + glyphId + '" transform="translate(' + dx + ' 0)" fill="' + y1 + '"/>') + '</g>' +
+          '<use href="' + glyphId + '" fill="#f5f5f7"/>' +
+          '</g>';
+      }
+
+      if (mode === "rain-yang") {
+        return guidesMarkup +
+          '<g filter="url(#rm-elev)">' +
+          '<g mask="url(#' + m2 + ')">' + wrapLouver(2, '<use href="' + glyphId + '" transform="translate(' + (dx * 2) + ' 0)" fill="url(#g-r7-light-l2)"/>') + '</g>' +
+          '<g mask="url(#' + m1 + ')">' + wrapLouver(1, '<use href="' + glyphId + '" transform="translate(' + dx + ' 0)" fill="url(#g-r7-light-l1)"/>') + '</g>' +
+          '<use href="' + glyphId + '" fill="url(#g-r7-light-l0)"/>' +
+          '</g>';
+      }
+
+      // rain-yin: 黑底 R7 热区记忆冷却轨迹
+      return guidesMarkup +
+        '<g filter="url(#rm-glow)">' +
+        '<g mask="url(#' + m2 + ')">' + wrapLouver(2, '<use href="' + glyphId + '" transform="translate(' + (dx * 2) + ' 0)" fill="url(#g-r7-dark-l2)"/>') + '</g>' +
+        '<g mask="url(#' + m1 + ')">' + wrapLouver(1, '<use href="' + glyphId + '" transform="translate(' + dx + ' 0)" fill="url(#g-r7-dark-l1)"/>') + '</g>' +
+        '<use href="' + glyphId + '" fill="url(#g-r7-dark-l0)"/>' +
+        '</g>';
+    }
+
+    function renderAll() {
+      root.classList.toggle("show-guides", !!state.guides);
+      if (gridBox) gridBox.checked = !!state.guides;
+      structTabs.forEach(function (t) {
+        var on = t.getAttribute("data-struct") === state.struct;
+        t.classList.toggle("active", on);
+        t.setAttribute("aria-selected", on ? "true" : "false");
+      });
+
+      var editions = [
+        { mode: "yang", cls: "ed-yang", label: "① 阳（白底深墨）", sub: "yang.svg" },
+        { mode: "yin", cls: "ed-yin", label: "② 阴（黑底纯白）", sub: "yin.svg" },
+        { mode: "rain-yang", cls: "ed-rain-yang", label: "③ 彩虹阳（白底极光）", sub: "rainbow-yang.svg" },
+        { mode: "rain-yin", cls: "ed-rain-yin", label: "④ 彩虹阴（黑底极光）", sub: "rainbow-yin.svg" }
+      ];
+
+      stackEl.innerHTML = FAMILIES.map(function (fam) {
+        var cardsHtml = editions.map(function (ed) {
+          var svgInner = buildMark(fam.key, ed.mode, state.struct);
+          return (
+            '<div class="rm-edition-card ' + ed.cls + '">' +
+              '<div class="rm-ed-top"><span>' + ed.label + '</span><code>' + ed.sub + '</code></div>' +
+              '<svg viewBox="0 0 128 128" class="rm-ed-svg" role="img" aria-label="' + fam.code + ' ' + ed.label + '">' + svgInner + '</svg>' +
+              '<div class="rm-ed-foot">' +
+                '<div class="rm-ed-lockup">' +
+                  '<svg viewBox="0 0 128 128" aria-hidden="true">' + svgInner + '</svg>' +
+                  '<span class="rm-ed-word" style="font-family:' + fam.font + '">Rolling-<em>Memory</em></span>' +
+                '</div>' +
+                '<div class="rm-ed-scales" aria-label="24px / 16px 实测">' +
+                  '<svg viewBox="0 0 128 128" class="s24" aria-hidden="true">' + svgInner + '</svg>' +
+                  '<svg viewBox="0 0 128 128" class="s16" aria-hidden="true">' + svgInner + '</svg>' +
+                '</div>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join("");
+
+        return (
+          '<section class="rm-family-panel" aria-label="' + fam.code + '">' +
+            '<div class="rm-family-head">' +
+              '<h3>' + fam.code + '</h3>' +
+              '<span class="text-small text-muted">' + fam.spec + '</span>' +
+            '</div>' +
+            '<div class="rm-quad-grid">' + cardsHtml + '</div>' +
+          '</section>'
+        );
+      }).join("");
+    }
+
+    function save() {
+      if (window.zcode && window.zcode.setWidgetState) {
+        window.zcode.setWidgetState({ modelContent: state, privateContent: state }).catch(function () {});
+      }
+    }
+
+    var saved = window.zcode && window.zcode.widgetState;
+    if (saved && typeof saved === "object") {
+      if (typeof saved.struct === "string" && ["sl", "s", "solid"].indexOf(saved.struct) >= 0) {
+        state.struct = saved.struct;
+      }
+      if (typeof saved.guides === "boolean") state.guides = saved.guides;
+    }
+    renderAll();
+
+    structTabs.forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        state.struct = tab.getAttribute("data-struct") || "sl";
+        renderAll();
+        save();
+      });
+    });
+
+    if (gridBox) {
+      gridBox.addEventListener("change", function () {
+        state.guides = gridBox.checked;
+        renderAll();
+        save();
+      });
+    }
+
+    window.addEventListener("zcode:set_globals", function (e) {
+      var g = e.detail && e.detail.globals && e.detail.globals.widgetState;
+      if (g && typeof g === "object") {
+        if (typeof g.struct === "string" && ["sl", "s", "solid"].indexOf(g.struct) >= 0) {
+          state.struct = g.struct;
+        }
+        if (typeof g.guides === "boolean") state.guides = g.guides;
+        renderAll();
+      }
+    });
+  })();
+</script>

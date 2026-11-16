@@ -1,0 +1,576 @@
+# plugin: rolling-memory v0.0.58
+# Rolling-Memory 记忆系统插件中文语言包（源 → web/src/lang/zh-cn/plugin/rolling-memory.yaml，逐字节一致）。
+# 键前缀 plugin.rolling-memory.*（由落位路径物理分段生成）。
+title: Rolling Memory
+refresh: 立即刷新
+widget:
+    status: 状态
+    online: 在线 (Online)
+    offline: 离线 (Offline)
+    assertions: 活跃单元
+    conflicts: 陈旧结晶
+    lastEvent: 最近事件
+    latency: 延迟
+    boot: Boot注入
+    ledger: 调用账本
+    scope: 记忆域
+    bgTask: 后台任务
+    clickTerminal: ⌘ 点击打开实时 CLI 终端
+background:
+    selectAndMount: 选择目录并挂载
+    waitingForPicker: 等待系统目录选择
+    mounting: 正在挂载并同步
+    nativeHint: 点选的是 Admin 服务所在电脑的目录；远程访问时，系统面板也会打开在服务器上。
+    manualFallback: 系统目录选择器不可用，已改为手动输入
+    manualTitle: 手动挂载服务器目录
+    manualPrompt: 请输入 Admin 服务所在电脑的目录路径（支持绝对路径或 ~/ 开头，自动递归扫描嵌套子目录）：
+    manualPlaceholder: '/Users/name/Documents、C:\Users\name\Documents 或 ~/Documents'
+    mountAndSync: 挂载并同步
+    cancelled: 已取消目录选择
+    pickerBusy: 系统目录选择器已打开，请先完成当前选择
+    mountSuccess: 目录已挂载，正文读取与分块同步完成
+    mountFailed: 挂载失败
+    badge: L1 · 文档与代码
+    tag: 多目录/嵌套目录原位读取
+    dirsLabel: '已挂载目录：'
+    dirsUnit: 个
+    filesLabel: '扫描文件：'
+    filesUnit: 个
+    chunksLabel: '文档分块：'
+    chunksUnit: 块
+    mountTitle: L1 Background 本地多目录挂载（支持嵌套子目录）
+    formatPrefix: '支持纯 Go 流式原位读取：'
+    formatSuffix: 代码源码（自动递归子目录并过滤 .git / node_modules）
+    empty: 暂未挂载本地目录，点击右上角「选择目录并挂载」添加
+    colPath: 本地目录物理路径
+    colFileCount: 文件数
+    colChunkCount: 分块数
+    colAction: 操作
+    removeBtn: 移除
+    removeConfirm: 确认移除挂载目录「{path}」及其派生的背景分块吗？
+    removeConfirmTitle: 确认移除
+    removeSuccess: 已移除挂载目录
+    removeKeptFiles: 保留 {count} 个仍被其他挂载目录覆盖的文件（未移除、无需重传）
+    syncSummary: '同步完成：扫描 {scanned} 个文件，新增/更新 {ingested} 个，未变跳过 {unchanged} 个'
+    syncDone: 同步完成
+    pageTitle: L1 文档与代码 · 本地目录挂载与分块浏览
+    pageSub: 仅由您自己挂载的本地目录文件构成：原位读取正文 → 分块入 L1；Harness 对话记录永不进入本层（对话属于 L2 会话记录）
+    reconcileSuccess: 'L1 对齐完成：+{bg} 个挂载文档分块（本层不含任何 Harness 对话记录）'
+    reconcileSuccessLocal: 'L1 本地对齐完成：+{bg} 个挂载文档分块（本地模式零云端请求）'
+    reconcileResult: 'L1 同步结果：处理文件 {files}，推送分块 {chunks}'
+    syncBtn: 立即增量同步
+    manualBtn: 手动输入路径
+    manualHint: 系统目录选择器不可用（如远程访问）时，可直接手输服务器路径挂载；挂载即触发一次增量同步。
+    colAddedAt: 挂载时间
+    browseBtn: 浏览文件
+    filesTitle: 挂载目录内的文件（点「查看分块」可定位下方分块列表）
+    filesEmpty: 暂无文件（挂载目录后首次同步会建立文件清单）
+    colRelPath: 文件相对路径
+    colSize: 大小
+    colUpdatedAt: 文件修改时间
+    chunksBtn: 查看分块
+    clearFilterBtn: 清除文件过滤
+    unitsTitle: 文档分块（L1）
+episodic:
+    badge: L2 · 会话记录
+    tag: 用户 Harness 日常对话流
+    cellsLabel: '记忆地址：'
+    cellsUnit: 个
+    totalLabel: '总记忆单元：'
+    totalUnit: 条
+    pageTitle: L2 会话记录 · 对话单元与本机 Harness 同步
+    pageSub: 仅由 Harness 对话记录构成：后台自动同步 + 历史会话对齐导入；本地目录文件永不进入本层（文件属于 L1 文档与代码）
+    reconcileResult: 'L2 同步结果：导入宿主对话 {har} 轮，推送 {epi} 条'
+    reconcileSuccess: 'L2 对齐完成：导入 Harness 对话 +{har} 轮 · 同步 +{epi}（Harness 对话只进 L2，不进 L1）'
+    reconcileSuccessLocal: 'L2 本地对齐完成：导入 Harness 对话 +{har} 轮（本地模式零云端请求）'
+    unitsTitle: 会话记录单元（L2）
+    syncActiveHarnessBtn: '同步当前 Harness 对话 ({name})'
+    syncAllHarnessesBtn: 同步本机全部 Harness 对话
+    syncThisBtn: 同步此宿主
+    indexProgressTitle: 历史指针索引回填与流式扫描进度
+    indexStatusRunning: 后台扫描中
+    indexStatusPaused: 已暂停
+    indexStatusReady: 就绪待命
+    indexCompatibleLbl: 已建索引
+    indexMissingLbl: 待回填/无源
+    indexBackfillCursorLbl: 回填游标
+    indexScanCursorLbl: 扫描位置
+    pauseSyncBtn: 暂停后台扫描
+    resumeSyncBtn: 继续后台扫描
+    stepSyncBtn: 推进一轮 (+60)
+    syncPausedToast: 已暂停后台扫描与索引回填（游标已保存）
+    syncResumedToast: 已恢复后台扫描与索引回填
+    syncSteppedToast: '已单步推进一轮：新增索引 +{indexed}（扫描 {scanned} 条）'
+noetic:
+    badge: L3 · 检索沉淀
+    tag: Agent 检索线索 + 引用证据
+    citedLabel: '引用证据：'
+    citedUnit: 条
+    staleLabel: '已失效 (stale)：'
+    staleUnit: 条
+    unit: 条
+    pageTitle: L3 检索沉淀 · Agent 检索线索与引用证据
+    pageSub: 仅由 Agent 每次带证据的 recall 自动沉淀（检索线索 + 引用的证据单元），检索时写入；不承接 Harness 对话或本地目录文件。行内「在调试台重放」可复现 Agent 当时看到的结果
+    reconcileResult: 'L3 同步结果：推送 {noe} 条检索沉淀'
+    reconcileSuccess: 'L3 对齐完成：+{noe} 条检索沉淀（来自 Agent 检索线索 + 引用证据）'
+    reconcileSuccessLocal: 'L3 本地模式无需对齐：检索沉淀由 Agent 检索在本地自动写入（零云端请求）'
+    unitsTitle: 检索沉淀（L3）
+    purgeStaleBtn: '清理已失效 ({n})'
+    purgeStaleConfirm: '确认彻底清除 {n} 条已失效（stale）的检索沉淀吗？'
+    purgeStaleSuccess: 已清理全部已失效（stale）条目
+    goRecallBtn: 打开检索调试台
+    replayBtn: 在调试台重放
+overview:
+    heroTitleSuffix: 记忆总览
+    heroSub: Rolling Autonoetic Memory Engine（洛灵自知记忆引擎）· 三层记忆（L1 文档与代码 / L2 会话记录 / L3 检索沉淀）实时分布与跨层聚合
+    syncBtn: 同步全部挂载目录（L1）
+    reloadBtn: 刷新数据
+    jumpHint: 进入该层独立页面
+    aggregateTitle: 跨层聚合列表（全部记忆单元）
+    envLabel: 当前运行环境
+    healthLabel: 记忆健康度
+    reconcileAllBtn: 一键三层对齐同步
+    reconcileLayerBtn: 对齐同步本层
+    checkHealthBtn: 重新检测
+    harnessesTitle: 宿主运行环境检测与历史会话扫描（Claude Code / ZCode / Codex 等）
+    healthChecksTitle: 五维记忆健康诊断与本地 ⇄ 远端三层对齐
+    healthChecksTitleLocal: 五维记忆健康诊断与本地三层金库
+    localVaultLbl: 本地金库
+    remoteCloudLbl: 远端云端
+    pendingSyncLbl: 待对齐差额
+    harnessUnsyncedLbl: 宿主未导入对话
+    alignedTag: 已对齐
+    pendingTag: 待同步
+    unknownStatus: 状态未知
+    healthUnavailable: 健康状态不可用，请重新检测
+    progressTitle: 正在检测环境与记忆健康
+    progressHint: 检测结果就绪后自动呈现，无需停留本页
+    progressElapsed: 已用 {s}s
+    progressRefreshing: 后台刷新中 · 已 {s}s
+    progressUpdatedAt: 数据更新于 {time}（用时 {s}s）
+    progressSessions: 已查 {done} 个会话
+    progressTurns: '{turns}/{cap} 轮'
+    progressStageVault: 本地金库统计
+    progressStageWiring: 宿主接线检测
+    progressStageScan: 对话历史扫描
+    progressStageIndex: 记忆索引诊断
+    progressError: 检测未完成，可在下方重试
+    progressRetry: 重试
+    refreshFailed: 重新检测未完成，请稍后重试
+    reconcileResult: '同步结果：导入宿主对话 {har} 轮 · 处理 L1 文件 {files} · 推送 L2 {epi} / L1 {bg} / L3 {noe}'
+    reconcileWarnings: '同步有警告，结果可能不完整：'
+    reconcileNoReport: 同步未返回结果，状态未知
+    autoSyncModeLbl: 自动监控同步
+    manualSyncModeLbl: 手动同步模式
+    syncModeSwitchedAuto: '已切换为自动监控同步模式（L1 挂载目录块级增量 + L2 宿主对话静默后自动同步）'
+    syncModeSwitchedManual: '已切换为手动同步模式（仅在点击同步按钮或执行 CLI 命令时同步）'
+    reconcileSuccess: '记忆对齐完成：导入宿主历史对话 +{har} 轮 · L2 +{epi} · L1 +{bg} · L3 +{noe}（健康度 {score}%）'
+    reconcileSuccessLocal: '本地记忆对齐完成：导入宿主历史对话 +{har} 轮 · L1 挂载分块 +{bg}（健康度 {score}% · 零云端请求）'
+browser:
+    title: 记忆单元列表
+    contentTitle: 单元正文
+    countText: 当前显示 {shown} / 该层共 {total} 条
+    refreshBtn: 刷新
+    statusAll: 全部状态
+    statusActive: 有效 active
+    statusStale: 失效 stale
+    colStatus: 状态
+    colFileChunk: 文件 · 分块坐标
+    empty: 暂无记忆单元（可先在 L1 文档与代码挂载目录；L3 由 Agent 检索自动沉淀）
+    emptySearch: 没有匹配当前搜索条件的记忆单元
+    emptyLoadFailed: 加载失败：请求超时或后端未响应，请点击「刷新」重试
+    reloadBody: 重新读取正文
+preview:
+    copyRaw: 复制原文
+    copied: 已复制
+filters:
+    all: '全部 ({n})'
+    searchPlaceholder: 搜索 ID / 内容 / 路径...
+    colLayer: 层级
+    colUnit: 单元 ID
+    colContent: 记忆内容
+    colAddr: 记忆地址 / 引用证据
+    colTime: 时间
+    citedPrefix: '引用:'
+    cellAddress: '记忆地址:'
+    citedHandles: '引用证据:'
+layers:
+    background: L1 文档
+    episodic: L2 会话
+    noetic: L3 沉淀
+manage:
+    colCell: 记忆地址
+    colLayer: 记忆层
+    colObject: 记忆明文
+    colConfidence: 权重/置信度
+    colAction: 操作
+    detailBtn: 详情溯源
+    confAll: 全部置信度 (Confidence ≥ 0)
+    drawerTitle: 记忆单元溯源（本地明文金库）
+    verbatimAnchorTitle: 原文切片
+    fullTraceTitle: 所属原始明文全文
+recallPage:
+    title: 检索调试 · 与 Agent 同一条 recall 链路
+    subtitle: 输入线索执行 recall，结果按「带」分组交付。默认只读（不写入 L3）；工作区锚参与查询，并优先显示匹配的项目证据。可在下方选择其他排序方式。
+    backManageBtn: 返回记忆总览
+    runBtn: 执行检索
+    queryPlaceholder: 输入线索（与 Agent 调用 recall 时的 cue 相同），回车执行
+    cueLbl: 线索
+    workspaceAll: 全部工作区
+    recentCuesLbl: 最近 Agent 检索
+    recentCuesEmpty: 暂无（Agent 带证据的 recall 会自动出现在这里）
+    citedUnit: 条引用证据
+    crystallizeLbl: 写入 L3
+    minRelLbl: 组内相对下限
+    relOptAll: 全部（不按相对强度过滤）
+    relOptAtLeast: 相对下限 ≥ {v}
+    relStrengthHint: 相对强度是本条权重相对于同族候选峰值的比例；不同来源族分别归一化，峰值候选不一定最终显示。它不是可信度或相关度，也不能跨查询或跨族比较。线索覆盖率只描述首个候选与线索的原子重合，并非检索成功率或逐条相关度。
+    sortByLbl: 结果排序方式
+    sortByDelivery: 按交付顺序
+    sortByScore: 按得分（跨来源不可比）
+    sortByRel: 按组内相对强度
+    sortByTime: 按时间
+    includeRawLbl: 附带原文命中
+    kpiBandsHits: 交付带 / 命中条目
+    kpiCoverage: 首候选线索原子重合率
+    kpiWorkspace: 工作区锚
+    kpiLatency: 耗时 · 模式
+    modeReadOnly: 只读
+    modeWrite: 已写入 L3
+    tabHitsTable: 命中明细
+    tabBandsTree: 按带分组（Agent 实际看到的结构）
+    tabRawJson: 原文命中 & 原始 JSON
+    colBandChain: 所属带
+    colFact: 召回内容
+    colRelStrength: 组内相对强度
+    colRelTag: 相对
+    colScore: 得分
+    colCoord: 状态 / 工作区 / 时间
+    emptyBands: 未命中（可调整线索或取消工作区锚）
+eval:
+    title: LoCoMo × Backboard 长程记忆评测实验室
+    goLeaderboardBtn: 查看 LoCoMo-Backboard 榜单
+    corpusTag: 语料：LoCoMo10（5,882 轮对话）
+    protocolBoardTag: 内置协议 & 对标榜单：locomo-backboard
+    isolatedScopeTag: 同表隔离域
+    configProtocolBtn: 模型 & 协议配置
+    importRaw: 导入 LoCoMo 语料 (5,882 轮)
+    importRule: 导入并抽取记忆单元
+    clearEval: 清空评测域
+    intro1Title: 1. 权威基准语料：LoCoMo 10 组长程对话 (ACL 2024)
+    intro1Badge: SHA256 完整性已锁死
+    intro1Body: 评测采用 Maharana et al. 发布的 10 组跨月长程多会话对话（共 5,882 轮交互）与上游官方题集 cat1-4 全集（1,540 题：Cat 4 单跳 841 · Cat 2 时序 321 · Cat 1 多跳 282 · Cat 3 开放域 96，随附官方证据）。基准语料由上游项目按 CC BY-NC 4.0 发布、不随产品分发：可运行 rmem eval --fetch locomo --accept-upstream-license 一条命令获取并本地重建官方题集，或从上游获取 locomo10.json 后自备导入；每次运行前自动校验 SHA-256，可在本机复现。ATM-Bench 语料同样可一条命令获取：rmem eval --fetch atm --accept-upstream-license。
+    intro2Title: 2. 零偏差同尺协议：locomo-backboard 冻结协议对
+    intro2Badge: 三枚 SHA1 钉只读保护
+    intro2Body: 内置评测协议与 locomo-backboard 商业榜单 1:1 严格同尺，逐字节复刻官方 local-qa-judge（locomo-frozen-2026-10-11）：由 locomo-answer（答题智能体）与 locomo-judge（1,694 字节判官智能体，输出 CORRECT / WRONG）组成。您既可 0 成本断网秒级复算纯检索召回率，也可配置自己的 LLM（自付 Token 成本）复现端到端问答得分。
+    intro3Title: 3. 个人记忆安全：同库同表 · Scope 物理隔离
+    intro3Badge: 100% 零交叉污染
+    userScopeTag: 用户记忆域
+    evalScopeTag: 评测隔离域
+    statTraces: 原文轨迹
+    statNodes: 图节点
+    statAssertions: 记忆单元
+    chart1Title: 基准水位 vs 历史评测运行得分对比（点击柱条可切换右侧分项剖析）
+    legendEv: 证据召回率 (Evidence Hit)
+    legendJdg: Judge 判对率 (Accuracy)
+    oracleLine: 历史参考：单轮金标 Oracle 上限（归档档位，不再提供）
+    baselineShort: 基线
+    runShort: 实测
+    chart2Title: 四维题型得分剖析
+    baselineBadge: 参考基线
+    runBadge: 实测运行
+    catEvLabel: 证据召回
+    catJdgLabel: Judge 判对
+    cat4Label: Cat 4 · 单跳事实 (Single-hop)
+    cat2Label: Cat 2 · 时间推理 (Temporal)
+    cat1Label: Cat 1 · 多跳推理 (Multi-hop)
+    cat3Label: Cat 3 · 开放域推理 (Open-domain)
+    notePrefix: 评测说明
+    newRunLabel: 发起新评测运行
+    tierSetSuffix: 题集
+    questionsUnit: 题
+    agentsSwitchOn: 启用 locomo-backboard 双智能体评测 (Answer + Judge)
+    agentsSwitchOff: 仅跑 0-LLM 机械检索核
+    evalCountLabel: 评测题数
+    runBatchBtn: 立即运行评测并记入台账
+    tabLedger: 基准水位与历史运行台账
+    tabQuestions: LoCoMo 题集浏览与单题检索调试
+    tabProtocol: AI 模型通道 & locomo-backboard 冻结协议对
+    colType: 类型
+    typeBaseline: 权威基线
+    typeRun: 实测运行
+    colLabel: 批次名称
+    colTime: 运行时间
+    colTier: 题集规模
+    colModel: 评测模型
+    colEv: 证据召回率
+    colAic: 上下文含答案率
+    colJudge: Judge 判对率
+    noJudgeText: 0-LLM（未调判官）
+    colCats: 四类题型分项（Cat 4 单跳 / Cat 2 时序 / Cat 1 多跳）
+    colNote: 备注说明
+    filterCatPlaceholder: 按题型类别筛选 (Cat 1–4)
+    filterKwPlaceholder: 搜索题目内容 / 金标答案 / 题目 ID
+    colCategory: 题型类别
+    colQuestion: 评测问题 (Question)
+    colGold: 金标答案 (Gold Answer)
+    colEvidence: 金标证据原文 (Gold Evidence)
+    poolEvidenceHint: （Tier-1540 全量题集通过 Answer × Judge 官方协议判分）
+    colAction: 操作
+    probeBtn: 在线召回调试
+    protoSec1Title: 1. 评测模型通道配置（供 locomo-answer 与 locomo-judge 智能体调用）
+    saveModelBtn: 保存模型配置
+    lblBaseUrl: 接口地址 (Base URL)
+    lblApiKey: API 密钥 (API Key)
+    keyConfiguredHint: 密钥已配置（留空保持不变，输入新值则覆盖）
+    keyEmptyHint: 请输入 API Key（本地 Ollama 可填 ollama）
+    lblAnswerModel: Answer 作答模型
+    lblJudgeModel: Judge 判官模型
+    lblMaxTokens: 最大输出 Token
+    lblTimeout: 超时时间 (秒)
+    protoSec2Title: 2. locomo-backboard 官方冻结协议对（locomo-frozen-2026-10-11 · 三枚 SHA1 钉只读保护）
+    pinVerifiedTag: ✓ SHA1 协议钉已对齐
+    pinDriftTag: ✗ 协议钉漂移告警
+    lblRole: 智能体角色
+    lblBoundModel: 当前绑定模型
+    lblProtocol: 冻结协议标识
+    lblSysSha1: System Prompt SHA1 钉
+    lblTplSha1: User 模板 SHA1 钉
+    lblSysPrompt: 冻结 System Prompt 原文
+    lblUserTpl: 冻结 User 载荷模板原文
+    drawerTitle: 单题在线检索召回与双智能体全链路沙盒（Rolling Autonoetic Memory Engine）
+    lblQuestionId: 题目 ID
+    lblRealtimeRecall: 评测隔离域实时 Recall 输出结果
+    presetLabel: 快捷评测方案
+    presetSmoke0: ⚡ 极速 0-LLM 冒烟 (20题)
+    presetStd0: 🎯 官方 1,540 标准 0-LLM
+    presetAgent100: 🤖 官方 1,540 作答与判分
+    presetOracle: 🏆 Oracle 理论上限验证 (20题)
+    armModeLabel: 检索臂模式
+    armRaw: 原文+图谱混合臂 (raw)
+    armRule: 规则抽取记忆单元臂 (rule)
+    armOracle: 金标证据上限臂 (oracle)
+    rawLimitLabel: 检索窗口
+    workersLabel: 并发数
+    catScopeAll: 全部题型 (Cat 1–4)
+    customLabelPlaceholder: 可选：自定义批次备注名
+    stopEvalBtn: 停止评测
+    stopAndSaveBtn: 停止并保存已跑题目
+    livePanelTitle: 实时流式评测监控台 (WS 逐题流)
+    liveFeedTab: 逐题实时流 (Live Question Stream)
+    liveLogTab: 实时执行日志 (Live Console Log)
+    tabRunDetail: 批次逐题明细与错题诊断
+    inspectRunBtn: 逐题明细
+    deleteRunBtn: 删除
+    testConnBtn: 🔌 测试模型连通性 (Ping Answer & Judge)
+    aiReadyTag: ✓ 模型通道已就绪
+    aiNotReadyTag: ⚠️ 模型配置未就绪（需配置 API Key）
+    modalAiBlockTitle: ⚠️ 评测前置引导：需配置您自己的 LLM 通道（自付 Token 成本）
+    modalAiBlockDesc: 您已开启「locomo-backboard 双智能体端到端评测 (Answer + Judge)」，该模式每道题需调用 1 次作答模型 + 1 次判官模型。本开源软件不内置付费 API Key，请先在下方配置您自己的 LLM 接口（支持 DeepSeek / OpenAI 或本机免密 Ollama，费用由您自付），或点击左下角一键切换为「0-LLM 机械检索核（0 成本断网秒级可跑）」。
+    modalCorpusEmptyTitle: ⚠️ 评测前置引导：评测隔离域尚未导入语料
+    modalCorpusEmptyDesc: 当前评测隔离域尚未导入所需的评测语料（注：您的个人记忆空间不受任何影响）。点击下方按钮即可一键准备语料并自动开始评测。
+    modalSaveAndContinueBtn: 保存我的模型配置并继续评测
+    modalFallback0LlmBtn: ⚡ 不配模型，切换为 0-LLM 机械检索直接免费运行
+    modalImportAndRunBtn: 一键准备语料并开始评测
+    probeRun0LlmBtn: ⚡ 仅跑 0-LLM 机械召回
+    probeRunFullBtn: 🤖 全链路实测 (Recall + Answer + Judge)
+    pluginChannelsTitle: AI 路由插件渠道一键接入（复用渠道密钥与探活结果）
+    pluginChannelsRoutable: 可路由 {n} 条
+    pluginChannelsManage: 前往渠道管理 →
+    pluginChannelsEmpty: 尚未在「AI 路由」插件中配置渠道（可先在插件内新增厂商 / 渠道 / 模型并绑定）
+    pluginChannelsKeySet: 密钥已配置
+    pluginChannelsModels: 可服务模型
+    pluginChannelsApply: 一键接入
+leaderboard:
+    title: LoCoMo-Backboard 榜单（长程对话对照参照）
+    backEvalLabBtn: 返回评测实验室
+    protocolBadge: 内置协议：locomo-backboard (locomo-frozen-2026-10-11)
+    boardBadge: 对照基准：locomo-backboard 商业记忆系统榜单
+    pinsVerifiedBadge: ✓ 三枚 SHA1 协议钉校验通过
+    pillText: 对照参照 · 1:1 协议同构
+    bannerTitle: 对照基准说明：内置 locomo-backboard 冻结协议，作为长程多会话对话参照（主基准见剑桥 ATM-Bench）
+    bannerDesc: 除第一主基准剑桥大学 ATM-Bench 外，系统同时保留 LoCoMo（ACL 2024）与开源评测框架 locomo-backboard（https://github.com/Backboard-io/Backboard-Locomo-Benchmark）作为多会话对话记忆的横向参照。内置评测模块复刻官方答题智能体（locomo-answer）与判官智能体（locomo-judge）提示词，并通过三枚 SHA-1 摘要只读校验。
+    card1Title: 1. 协议一致性（locomo-backboard）
+    card1Tag: 协议同构
+    card1Body: 答题侧采用「编号记忆行 + 空行 + 原题直问」，评分侧采用 Backboard 官方 1,694 字节语义判词（JSON 输出 CORRECT / WRONG），与公开榜单中的 Backboard、Zep、Mem0、Memobase、LangMem、OpenAI Memory 保持同一评判协议。
+    card2Title: 2. 提示词 SHA-1 只读校验
+    card2Tag: 完整性校验
+    card2Body: ① 答题 System 摘要 0d591628…；② 判官 System 摘要 497f7892…；③ 判官 User 模板摘要 38f9b6a1…（1,694 字节）。每次运行前自动执行协议摘要核验，防止提示词漂移。
+    card3Title: 3. 历史架构对照：LLM + 向量重型路线（92.79%）
+    card3Tag: 历史成绩 · 早期重型架构
+    card3Body: 历史成绩：我方早期重型架构（LLM 抽取 + 向量检索 + 图/关系增强）在 LoCoMo 1,540 题全量上的存档读数：总分 92.79%（GPT-4.1 temp 0.1 判官；单跳 89.10%、多跳 88.40%、开放域 81.30%、时序 94.40%、证据命中 98.90%）。该路线不再提供；现行引擎为 0-Vector / 0-LLM 本机确定性检索（最新 1,540 全量 85.26%，见榜单我方行）。
+    kpi1Label: '评测协议 & 参照榜单'
+    kpi1Value: 'locomo-backboard'
+    kpi1Sub: '冻结协议栈 locomo-frozen-2026-10-11 · 三钉校验'
+    kpi2Label: '最新 1,540 全量成绩（本机实测）'
+    kpi2Value: '85.26%（1313/1540）'
+    kpi2Sub: '0-Vector · 0-LLM · deepseek-v4.1-flash 判官 · 2026-11-16'
+    kpi3Label: '单跳 / 时序 / 多跳分项'
+    kpi3Value: '91.0% / 87.2% / 70.6%'
+    kpi3Sub: 'Cat 4 单跳 90.96% · Cat 2 时序 87.23% · Cat 1 多跳 70.57% · Cat 3 开放域 71.88%'
+    kpi4Label: '历史架构对照（LLM + 向量）'
+    kpi4Value: '92.79%'
+    kpi4Sub: '1,540 全量 · GPT-4.1 (temp 0.1) 判官 · 早期重型架构'
+    chartLeftTitle: 'locomo-backboard 榜单总分天梯对比（点击任意系统切换右侧四维剖析）'
+    chartRightTitle: '四维题型得分剖析（Cat 4 单跳 / Cat 1 多跳 / Cat 3 开放域 / Cat 2 时序）'
+    legendOurs: '我方系统（同协议实测）'
+    legendPublic: '外部商业榜系统（Backboard 官方榜）'
+    leaderLineTip: '外部商业榜首 Backboard 基准线 (90.00%)'
+    vsLeaderPrefix: '对比外部商业榜首 Backboard (90.00%)'
+    judgePrefix: '判官模型'
+    filterAll: '全部系统（含我方与外部商业榜）'
+    filterPublic: '仅看 1,540 题官方同尺榜单'
+    filterOurs: '仅看我方 Rolling Autonoetic Memory Engine 实测'
+    sortOverall: '排序：总分 (Overall 降序)'
+    sortSingleHop: '排序：Cat 4 单跳事实 (降序)'
+    sortMultiHop: '排序：Cat 1 多跳推理 (降序)'
+    sortOpenDomain: '排序：Cat 3 开放域推理 (降序)'
+    sortTemporal: '排序：Cat 2 时间推理 (降序)'
+    tableSectionTitle: 'locomo-backboard 完整榜单明细表（点击任意行联动上方四维剖析图）'
+    colRank: '排名'
+    colSystem: '记忆系统 / 演进版本'
+    colVendor: '研发团队 & 架构路线'
+    colProtocol: '评测协议 / 题集 / 判官模型'
+    colSingleHop: 'Cat 4 单跳'
+    colMultiHop: 'Cat 1 多跳'
+    colOpenDomain: 'Cat 3 开放域'
+    colTemporal: 'Cat 2 时序'
+    colOverall: '总分 (Overall)'
+    colNote: '核心结论与评测口径说明'
+    tagOurs: '我方系统'
+    tagPublic: '外部商业榜'
+    leaderCrown: '榜首'
+    catLeaderBadge: '超越外部榜首'
+    protoDetailTitle: '内置 locomo-backboard 协议栈与商业榜单 Harness 逐项核对清单'
+    lblBuiltinProto: '内置评测协议名称'
+    lblTargetBoard: '对标商业榜单名称'
+    lblCorpusSpec: '标准评测语料规模'
+    lblAnswerSpec: '答题载荷规范 (locomo-answer)'
+    lblJudgeSpec: '判官裁决规范 (locomo-judge)'
+    lblCatMap: '官方题型编号映射'
+    lblFairNotice: '同尺对标口径声明'
+    siblingAtmTitle: '第一主基准：剑桥大学 ATM-Bench 多模态个人记忆榜单'
+    siblingAtmDesc: '11,034 条 SGM 邮件/照片/视频记忆 · Main-1013 与 Hard-31 双榜单 · atmbench-official-v1 官方协议校验'
+    siblingAtmBtn: '查看剑桥 ATM-Bench 主榜单 →'
+atmLeaderboard:
+    title: 剑桥 ATM-Bench 榜单（第一主基准 · 多模态个人指称记忆）
+    protocolBadge: 内置协议：atmbench-official-v1 (QS)
+    corpusBadge: 11,034 条 SGM 多模态记忆
+    pinsVerifiedBadge: ✓ 官方协议摘要校验通过
+    goLocomoBtn: LoCoMo 对照榜单
+    backEvalLabBtn: 返回评测实验室
+    copyReproBtn: 复制复现命令
+    benchmarkFallback: 剑桥大学 ATM-Bench 多模态个人指称记忆基准 (University of Cambridge ATM-Bench)
+    kpi1Label: 官方语料规模（4 年跨度）
+    kpi1Sub: 6,742 封邮件 + 3,759 张带 GPS/OCR 照片 + 533 段视频 · SHA-256 校验
+    kpi2Label: ATM-Bench-Hard（31 题）实测读数
+    kpi2SubFallback: 暂无 Hard 读数
+    kpi3Label: "ATM-Bench 主榜（1,013 题 R{'@'}10）"
+    kpi3SubFallback: 暂无主榜读数
+    kpi4Label: 官方协议 & 金标参照
+    kpi4Sub: '金标证据直投参照上限 QS {qs}%'
+    kpi4SubFallback: 官方 MMRag Top-10 载荷 + 混合 QS 评分
+    ladderTitle: Rolling Autonoetic Memory Engine（洛灵自知记忆引擎）实测基线台账
+    ladderHint: 零向量 · 零 LLM 抽取（洛灵自知记忆引擎）确定性检索与端到端实测记录
+    refTitle: 实测基线与外部对照参考台账
+    judgeCorrect: '判对 {correct}/{scored}'
+    copyBtn: 复制命令
+    protoDetailTitle: 内置 atmbench-official-v1 协议栈与官方评判组件核对清单
+cloudAccount:
+    title: 云端会员中心 · API Key 与云端记忆管理（申请制预览）
+    serverLabel: '云端服务地址：'
+    connected: 已连接
+    applyIntro: '云端模式采用申请制，当前逐步开放试用；在线注册已关闭，请通过申请邮箱联系开通。'
+    applyNote: '请在邮件中说明使用场景与预计规模；开通后我们会发放试用账号，再回到此处登录绑定。'
+    applyBtn: 发送申请邮件
+    applyContact: '申请邮箱：'
+    supportContact: '支持邮箱：'
+    tabLogin: 会员登录
+    tabApply: 申请试用
+    username: 用户名
+    password: 密码
+    rotateOnLogin: 登录时顺带轮换并获取最新明文 API Key（自动写入本机 cloud.key）
+    signInBtn: 立即登录并绑定云端记忆
+    keyMask: '密钥掩码：'
+    colKeyMask: 密钥掩码
+    signedKeyMask: '数据面签名钥：'
+    signedKeyExpires: '到期：'
+    signedKeyErrorTitle: 签名钥换取失败（端侧唯一记忆凭据）
+    keyFile: '已保存至：'
+    rotateDefaultKey: 轮换默认 API Key
+    signOut: 退出登录
+    freshKeyTitle: '已签发最新明文 API Key（已自动写入本机 cloud.key）：'
+    copy: 复制
+    tabMemory: 云端记忆管理
+    statActiveUnits: 活跃记忆单元
+    statNodes: 图谱节点数
+    statTraces: 原文轮次
+    statConflicts: 待决冲突
+    refresh: 刷新
+    recallPlaceholder: 输入线索从洛灵自知记忆引擎检索召回...
+    recallBtn: 检索召回
+    subjectS: 主体 (S)
+    predicateX: 关系 (X)
+    objectO: 客体 (O)
+    addToCloud: + 写入云端
+    actions: 操作
+    forgetConfirm: 确定在云端撤销/删除该条记忆？
+    delete: 删除
+    tabDevices: API Key 与多设备管理
+    deviceNamePlaceholder: 新客户端/设备名称（如 MacBook-ZCode）
+    createKey: 新增独立 API Key
+    device: 设备名称
+    kind: 类型
+    status: 状态
+    statusActive: 生效中
+    statusRevoked: 已停用
+    rotate: 轮换
+    revoke: 停用
+    msgSignedIn: 登录成功，已绑定云端记忆账户！
+    msgSignedOut: 已退出云端账户
+    msgKeyRotated: 默认 API Key 已轮换并更新至本机！
+    msgFillAll: 请填写完整的主体 (S)、关系 (X) 与客体 (O)
+    msgSaved: 已成功写入云端记忆！
+    msgRetracted: 云端记忆已撤销/删除
+    msgCopied: 已复制到剪贴板
+
+recall:
+    readerOwner: owner（受众限制可能无法覆盖所有来源）
+    readerDeliverable: deliverable（受众限制可能无法覆盖所有来源）
+    modeFull: full（带引证链）
+    modeProbe: probe（探针）
+
+systemUpdate:
+    openBtn: 版本与在线更新
+    dialogTitle: 版本与在线安全更新（SHA-256 强校验 · 免 Git）
+    safetyNotice: 打开本窗口仅读取本地文件 SHA-256 指纹（零网络请求）；仅在点击「检查更新」或「立即升级」时按需请求发布渠道。升级只替换二进制、前端静态资源与宿主接线，绝不修改或覆盖您的本地 SQLite 明文金库（memory.db）。
+    currentVerLbl: 当前版本
+    latestVerLbl: 渠道最新版本
+    notCheckedYet: 未检查（点击下方「检查更新」）
+    upToDateTag: 已是最新
+    updateAvailTag: 发现可用更新
+    channelLbl: 发布渠道 / 镜像源 URL
+    channelPlaceholder: 默认官方 GitHub Releases 渠道（可填自定义镜像 URL）
+    compCol: 组件名称
+    assetCol: 发布资产 / 本地路径
+    localShaCol: 本地 SHA-256 指纹
+    remoteShaCol: 远端 SHA-256 指纹
+    statusCol: 状态
+    compCli: CLI 与 MCP 引擎核
+    compAdmin: 控制台后端服务
+    compWeb: 控制台前端资源
+    statusUpToDate: 已一致
+    statusNeedsUpdate: 待更新
+    statusLocalOnly: 仅本地
+    forceOpt: 强制重装（即使 SHA-256 已一致也重新下载覆盖）
+    withConsoleOpt: 同步检查并升级本地 Web 控制台（后端 + 前端资源）
+    refreshHarnessOpt: 升级后自动刷新本机 AI 宿主接线（install --with-hooks）
+    checkBtn: 检查更新 (Check SHA256SUMS)
+    applyBtn: 立即安全升级 (Update Now)
+    cliHintTitle: 命令行等价操作（终端随时可用）：
+    checkSuccessUpToDate: 当前所有组件均已是最新版本（SHA-256 指纹完全一致）
+    checkSuccessAvail: 检测到可用更新，点击「立即安全升级」即可原位替换
+    applySuccessUpdated: '升级完成：已更新 {components}'
+    applySuccessNoop: 所有组件均已是最新，无需替换
+    restartingNotice: 控制台组件已更新，正在后台平滑重启并刷新页面...
+

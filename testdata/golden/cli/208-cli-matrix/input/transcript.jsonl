@@ -1,0 +1,3 @@
+{"type": "user", "sessionId": "cm1", "timestamp": "2026-03-02T08:00:00Z", "message": {"role": "user", "content": "老张搬到了上海。"}}
+{"type": "assistant", "sessionId": "cm1", "timestamp": "2026-03-02T08:01:00Z", "message": {"role": "assistant", "content": [{"type": "text", "text": "记住了。"}]}}
+{"type": "user", "sessionId": "cm1", "timestamp": "2026-03-02T08:02:00Z", "message": {"role": "user", "content": "<rolling-memory-recall>injected</rolling-memory-recall> 老张喜欢咖啡。"}}

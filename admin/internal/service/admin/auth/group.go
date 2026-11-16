@@ -1,0 +1,576 @@
+package auth
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"slices"
+	"strconv"
+	"strings"
+
+	"github.com/ai-go-hub/ai-go-admin/internal/dto"
+	"github.com/ai-go-hub/ai-go-admin/internal/infra/permission"
+	"github.com/ai-go-hub/ai-go-admin/internal/model"
+	"github.com/ai-go-hub/ai-go-admin/internal/repository"
+	repoAuth "github.com/ai-go-hub/ai-go-admin/internal/repository/admin/auth"
+	"github.com/ai-go-hub/ai-go-admin/internal/service"
+
+	"gorm.io/gorm"
+
+	"github.com/ai-go-hub/ai-go-admin/internal/kit/bindx"
+	"github.com/ai-go-hub/ai-go-admin/pkg/util"
+)
+
+// AuthAdminGroupService 管理员分组管理服务
+type AuthAdminGroupService struct {
+	service.IService[model.AdminGroup]
+	repo     *repoAuth.AdminGroupRepository
+	ruleRepo *repoAuth.AdminRuleRepository
+}
+
+// NewAuthAdminGroupService 创建管理员分组管理服务实例
+func NewAuthAdminGroupService(repo *repoAuth.AdminGroupRepository, ruleRepo *repoAuth.AdminRuleRepository) *AuthAdminGroupService {
+	return &AuthAdminGroupService{
+		IService: service.NewService(repo),
+		repo:     repo,
+		ruleRepo: ruleRepo,
+	}
+}
+
+// Create 覆写通用创建方法
+func (s *AuthAdminGroupService) Create(ctx context.Context, tri *bindx.Tri[model.AdminGroup], opts service.Options) error {
+	session, err := sessionFrom(opts)
+	if err != nil {
+		return err
+	}
+
+	// 分组基本信息校验
+	if err := s.validateGroup(ctx, &tri.Model, opts); err != nil {
+		return err
+	}
+
+	// 若选中的规则已覆盖全部规则，折叠为通配符 "*"
+	hasAll, err := hasAllRules(ctx, tri.Model.Rules)
+	if err != nil {
+		return err
+	}
+	if hasAll {
+		tri.Model.Rules = new("*")
+	}
+
+	// 权限规则校验
+	if err := s.validateRules(ctx, &tri.Model, session); err != nil {
+		return err
+	}
+	return s.IService.Create(ctx, tri, opts)
+}
+
+// Update 覆写通用更新方法
+func (s *AuthAdminGroupService) Update(ctx context.Context, tri *bindx.Tri[model.AdminGroup], opts service.Options) error {
+	pk, err := strconv.ParseUint(opts.PrimaryKeyValue, 10, 32)
+	if err != nil {
+		return errors.New("主键值错误")
+	}
+
+	session, err := sessionFrom(opts)
+	if err != nil {
+		return err
+	}
+
+	// 校验目标分组是否在操作者可见范围内，防止低权账号操作更高权限分组
+	if err := s.ensureVisible(ctx, []uint{uint(pk)}, session); err != nil {
+		return err
+	}
+
+	// 禁止禁用自己已加入的分组
+	ownGroups, err := s.ownGroupIDs(ctx, session.ID)
+	if err != nil {
+		return err
+	}
+	if _, joined := ownGroups[uint(pk)]; joined && tri.Model.Status != nil && *tri.Model.Status == permission.RuleStatusDisabled {
+		return errors.New("不能禁用自己所在的分组")
+	}
+
+	// 分组基本信息校验
+	if err := s.validateGroup(ctx, &tri.Model, opts); err != nil {
+		return err
+	}
+
+	// 不允许将分组挂到自身的后代分组下，避免形成环
+	if pid := util.FromPtr(tri.Model.Pid); pid != 0 {
+		if err := s.ensurePidNotDescendant(ctx, uint(pk), pid); err != nil {
+			return err
+		}
+	}
+
+	// 若选中的规则已覆盖全部规则，折叠为通配符 "*"
+	hasAll, err := hasAllRules(ctx, tri.Model.Rules)
+	if err != nil {
+		return err
+	}
+	if hasAll {
+		// 用于更新数据库
+		tri.Map["rules"] = "*"
+
+		// 用于后续权限规则校验
+		tri.Model.Rules = new("*")
+	}
+
+	// 权限规则校验
+	if err := s.validateRules(ctx, &tri.Model, session); err != nil {
+		return err
+	}
+	return s.IService.Update(ctx, tri, opts)
+}
+
+// Delete 覆写通用删除方法: 校验被删分组没有游离的子级
+func (s *AuthAdminGroupService) Delete(ctx context.Context, opts service.Options) error {
+	if len(opts.PrimaryKeyValues) == 0 {
+		return errors.New("请选择要删除的记录")
+	}
+
+	// 把待删主键转为 uint 集合（与数据库 pid 字段类型一致，避免类型转换开销）
+	pks := make([]uint, 0, len(opts.PrimaryKeyValues))
+	pkSet := make(map[uint]struct{}, len(opts.PrimaryKeyValues))
+	for _, pk := range opts.PrimaryKeyValues {
+		id, err := strconv.ParseUint(pk, 10, 32)
+		if err != nil {
+			return errors.New("主键值错误")
+		}
+		pks = append(pks, uint(id))
+		pkSet[uint(id)] = struct{}{}
+	}
+
+	session, err := sessionFrom(opts)
+	if err != nil {
+		return err
+	}
+
+	// 禁止删除自己已加入的分组
+	ownGroups, err := s.ownGroupIDs(ctx, session.ID)
+	if err != nil {
+		return err
+	}
+	for _, id := range pks {
+		if _, joined := ownGroups[id]; joined {
+			return errors.New("不能删除自己所在的分组")
+		}
+	}
+
+	// 校验待删分组是否在操作者可见范围内，防止低权账号删除更高权限分组
+	if err := s.ensureVisible(ctx, pks, session); err != nil {
+		return err
+	}
+
+	// 查询 pid 的直接子级 id
+	childIDs, err := s.repo.ChildIDsByPids(ctx, pks)
+	if err != nil {
+		return err
+	}
+
+	// 遍历子级，若子级自身不在待删集合内则视为游离子级
+	for _, id := range childIDs {
+		if _, ok := pkSet[id]; !ok {
+			return errors.New("请先删除子级分组，或使用批量删除")
+		}
+	}
+
+	return s.IService.Delete(ctx, opts)
+}
+
+// Get 覆写通用单条读取方法: 校验目标分组在操作者可见范围内（自身所属分组 + 其后代分组），
+// 防止仅持有 auth/group/read 的非超管按任意 id 读取可见范围外的分组详情（IDOR）。
+func (s *AuthAdminGroupService) Get(ctx context.Context, opts service.Options) (*model.AdminGroup, error) {
+	pk, err := strconv.ParseUint(opts.PrimaryKeyValue, 10, 32)
+	if err != nil {
+		return nil, errors.New("主键值错误")
+	}
+
+	session, err := sessionFrom(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.ensureVisible(ctx, []uint{uint(pk)}, session); err != nil {
+		return nil, err
+	}
+
+	return s.IService.Get(ctx, opts)
+}
+
+// List 覆写通用查询全部记录方法: 根据管理员权限过滤（自身所属分组 + 其后代分组）
+func (s *AuthAdminGroupService) List(ctx context.Context, opts service.Options) ([]model.AdminGroup, error) {
+	session, err := sessionFrom(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// 树状表格无翻页，设定无限 limit
+	opts.Limit = 999999
+
+	perm := permission.New()
+	super, err := perm.IsSuperAdmin(ctx, session.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 非超管，需要限定到读取 `自身所属分组 + 其后代分组` 的规则
+	if !super {
+		visibleIDs, err := perm.GetVisibleGroupIDs(ctx, session.ID, nil)
+		if err != nil {
+			return nil, err
+		}
+		if len(visibleIDs) == 0 {
+			return nil, nil
+		}
+		opts.Wheres = append(opts.Wheres, service.WhereGroup{
+			Wheres: []service.Where{{
+				Field:    "id",
+				Operator: "IN",
+				Value:    visibleIDs,
+			}},
+		})
+	}
+
+	return s.repo.List(ctx, s.BuildRepoOpts(opts))
+}
+
+// Count 覆写通用统计方法: 与 List 使用相同的权限过滤条件
+func (s *AuthAdminGroupService) Count(ctx context.Context, opts service.Options) (int64, error) {
+	if opts.Selector {
+		return 0, nil
+	}
+
+	session, err := sessionFrom(opts)
+	if err != nil {
+		return 0, err
+	}
+
+	perm := permission.New()
+	super, err := perm.IsSuperAdmin(ctx, session.ID)
+	if err != nil {
+		return 0, err
+	}
+
+	if !super {
+		visibleIDs, err := perm.GetVisibleGroupIDs(ctx, session.ID, nil)
+		if err != nil {
+			return 0, err
+		}
+		if len(visibleIDs) == 0 {
+			return 0, nil
+		}
+		opts.Wheres = append(opts.Wheres, service.WhereGroup{
+			Wheres: []service.Where{{
+				Field:    "id",
+				Operator: "IN",
+				Value:    visibleIDs,
+			}},
+		})
+	}
+
+	return s.IService.Count(ctx, opts)
+}
+
+// StripParentRuleIDs 计算剥离父级 ID 之后的 rules 值（父级选择状态由子级决定）
+func (s *AuthAdminGroupService) StripParentRuleIDs(ctx context.Context, entity *model.AdminGroup) (*string, error) {
+	ruleIDs, err := parseRuleIDs(entity.Rules)
+	if err != nil || len(ruleIDs) == 0 {
+		return nil, err
+	}
+
+	pids, err := s.ruleRepo.DistinctPidsByIDs(ctx, ruleIDs)
+	if err != nil {
+		return nil, err
+	}
+	if len(pids) == 0 {
+		return entity.Rules, nil
+	}
+
+	pidSet := make(map[uint]struct{}, len(pids))
+	for _, id := range pids {
+		pidSet[id] = struct{}{}
+	}
+
+	// 剔除作为父级出现的 ID
+	kept := make([]string, 0, len(ruleIDs))
+	for _, id := range ruleIDs {
+		if _, isParent := pidSet[id]; isParent {
+			continue
+		}
+		kept = append(kept, strconv.FormatUint(uint64(id), 10))
+	}
+	return new(strings.Join(kept, ",")), nil
+}
+
+// BuildRulesTitles 为分组列表构建 rules 字段的摘要文本
+func (s *AuthAdminGroupService) BuildRulesTitles(ctx context.Context, groups []model.AdminGroup) (map[uint]string, error) {
+	result := make(map[uint]string, len(groups))
+
+	for _, g := range groups {
+		if util.FromPtr(g.Rules) == "*" {
+			result[g.ID] = "超级管理员"
+			continue
+		}
+
+		ruleIDs, err := parseRuleIDs(g.Rules)
+		if err != nil || len(ruleIDs) == 0 {
+			result[g.ID] = "无权限"
+			continue
+		}
+
+		title, err := s.firstMenuTitle(ctx, ruleIDs)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(ruleIDs) == 1 {
+			result[g.ID] = title
+		} else {
+			result[g.ID] = fmt.Sprintf("%s等 %d 项", title, len(ruleIDs))
+		}
+	}
+	return result, nil
+}
+
+// validateGroup 校验分组名称、上级分组
+func (s *AuthAdminGroupService) validateGroup(ctx context.Context, entity *model.AdminGroup, opts service.Options) error {
+	// 名称唯一校验
+	nameExist, err := s.repo.FindByName(ctx, entity.Name)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	if nameExist != nil && strconv.FormatUint(uint64(nameExist.ID), 10) != opts.PrimaryKeyValue {
+		return errors.New("组名已存在")
+	}
+
+	// 上级分组校验
+	if util.FromPtr(entity.Pid) != 0 {
+		strPid := strconv.FormatUint(uint64(*entity.Pid), 10)
+		if strPid == opts.PrimaryKeyValue {
+			return errors.New("上级分组不能是自身")
+		}
+		if _, err := s.repo.Get(ctx, repository.Options{PrimaryKeyValue: strPid}); err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("上级分组不存在")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validateRules 校验 rules 字段格式与越权授权
+//
+// 超管级分组仅允许超级管理员设置，非超管所填的规则 ID 必须都在自己拥有的规则集合内
+func (s *AuthAdminGroupService) validateRules(ctx context.Context, entity *model.AdminGroup, session *dto.AdminSession) error {
+	perm := permission.New()
+	super, err := perm.IsSuperAdmin(ctx, session.ID)
+	if err != nil {
+		return err
+	}
+
+	// 通配符仅超管可用
+	if strings.Contains(util.FromPtr(entity.Rules), "*") {
+		if !super {
+			return errors.New("无权设置超级管理员分组")
+		}
+
+		// 是超管直接放行
+		return nil
+	}
+
+	ruleIDs, err := parseRuleIDs(entity.Rules)
+	if err != nil {
+		return err
+	}
+	if len(ruleIDs) == 0 || super {
+		return nil
+	}
+
+	// 非超管: 分组的 rules 必须是当前操作人拥有的规则集合的子集
+	ownedIDs, err := perm.GetRuleIds(ctx, session.ID, nil)
+	if err != nil {
+		return err
+	}
+	ownedSet := make(map[uint]struct{}, len(ownedIDs))
+	for _, id := range ownedIDs {
+		ownedSet[id] = struct{}{}
+	}
+	for _, id := range ruleIDs {
+		if _, ok := ownedSet[id]; !ok {
+			return errors.New("不能授予自己没有的权限规则")
+		}
+	}
+
+	return nil
+}
+
+// ensureVisible 校验目标分组是否全部在操作者可见范围内
+func (s *AuthAdminGroupService) ensureVisible(ctx context.Context, groupIDs []uint, session *dto.AdminSession) error {
+	perm := permission.New()
+	super, err := perm.IsSuperAdmin(ctx, session.ID)
+	if err != nil {
+		return err
+	}
+	if super {
+		return nil
+	}
+
+	visible, err := perm.GetVisibleGroupIDs(ctx, session.ID, nil)
+	if err != nil {
+		return err
+	}
+	visibleSet := make(map[uint]struct{}, len(visible))
+	for _, id := range visible {
+		visibleSet[id] = struct{}{}
+	}
+	for _, id := range groupIDs {
+		if _, ok := visibleSet[id]; !ok {
+			return errors.New("无权操作该分组或分组不存在")
+		}
+	}
+	return nil
+}
+
+// firstMenuTitle 按 ids 传入顺序找出首个 type=menu|dir 节点的 title
+func (s *AuthAdminGroupService) firstMenuTitle(ctx context.Context, ids []uint) (string, error) {
+	titleMap, err := s.ruleRepo.TitleMapByIDs(ctx, ids, "menu", "dir")
+	if err != nil {
+		return "", err
+	}
+	if title := pickTitleByOrder(ids, titleMap); title != "" {
+		return title, nil
+	}
+
+	// 没有找到有效的 title，获取 ids 的 pids
+	pids, err := s.ruleRepo.DistinctPidsByIDs(ctx, ids)
+	if err != nil {
+		return "", err
+	}
+	if len(pids) == 0 {
+		return "", nil
+	}
+
+	// 以 pids 再次获取有效的 title
+	titleMap, err = s.ruleRepo.TitleMapByIDs(ctx, pids, "menu", "dir")
+	if err != nil {
+		return "", err
+	}
+	return pickTitleByOrder(pids, titleMap), nil
+}
+
+// ensurePidNotDescendant 校验新的 pid 不是当前分组的后代分组
+func (s *AuthAdminGroupService) ensurePidNotDescendant(ctx context.Context, pk uint, pid uint) error {
+	all, err := s.repo.FindAll(ctx)
+	if err != nil {
+		return err
+	}
+
+	// 收集所有子级分组 ID
+	descendants := descendantIDs(all, pk)
+	if slices.Contains(descendants, pid) {
+		return errors.New("上级分组不能是当前分组的下级")
+	}
+	return nil
+}
+
+// ownGroupIDs 返回管理员自己已加入的分组 ID 集合
+func (s *AuthAdminGroupService) ownGroupIDs(ctx context.Context, adminID uint) (map[uint]struct{}, error) {
+	groups, err := permission.New().GetGroups(ctx, adminID)
+	if err != nil {
+		return nil, err
+	}
+	set := make(map[uint]struct{}, len(groups))
+	for _, g := range groups {
+		set[g.ID] = struct{}{}
+	}
+	return set, nil
+}
+
+// descendantIDs 返回 rootID 在 all 中的所有子级分组 ID（不包含 rootID 自身）
+func descendantIDs(all []model.AdminGroup, rootID uint) []uint {
+	// pid -> children ids
+	childrenMap := make(map[uint][]uint, len(all))
+	for _, g := range all {
+		if util.FromPtr(g.Pid) == 0 {
+			continue
+		}
+		childrenMap[*g.Pid] = append(childrenMap[*g.Pid], g.ID)
+	}
+
+	result := make([]uint, 0)
+	stack := append([]uint{}, childrenMap[rootID]...)
+
+	for len(stack) > 0 {
+		id := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		result = append(result, id)
+		stack = append(stack, childrenMap[id]...)
+	}
+	return result
+}
+
+// parseRuleIDs 解析 rules 字符串为 ID 切片
+func parseRuleIDs(rules *string) ([]uint, error) {
+	if rules == nil {
+		return nil, nil
+	}
+	s := strings.TrimSpace(*rules)
+	if s == "" || strings.Contains(s, "*") {
+		return nil, nil
+	}
+	ids := make([]uint, 0)
+	for part := range strings.SplitSeq(s, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		id, err := strconv.ParseUint(part, 10, 32)
+		if err != nil {
+			return nil, errors.New("权限规则 ID 格式错误")
+		}
+		ids = append(ids, uint(id))
+	}
+	return ids, nil
+}
+
+// hasAllRules 判断 rules 中的规则 ID 是否已覆盖数据库中的全部规则
+func hasAllRules(ctx context.Context, rules *string) (bool, error) {
+	ruleIDs, err := parseRuleIDs(rules)
+	if err != nil || len(ruleIDs) == 0 {
+		return false, err
+	}
+
+	allIDs, err := permission.New().AllRuleIDs(ctx, nil)
+	if err != nil {
+		return false, err
+	}
+	if len(allIDs) == 0 || len(ruleIDs) < len(allIDs) {
+		return false, nil
+	}
+
+	// 使用 set 判断 ruleIDs 是否包含全部 allIDs（去重后逐一比对）
+	provided := make(map[uint]struct{}, len(ruleIDs))
+	for _, id := range ruleIDs {
+		provided[id] = struct{}{}
+	}
+	for _, id := range allIDs {
+		if _, ok := provided[id]; !ok {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// pickTitleByOrder 按 ids 顺序返回 titleMap 中首个命中的 title
+func pickTitleByOrder(ids []uint, titleMap map[uint]string) string {
+	for _, id := range ids {
+		if t, ok := titleMap[id]; ok {
+			return t
+		}
+	}
+	return ""
+}

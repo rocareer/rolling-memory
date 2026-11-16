@@ -1,0 +1,92 @@
+{
+  "cases": [
+    {
+      "expected": [
+        0,
+        7
+      ],
+      "name": "exact",
+      "trace": "老张养了一只猫。"
+    },
+    {
+      "expected": [
+        0,
+        8
+      ],
+      "name": "exact-full",
+      "trace": "老张养了一只猫。"
+    },
+    {
+      "expected": [
+        0,
+        6
+      ],
+      "name": "whitespace-tolerant",
+      "trace": "老张  养了一只猫"
+    },
+    {
+      "expected": null,
+      "name": "not-normalized",
+      "trace": "老张  养了一只猫"
+    },
+    {
+      "expected": [
+        0,
+        11
+      ],
+      "name": "fullwidth",
+      "trace": "ＡＬＩＣＥ likes SQLite."
+    },
+    {
+      "expected": [
+        4,
+        7
+      ],
+      "name": "emoji",
+      "trace": "老张养了小白🐱。"
+    },
+    {
+      "expected": [
+        0,
+        8
+      ],
+      "name": "empty-anchor",
+      "trace": "老张养了一只猫。"
+    },
+    {
+      "expected": null,
+      "name": "empty-anchor-empty-trace",
+      "trace": "   "
+    },
+    {
+      "expected": null,
+      "name": "missing",
+      "trace": "老张养了一只猫。"
+    },
+    {
+      "expected": [
+        2,
+        4
+      ],
+      "name": "span",
+      "trace": "老张养了一只猫。"
+    },
+    {
+      "expected": [
+        2,
+        4
+      ],
+      "name": "span-mismatch",
+      "trace": "老张养了一只猫。"
+    },
+    {
+      "expected": [
+        0,
+        8
+      ],
+      "name": "span-out-of-range",
+      "trace": "老张养了一只猫。"
+    }
+  ],
+  "version": 1
+}

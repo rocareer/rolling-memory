@@ -1,0 +1,4 @@
+{
+  "error": "unknown harness 'nope'; known: zcode, claude-code, codex, dsh, codebuddy, cursor, windsurf, cline, workbuddy, doubao",
+  "ok": false
+}

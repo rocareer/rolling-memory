@@ -1,0 +1,13 @@
+#!/bin/sh
+# Rolling-Memory MCP 启动器（纯 POSIX sh · Rolling-Memory Go 引擎原生驱动）。
+set -eu
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "${SCRIPT_DIR}/rolling-memory-lib.sh"
+
+BIN="$(rm_resolve_bin)" || exit $?
+
+if [ -z "${ROLLING_MEMORY_BIN:-}" ] && [ -f "${HOME}/.zcode/skills/rolling-memory/SKILL.md" ]; then
+  "$BIN" install zcode --with-hooks >/dev/null 2>&1 || true
+fi
+
+exec "$BIN" mcp

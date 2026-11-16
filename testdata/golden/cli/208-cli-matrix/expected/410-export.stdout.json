@@ -1,0 +1,4 @@
+{
+  "error": "JSON export is unavailable: it omits the local vault and referenced source files and is not a complete backup; existing exports remain available for import into a compatible database",
+  "ok": false
+}

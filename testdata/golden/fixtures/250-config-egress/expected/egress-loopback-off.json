@@ -1,0 +1,16 @@
+{
+  "allow_loopback_llm": false,
+  "cases": [
+    {
+      "denied": true,
+      "error": "local mode blocks non-loopback egress to 127.0.0.1; switch to cloud mode explicitly if this is intended",
+      "url": "http://127.0.0.1:11434/v1/chat/completions"
+    },
+    {
+      "denied": true,
+      "error": "local mode blocks non-loopback egress to localhost; switch to cloud mode explicitly if this is intended",
+      "url": "http://localhost:8080/v1"
+    }
+  ],
+  "mode": "local"
+}

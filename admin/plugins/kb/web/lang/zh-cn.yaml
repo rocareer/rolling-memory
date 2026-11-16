@@ -1,0 +1,71 @@
+# plugin: kb v1.0.0
+# 知识库插件的语言包（源：plugins/kb/web/lang/zh-cn.yaml；落位副本：web/src/lang/zh-cn/plugin/kb.yaml，逐字节一致）。
+# 键前缀 plugin.kb.* 由落位路径的物理分段生成；插件不改写宿主语言包。
+# 结构分层：library（库管理页 + 入库对话框）/ team（团队）/ tag（标签；group=标签组、rule=标签规则）。
+library:
+  name: 库名
+  nameHint: 同一属主（类型 + ID）内库名唯一，软删后可复用
+  ownerKind: 属主类型
+  ownerKindSystem: 系统级
+  ownerKindUser: 用户级
+  ownerId: 属主用户
+  ownerLocked: 归属创建后不可修改；后台当前无「转移归属」入口，如需变更请走运维处理（落审计）
+  description: 描述
+  chunkConfig: 切片配置
+  chunkConfigPlaceholder: 留空表示未配置（继承全局档）
+  chunkConfigHint: JSON 对象；库级覆盖 global▷library▷document 的中间层，未知键由写入侧拒绝
+  chunkConfigInvalid: 切片配置须为合法的 JSON 对象
+  statusConfirm: 禁用后该库对一切读路径不可见（含已授权用户）；确认切换状态？
+  importDoc: 导入文档
+  importLibrary: 目标库
+  importName: 文档名
+  importText: 文本内容
+  importTextPlaceholder: 粘贴要入库的文本（Markdown / 纯文本）
+  importFile: 文件
+  importFileHint: 可选；选文件按字节入库（同时填了文本时以文件为准）
+  importPick: 选择文件
+  importContentRequired: 请填写文本或选择文件
+  importSucceeded: 导入成功（文档 {id}，切片任务已入队）
+  importDuplicated: 同库已存在相同内容的文档（文档 {id}，未重复建文档）
+  importHint: 导入后立即入队切片；是否走嵌入档由插件配置决定
+  grantPanel: 授权面板
+  grantSubjectKind: 授权主体
+  grantSubjectAll: 公开
+  grantSubjectTeam: 团队
+  grantSubjectUser: 用户
+  grantSubjectId: 主体ID
+  grantSubjectRequired: 请选择授权主体
+  grantPerm: 权限轴
+  grantPermRead: 读
+  grantPermWrite: 写
+  grantAdd: 授权
+  grantRemove: 撤权
+  grantRemoveConfirm: 确认撤销该授权行（软删即时生效，变更落审计）
+  grantedBy: 授权人
+  grantHint: 可见性唯一来源 = 授权行；公开 = 主体「公开」一行；撤销即时生效，授权变更与审计同事务
+  grantLoadFailed: 授权列表加载失败（须具备 plugin/kb/grant/read 节点权限）
+team:
+  groupName: 组名
+  displayName: 显示名
+  statusConfirm: 禁用后该团队不参与读视图判定（既有授权行仍在但不再生效）；确认切换状态？
+tag:
+  groupId: 所属标签组
+  name: 标签名
+  group:
+    scope: 作用域
+    'scope platform': 平台
+    'scope library': 库
+    libraryId: 所属库（0=平台）
+    name: 组名
+  rule:
+    libraryId: 所属库（规则随库作用）
+    name: 规则名
+    enabled: 启用
+    matchType: 匹配类型
+    'matchType path_glob': 路径通配
+    'matchType filename_regex': 文件名正则
+    'matchType suffix': 后缀
+    'matchType meta_eq': 元信息等值
+    pattern: 匹配式
+    tagId: 命中后所打标签
+    priority: 优先级

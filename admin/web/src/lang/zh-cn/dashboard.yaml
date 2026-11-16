@@ -1,0 +1,81 @@
+# 顶部欢迎条
+welcomeTip: Rolling Memory 记忆系统实时控制台 —— 全量监控本地三层记忆金库（L1 背景 / L2 情景 / L3 结晶）、可寻址证据锚与 MCP recall 检索事实账本（默认 ⚡ Stream 零轮询事件流，可切 1s / 5s / 1m）。
+workTimerLabel: 会话监控已运行
+workRest: 暂停计时
+workContinue: 继续计时
+hours: 小时
+minutes: 分
+seconds: 秒
+greetingNight: 夜深了
+greetingMorning: 上午好
+greetingNoon: 中午好
+greetingAfternoon: 下午好
+greetingEvening: 晚上好
+liveConsole: 实时控制台
+engineOnline: 引擎在线
+engineOffline: 引擎离线
+refreshNow: 立即刷新
+dbSize: 库体积
+conflicts: 陈旧结晶
+modeLabel: 运行模式
+cloudPulse: 云端脉冲
+localPlain: 本地明文 (local_plain)
+cloudPulseTip: 当前运行于云端脉冲模式。
+localPlainTip: 本地明文模式（local_plain）：100% 本地 SQLite 明文金库（FTS5/BM25 + 香农自信息连续增益），零云端外呼。
+pulsePreviewTip: 脉冲明文（pulse_plain）与脉冲密文（pulse_cipher）未包含在本次发布中。
+previewDetails: 预览详情
+
+# KPI 指标
+totalUsers: 活跃记忆单元
+todayOrders: 图谱节点 / 证据原文
+salesAmount: 实时召回延迟 (ms)
+pageVisits: MCP 召回 / 有效命中
+vsLastWeek: 索引就绪率
+kpiSubAssertions: L2 索引就绪率
+kpiSubNodes: 可寻址溯源率
+kpiSubLatency: 较近20次均值
+kpiSubHooks: 有效命中率 · 事实账本 (MCP recall)
+
+# 图表
+accessTrend: 记忆吞吐与检索召回趋势 (L1–L3 三层资产增长)
+trendAssertions: 三层合计 (L1+L2+L3)
+trendL1: L1 背景文档 (Background)
+trendL2: L2 情景对话 (Episodic)
+trendL3: L3 认知结晶 (Noetic)
+trendRecalls: 检索召回 (Recalls)
+trendTraces: L2 情景记忆 (Episodic)
+trendActivity: 召回与写入 (Recall & Ingest)
+last1Hour: 近 1 小时
+last1Day: 近 1 日
+last7Days: 近 7 天
+last30Days: 近 30 天
+trafficSource: 三层认知记忆资产分布 (L1 / L2 / L3)
+today: 实时
+searchEngine: 指称事实 (referential)
+directAccess: 亲历经验 (experiential)
+socialMedia: 规程纪律 (procedural)
+referralLink: 裁定宣告 (performative)
+other: 冲突与拓扑边 (topology edge)
+categorySales: 活跃工作区记忆分布 Top 6 (Locus)
+thisMonth: 活跃图谱
+digital: 定义
+clothing: 属于
+home: 为
+food: 读数
+beauty: 落于
+books: 状态
+serverLoad: 金库工程健康度
+stable: 结晶全鲜活
+cpuUsage: 工程健康分
+capabilityRadar: ATM-Bench 五维能力雷达
+latest: 本机实测
+liveStale: 数据已过期
+radarEmpty: 暂无评测读数 —— 跑一次 rmem eval 后自动显示
+radarNoRun: 暂无评测
+stability: "官方 Recall{'@'}10"
+performance: 开放指称 (Open)
+security: 列表枚举 (List)
+usability: 数值计算 (Num)
+scalability: 端到端综合 QS
+currentVersion: Rolling Memory (local_plain)
+previousVersion: 剑桥论文官方基准 (ATM-RAG)

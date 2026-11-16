@@ -1,0 +1,96 @@
+# plugin: kb v1.0.0
+# 知识库（KB）插件清单（kind: code）。
+#
+# 键集闭集（未知键拒装）；表结构全部由本插件自管迁移建（migrations/1..6，18 张表），
+# L2 引擎不参与（无 entities 段 ⇒ 不建任何实体表、不注册实体路由）。
+#
+# 出厂态：文件在仓 ≠ 已安装。本目录在、register_gen.go 无注册行、admin_rules 无本插件行、
+# 版本表 <表前缀>plugin_kb_migrations 不存在。回到该态：`aigo plugin uninstall --keep-files kb`。
+#
+# 菜单/节点由安装器按本清单代写 admin_rules（插件 SQL 不得直写 admin_rules）；
+# 节点名必须与后端路由经 BuildCheckPath 推导的结果逐字相等（去后台入口前缀、遇 :param 截断，
+# 末段 list/get 由 AdminPermission 回落同级 read）。
+name: kb
+title: 知识库
+version: 1.0.0
+kind: code
+host_api: ">=1 <2"
+framework_req: ">=0.1 <1"
+# 无 requires（不依赖其它插件）、无 entities、无 signature（未签名安装需 --allow-unsigned）、
+# 无 adopt（本项目从未建过 kb_* 表；接管路径见 README）、无 migrations_dir（缺省 migrations/）。
+menus:
+  # ① 目录（侧栏分组；不产生前端路由）
+  - {title: 知识库, type: dir, name: plugin/kb, path: plugin/kb, icon: lucide-book-open, weigh: 200}
+
+  # ② 五个页面（component 精确路径：宿主前端按 import.meta.glob 精确查表，落错位置静默查不到）
+  - {title: 库管理, type: menu, name: plugin/kb/library, path: plugin/kb/library, component: /src/views/admin/plugin/kb/library/index.vue, pid: plugin/kb, icon: lucide-library, weigh: 201}
+  - {title: 团队, type: menu, name: plugin/kb/team, path: plugin/kb/team, component: /src/views/admin/plugin/kb/team/index.vue, pid: plugin/kb, icon: lucide-users, weigh: 202}
+  - {title: 标签组管理, type: menu, name: plugin/kb/tag_group, path: plugin/kb/tag_group, component: /src/views/admin/plugin/kb/tag_group/index.vue, pid: plugin/kb, icon: lucide-folder-tree, weigh: 221}
+  - {title: 标签管理, type: menu, name: plugin/kb/tag, path: plugin/kb/tag, component: /src/views/admin/plugin/kb/tag/index.vue, pid: plugin/kb, icon: lucide-tags, weigh: 222}
+  - {title: 标签规则管理, type: menu, name: plugin/kb/tag_rule, path: plugin/kb/tag_rule, component: /src/views/admin/plugin/kb/tag_rule/index.vue, pid: plugin/kb, icon: lucide-funnel, weigh: 223}
+
+  # ③ 库管理页下的 22 枚节点（授权 / 文档动作 / 检索 / 逐字核对 / 审计 / 标签绑定 / 运维端点）
+  - {title: 查看, type: node, name: plugin/kb/library/read, pid: plugin/kb/library}
+  - {title: 新增, type: node, name: plugin/kb/library/create, pid: plugin/kb/library}
+  - {title: 编辑, type: node, name: plugin/kb/library/update, pid: plugin/kb/library}
+  - {title: 删除, type: node, name: plugin/kb/library/delete, pid: plugin/kb/library}
+  - {title: 查看授权, type: node, name: plugin/kb/grant/read, pid: plugin/kb/library}
+  - {title: 新增授权, type: node, name: plugin/kb/grant/add, pid: plugin/kb/library}
+  - {title: 移除授权, type: node, name: plugin/kb/grant/remove, pid: plugin/kb/library}
+  - {title: 查看文档, type: node, name: plugin/kb/document/read, pid: plugin/kb/library}
+  - {title: 删除文档, type: node, name: plugin/kb/document/delete, pid: plugin/kb/library}
+  - {title: 重建文档, type: node, name: plugin/kb/document/rebuild, pid: plugin/kb/library}
+  - {title: 取消构建, type: node, name: plugin/kb/document/cancel, pid: plugin/kb/library}
+  - {title: 失败文档, type: node, name: plugin/kb/document/failed, pid: plugin/kb/library}
+  - {title: 导入文档, type: node, name: plugin/kb/document/import, pid: plugin/kb/library}
+  - {title: 检索, type: node, name: plugin/kb/search, pid: plugin/kb/library}
+  - {title: 查看切片, type: node, name: plugin/kb/chunk/read, pid: plugin/kb/library}
+  - {title: 查看审计, type: node, name: plugin/kb/audit/read, pid: plugin/kb/library}
+  - {title: 查看标签绑定, type: node, name: plugin/kb/tag_link/read, pid: plugin/kb/library}
+  - {title: 绑定标签, type: node, name: plugin/kb/tag_link/bind, pid: plugin/kb/library}
+  - {title: 解绑标签, type: node, name: plugin/kb/tag_link/unbind, pid: plugin/kb/library}
+  - {title: 巡检, type: node, name: plugin/kb/maintenance/check, pid: plugin/kb/library}
+  - {title: 重建词面索引, type: node, name: plugin/kb/maintenance/reindex, pid: plugin/kb/library}
+  - {title: 重投嵌入, type: node, name: plugin/kb/maintenance/reembed, pid: plugin/kb/library}
+
+  # ④ 各页面下的 19 枚节点（tag_rule 无 sort：该表无 weigh 列，路由集与节点集 1:1）
+  - {title: 查看, type: node, name: plugin/kb/team/read, pid: plugin/kb/team}
+  - {title: 新增, type: node, name: plugin/kb/team/create, pid: plugin/kb/team}
+  - {title: 编辑, type: node, name: plugin/kb/team/update, pid: plugin/kb/team}
+  - {title: 删除, type: node, name: plugin/kb/team/delete, pid: plugin/kb/team}
+  - {title: 排序, type: node, name: plugin/kb/team/sort, pid: plugin/kb/team}
+  - {title: 查看, type: node, name: plugin/kb/tag_group/read, pid: plugin/kb/tag_group}
+  - {title: 新增, type: node, name: plugin/kb/tag_group/create, pid: plugin/kb/tag_group}
+  - {title: 编辑, type: node, name: plugin/kb/tag_group/update, pid: plugin/kb/tag_group}
+  - {title: 删除, type: node, name: plugin/kb/tag_group/delete, pid: plugin/kb/tag_group}
+  - {title: 排序, type: node, name: plugin/kb/tag_group/sort, pid: plugin/kb/tag_group}
+  - {title: 查看, type: node, name: plugin/kb/tag/read, pid: plugin/kb/tag}
+  - {title: 新增, type: node, name: plugin/kb/tag/create, pid: plugin/kb/tag}
+  - {title: 编辑, type: node, name: plugin/kb/tag/update, pid: plugin/kb/tag}
+  - {title: 删除, type: node, name: plugin/kb/tag/delete, pid: plugin/kb/tag}
+  - {title: 排序, type: node, name: plugin/kb/tag/sort, pid: plugin/kb/tag}
+  - {title: 查看, type: node, name: plugin/kb/tag_rule/read, pid: plugin/kb/tag_rule}
+  - {title: 新增, type: node, name: plugin/kb/tag_rule/create, pid: plugin/kb/tag_rule}
+  - {title: 编辑, type: node, name: plugin/kb/tag_rule/update, pid: plugin/kb/tag_rule}
+  - {title: 删除, type: node, name: plugin/kb/tag_rule/delete, pid: plugin/kb/tag_rule}
+web:
+  # 源是本插件的唯一事实源，宿主 web/src/** 下的是落位副本（逐字节一致，含首行归属标记）。
+  views: [web/views]
+  lang: [web/lang/zh-cn.yaml, web/lang/en.yaml]
+configs:
+  # 安装器写 configs 的 plugin.kb 分组（落库名 plugin_kb_<name>）；
+  # 未在此声明的键仍可由运维手工新增分组行（缺省源 = 插件内嵌 config/kb.yaml）。
+  - {name: embed_enabled, title: 嵌入档开关, type: switch, value: "0", tip: 关 = 只切不嵌；检索面自动走词面腿}
+  - {name: embed_provider, title: 嵌入端口实现名, type: string, value: openai-compatible}
+  - {name: embed_model, title: 嵌入模型, type: string, value: "", tip: 空 = 向量身份不可用 ⇒ 嵌入面响亮失败}
+  - {name: embed_dim, title: 向量维度, type: string, value: "1024", tip: 须与 kb_chunk_vectors 的 halfvec(1024) 列一致}
+  - {name: chunk_target, title: 切片目标块长, type: string, value: "512"}
+  - {name: chunk_overlap, title: 切片重叠, type: string, value: "64"}
+  - {name: chunk_hard_cap, title: 切片硬帽, type: string, value: "1024"}
+  - {name: fts_config, title: 词面腿 tsv 配置, type: string, value: simple, tip: 只接受空/simple}
+  - {name: search_scan_cap, title: 腿窗扫描帽, type: string, value: "5000"}
+  - {name: prune_retention_days, title: 检索日志保留天数, type: string, value: "180"}
+  - {name: log_query_text_max, title: 查询原文落库上限, type: string, value: "200", tip: 0/负 = 关；封顶 512}
+  - {name: media_ffmpeg_bin, title: 抽帧/音轨工具, type: string, value: ffmpeg}
+  - {name: limits_max_pages, title: 单文档页数上限, type: string, value: "500"}
+  - {name: limits_max_minutes, title: 单文档时长上限（分钟）, type: string, value: "120"}

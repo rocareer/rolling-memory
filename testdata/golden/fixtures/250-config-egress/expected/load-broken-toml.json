@@ -1,0 +1,5 @@
+{
+  "error": "ConfigError",
+  "message": "cannot read config <TMP>/cases/250-config-egress/cases/config/broken-toml/config.toml: Invalid value (at end of document)",
+  "ok": false
+}

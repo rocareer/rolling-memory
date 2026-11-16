@@ -1,0 +1,10 @@
+{
+  "config": {
+    "recall.budget_ms": 60000
+  },
+  "database": "fresh <DB> seeded by the transcript itself",
+  "notes": "non-dict caps on a full-mode tools/call raises AttributeError -> isError:true; null/{} stay normal",
+  "runner": "mcp.serve(memory, input_stream=transcript.jsonl, output_stream=expected.jsonl)",
+  "scenario": "209-mcp-caps",
+  "scope": "mem:golden:209"
+}

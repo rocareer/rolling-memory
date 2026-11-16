@@ -1,0 +1,71 @@
+{
+  "absent": true,
+  "bands": [],
+  "gaps": {
+    "empty_graph": 1
+  },
+  "meta": {
+    "activation": {
+      "decay_per_hour": 0.995,
+      "rank": false,
+      "recorded": 0
+    },
+    "anchor_failed": 0,
+    "anchors_checked": 0,
+    "asof": 0,
+    "backfill": {
+      "candidates": 0,
+      "seeds": 0,
+      "traces": 0
+    },
+    "candidates": 0,
+    "canonical_merges": 0,
+    "caps": {
+      "bands": 5,
+      "chars": 16000,
+      "nodes": 50
+    },
+    "date_window": {
+      "derived": false,
+      "end": 0,
+      "label": "",
+      "start": 0
+    },
+    "deep": {
+      "requested": false,
+      "used": false
+    },
+    "depth": 2,
+    "deterministic": true,
+    "elapsed_ms": 0,
+    "legs": {
+      "alias": 0,
+      "exact": 0,
+      "lexical": 0,
+      "substring": 0,
+      "token_correct": 0,
+      "vector": 0
+    },
+    "mode": "full",
+    "neighbors": 0,
+    "offset": 0,
+    "reader": "deliverable",
+    "seeds": 0,
+    "session": null,
+    "truncated": {
+      "bands": false,
+      "chars": false,
+      "nodes": false
+    },
+    "vector": {
+      "provider": "hash",
+      "warning": null
+    },
+    "window": [
+      0,
+      0
+    ]
+  },
+  "raw_hits": [],
+  "scope": "mem:golden:208"
+}

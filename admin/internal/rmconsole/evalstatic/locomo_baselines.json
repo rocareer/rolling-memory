@@ -1,0 +1,159 @@
+[
+  {
+    "id": "baseline-rm-20261116",
+    "label": "Rolling Autonoetic Memory Engine (本地明文 · 0-Vector/0-LLM 检索核) · Tier-1540 官方 Cat1-4 全量实测 (2026-11-16)",
+    "label_en": "Rolling Autonoetic Memory Engine (local_plain · 0-Vector/0-LLM retrieval kernel) · Tier-1540 Official Cat1-4 Full Run (2026-11-16)",
+    "created_at": "2026-11-16",
+    "is_baseline": true,
+    "tier": "1540",
+    "scored_questions": 1540,
+    "arm": "sdk-local-plain-llm-judge",
+    "model": "deepseek-v4.1-flash",
+    "protocol": "locomo-frozen-2026-10-11",
+    "evidence_hit": 0.0,
+    "answer_in_context": 0.2955,
+    "judge_rate": 0.8526,
+    "judge_correct": 1313,
+    "judge_scored": 1540,
+    "elapsed_seconds": 2040.6,
+    "category_evidence": {
+      "cat1": 0.0,
+      "cat2": 0.0,
+      "cat3": 0.0,
+      "cat4": 0.0
+    },
+    "category_judge": {
+      "cat1": 0.7057,
+      "cat2": 0.8723,
+      "cat3": 0.7188,
+      "cat4": 0.9096
+    },
+    "note": "本地明文离线检索核 + deepseek-v4.1-flash 冻结协议 Answer+Judge 全量 1,540 题：判对 1313/1540=85.26%（cat1 多跳 70.57 / cat2 时序 87.23 / cat3 开放域 71.88 / cat4 单跳 90.96），0 unparsed 0 error；f1 0.2354，答案在位 29.55%；tokenz-r 交付量 mean 5,164.7 tok/题、交付条数恒 96；召回 mean 371ms（48 并发）。五桶 HIT 1313 / JUDGE_AMBIGUITY 73 / RECALL_MISS 154。Tier-1540 无金标证据 ⇒ 证据类桶口径退化（evidence_hit ≡ 0）。provenance：scope u10-mem-eval-locomo-local-plain-20261112t222636z-8415、transport ramesdk.local_plain.offline-v1、local_fallback=false、语料 sha256 6c7e5ca2…；台账 run-20261116-170142（逐题 1,540 条）。同判官（deepseek）历史对账：11-13 同臂 82.01% ⇒ +3.25pp（非配对 A/B：二进制不同源 + 判官波动带 2-3%）。",
+    "note_en": "Local-plaintext offline retrieval kernel + deepseek-v4.1-flash frozen-protocol Answer+Judge on the full 1,540-question set: 1313/1540 = 85.26% correct (cat1 multi-hop 70.57 / cat2 temporal 87.23 / cat3 open-domain 71.88 / cat4 single-hop 90.96), 0 unparsed 0 error; f1 0.2354, answer-in-context 29.55%; tokenz-r delivery mean 5,164.7 tokens/question, 96 items delivered; recall mean 371ms (48 workers). Buckets HIT 1313 / JUDGE_AMBIGUITY 73 / RECALL_MISS 154. Tier-1540 carries no gold evidence, so the evidence buckets degenerate (evidence_hit identically 0). Provenance: scope u10-mem-eval-locomo-local-plain-20261112t222636z-8415, transport ramesdk.local_plain.offline-v1, local_fallback=false, corpus sha256 6c7e5ca2…; ledger run-20261116-170142 (1,540 per-question rows). Same-judge (deepseek) ledger delta: the 2026-11-13 same-arm run scored 82.01%, +3.25pp (not a paired A/B: binaries differ and the judge band is 2-3%).",
+    "repro_cli": "rmem eval --suite locomo --tier 1540 --answerer llm --judge llm --top-k 96 --context-chars 24576",
+    "bucket_counts": {
+      "HIT": 1313,
+      "JUDGE_AMBIGUITY": 73,
+      "RANK_CUTOFF": 0,
+      "READER_GAP": 0,
+      "RECALL_MISS": 154
+    },
+    "suite": "locomo",
+    "full_evidence_hit": 0.0,
+    "avg_recall_ms": 371.0,
+    "avg_delivered_tokens": 5165,
+    "total_delivered_tokens": 7953633,
+    "avg_delivered_items": 96.0,
+    "top_k": 96
+  },
+  {
+    "id": "baseline-rm-rl20",
+    "label": "Rolling Autonoetic Memory Engine (the memory engine · 0-Vector/0-LLM) · Tier-100 全池 5,882 轮实测 (rl20)",
+    "label_en": "Rolling Autonoetic Memory Engine (the memory engine · 0-Vector/0-LLM) · Tier-100 Full 5,882-Turn Run (rl20)",
+    "created_at": "2026-11-05",
+    "is_baseline": true,
+    "tier": "100",
+    "scored_questions": 100,
+    "arm": "wave-cell-rl20",
+    "model": "deepseek-v4.1-flash",
+    "protocol": "locomo-frozen-2026-10-11",
+    "evidence_hit": 0.63,
+    "answer_in_context": 0.38,
+    "judge_rate": 0.84,
+    "judge_correct": 84,
+    "judge_scored": 100,
+    "elapsed_seconds": 446.2,
+    "category_evidence": {
+      "cat1": 0.3158,
+      "cat2": 0.6818,
+      "cat3": 0.5,
+      "cat4": 0.7358
+    },
+    "category_judge": {
+      "cat1": 0.6842,
+      "cat2": 0.7727,
+      "cat3": 0.5,
+      "cat4": 0.9623
+    },
+    "note": "历史台账（迁移前本地 g7 zero 臂，缺现行 SDK transport/scope/digest 证据，仅归档）Rolling Autonoetic Memory Engine 全池 5,882 轮 Tier-100：头尺（前 48 唯一词元）证据命中 63.0%（63/100）、答案在位 38.0%，冻结 Answer+Judge 判对 84/100=84.00%，耗时 446.2s；五桶 84/7/0/9/0。产物：本机评测输出目录内的归档运行。旧台账的 91.0% 证据命中系字段错位，已按产物更正；Full 口径该产物未记录。",
+    "note_en": "Historical ledger (pre-migration local g7 zero arm; no current SDK transport/scope/digest evidence; archived only) Rolling Autonoetic Memory Engine over the full 5,882-turn Tier-100: head-48 evidence hit 63.0% (63/100), answer-in-context 38.0%, frozen Answer+Judge correct 84/100=84.00%, elapsed 446.2s; buckets 84/7/0/9/0. Artifact: an archived run under this machine's eval output directory. The old 91.0% evidence figure was a field-mixing error and is corrected from the artifact; the full-window metric was not recorded there.",
+    "repro_cli": "rmem eval --eval-store ~/.local/state/rolling-memory/eval/eval-locomo-local-plain.json --tier 200 --pulse-mode local_plain --top-k 20 --answerer llm --judge llm",
+    "bucket_counts": {
+      "HIT": 84,
+      "JUDGE_AMBIGUITY": 0,
+      "RANK_CUTOFF": 9,
+      "READER_GAP": 7,
+      "RECALL_MISS": 0
+    },
+    "top_k": 20
+  },
+  {
+    "id": "baseline-rm-0llm",
+    "label": "Rolling Autonoetic Memory Engine (the memory engine · 0-Vector/0-LLM) · 纯检索核 (Tier-100 · 0-LLM 归档臂)",
+    "label_en": "Rolling Autonoetic Memory Engine (the memory engine · 0-Vector/0-LLM) · Pure Retrieval Core (Tier-100 · 0-LLM archive arm)",
+    "created_at": "2026-11-05",
+    "is_baseline": true,
+    "tier": "100",
+    "scored_questions": 100,
+    "arm": "wave-cell-0llm",
+    "model": "none (0-LLM)",
+    "protocol": "locomo-frozen-2026-10-11",
+    "evidence_hit": 0.54,
+    "full_evidence_hit": 0.99,
+    "answer_in_context": 0.31,
+    "judge_rate": 0,
+    "judge_correct": 0,
+    "judge_scored": 0,
+    "elapsed_seconds": 122.2,
+    "category_evidence": {
+      "cat1": 0.3158,
+      "cat2": 0.6818,
+      "cat3": 0.5,
+      "cat4": 0.566
+    },
+    "category_judge": {
+      "cat1": 0,
+      "cat2": 0,
+      "cat3": 0,
+      "cat4": 0
+    },
+    "note": "历史台账（迁移前本地 g21 8edge 0-LLM 臂，缺现行 SDK transport/scope/digest 证据，仅归档）全池 5,882 轮 Tier-100 纯检索：头尺（前 48 唯一词元）证据命中 54.0%（54/100）、全窗口 99.0%、答案在位 31.0%，100 题检索 122.2s，无 Answer/Judge。产物：本机评测输出目录内的归档运行。旧台账的 91.0% 与 9.3ms/q 无法由该产物复算，已更正。",
+    "note_en": "Historical ledger (pre-migration local g21 8edge 0-LLM arm; no current SDK transport/scope/digest evidence; archived only) full 5,882-turn Tier-100 pure retrieval: head-48 evidence hit 54.0% (54/100), full-window 99.0%, answer-in-context 31.0%, 122.2s for 100 questions, no Answer/Judge. Artifact: an archived run under this machine's eval output directory. The old 91.0% and 9.3ms/q could not be reproduced from that artifact and are corrected.",
+    "repro_cli": "rmem eval --eval-store ~/.local/state/rolling-memory/eval/eval-locomo-local-plain.json --tier 200 --pulse-mode local_plain --top-k 20 --answerer none --judge off",
+    "top_k": 96
+  },
+  {
+    "id": "baseline-oracle",
+    "label": "Oracle 单点金标对照上限 (Single-Point Gold Evidence)",
+    "label_en": "Oracle Single-Point Ceiling (Gold Evidence)",
+    "created_at": "2026-11-05",
+    "is_baseline": true,
+    "tier": "100",
+    "scored_questions": 100,
+    "arm": "oracle-llm",
+    "model": "deepseek-v4.1-flash",
+    "protocol": "locomo-frozen-2026-10-11",
+    "evidence_hit": 1,
+    "full_evidence_hit": 1,
+    "answer_in_context": 0.85,
+    "judge_rate": 0.77,
+    "judge_correct": 77,
+    "judge_scored": 100,
+    "elapsed_seconds": 14.2,
+    "category_evidence": {
+      "cat1": 1,
+      "cat2": 1,
+      "cat3": 1,
+      "cat4": 1
+    },
+    "category_judge": {
+      "cat1": 0.579,
+      "cat2": 0.636,
+      "cat3": 0.5,
+      "cat4": 0.943
+    },
+    "note": "直接喂入单点金标证据原文时的冻结 Answer + Judge 答题基准（77/100）",
+    "note_en": "Frozen Answer + Judge reference when fed single-point gold evidence passages directly (77/100)",
+    "top_k": 96
+  }
+]

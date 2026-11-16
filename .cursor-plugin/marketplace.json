@@ -1,0 +1,19 @@
+{
+  "name": "rolling-memory-plugins",
+  "owner": {
+    "name": "Albert (Rocareer / Rolling-Memory)",
+    "email": "albert@rocareer.com"
+  },
+  "metadata": {
+    "description": "Rolling Memory official plugin marketplace for Cursor"
+  },
+  "plugins": [
+    {
+      "name": "rolling-memory",
+      "source": ".",
+      "description": "Cross-session local memory plugin for Cursor, built on the Rolling Autonoetic Memory Engine (single MCP tool `recall` + automatic background/episodic watch).",
+      "version": "0.0.1",
+      "license": "Apache-2.0"
+    }
+  ]
+}

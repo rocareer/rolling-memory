@@ -1,0 +1,118 @@
+{
+  "config": {},
+  "db": "db/030-date-window.db",
+  "description": "ISO/month/year windows, meta.date_window, window boost, outside_corpus",
+  "drop_fts": false,
+  "expected": {
+    "recall-month-only": "fixtures/030-date-window/expected/recall-month-only.json",
+    "recall-month-only.txt": "fixtures/030-date-window/expected/recall-month-only.txt",
+    "recall-month-year": "fixtures/030-date-window/expected/recall-month-year.json",
+    "recall-month-year.txt": "fixtures/030-date-window/expected/recall-month-year.txt",
+    "recall-outside": "fixtures/030-date-window/expected/recall-outside.json",
+    "t-zebra": "fixtures/030-date-window/expected/t-zebra.json"
+  },
+  "fixed_now": 1793102400,
+  "frozen_meta": {
+    "db_meta.engine": "rolling-memory",
+    "db_meta.schema_version": "1"
+  },
+  "frozen_time_columns": {
+    "activation.updated_at": [],
+    "assertion.created_at": [],
+    "assertion.t_record": [],
+    "assertion.t_source": [],
+    "assertion.t_valid_from": [],
+    "assertion.t_valid_to": [],
+    "db_meta.created_at": [
+      1793102400
+    ],
+    "event.created_at": [
+      1793102400
+    ],
+    "injection_ledger.created_at": [],
+    "mention.created_at": [],
+    "meta_edge.created_at": [],
+    "node.created_at": [],
+    "node.retired_at": [],
+    "node_alias.created_at": [],
+    "replay_state.produced_through": [],
+    "replay_state.updated_at": [],
+    "session_cursor.turn_done": [],
+    "session_cursor.updated_at": [],
+    "sync_state.synced_at": [],
+    "trace.occurred_at": [
+      1689292800
+    ],
+    "trace.processed_at": [],
+    "trace.recorded_at": [
+      1793102400
+    ],
+    "transcript_cursor.mtime": [],
+    "transcript_cursor.offset": [],
+    "transcript_cursor.size": [],
+    "transcript_cursor.updated_at": [],
+    "vector.updated_at": []
+  },
+  "inputs": [],
+  "ops": [
+    {
+      "args": {
+        "author": "user",
+        "occurred_at": 1689292800,
+        "session": "date-window",
+        "text": "zebra migration observation in the field notes."
+      },
+      "op": "add_trace",
+      "save": "t-zebra"
+    },
+    {
+      "args": {
+        "cue": "zebra migration July 2023",
+        "include_raw": false,
+        "raw_limit": 5
+      },
+      "op": "recall",
+      "render": "recall-month-year.txt",
+      "save": "recall-month-year"
+    },
+    {
+      "args": {
+        "cue": "zebra migration in July",
+        "include_raw": false,
+        "raw_limit": 5
+      },
+      "op": "recall",
+      "render": "recall-month-only.txt",
+      "save": "recall-month-only"
+    },
+    {
+      "args": {
+        "cue": "zebra migration July 1990",
+        "include_raw": false,
+        "raw_limit": 5
+      },
+      "op": "recall",
+      "save": "recall-outside"
+    }
+  ],
+  "scenario": "030-date-window",
+  "scope": "mem:golden:030",
+  "table_digests": {
+    "activation": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "assertion": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "db_meta": "52a0f8c2396c753d1e0677b94a61721ff84f1f38dffec127830e80813c39d597",
+    "event": "69410cfc4edbb36b7e3ef6b2228196460bc7c86f6dffc2369f862c6510779997",
+    "injection_ledger": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "mention": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "meta_edge": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "node": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "node_alias": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "replay_state": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "session_cursor": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "sync_state": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "trace": "f9b823c8e6006d57c444186439cdcd4c8857bfb989add7a0f3f7d3bd9a89a12b",
+    "transcript_cursor": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "vector": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "timezone": "UTC"
+}

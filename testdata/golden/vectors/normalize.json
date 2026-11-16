@@ -1,0 +1,145 @@
+{
+  "cases": [
+    {
+      "input": "",
+      "label": "",
+      "map": [],
+      "normalized": "",
+      "text": ""
+    },
+    {
+      "input": "  ",
+      "label": "",
+      "map": [],
+      "normalized": "",
+      "text": ""
+    },
+    {
+      "input": "老张",
+      "label": "老张",
+      "map": [
+        0,
+        1
+      ],
+      "normalized": "老张",
+      "text": "老张"
+    },
+    {
+      "input": "  老张。 ",
+      "label": "老张",
+      "map": [
+        2,
+        3,
+        4
+      ],
+      "normalized": "老张。",
+      "text": "老张。"
+    },
+    {
+      "input": "ＡＬＩＣＥ",
+      "label": "alice",
+      "map": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "normalized": "alice",
+      "text": "alice"
+    },
+    {
+      "input": "C++",
+      "label": "c++",
+      "map": [
+        0,
+        1,
+        2
+      ],
+      "normalized": "c++",
+      "text": "c++"
+    },
+    {
+      "input": " Straße ",
+      "label": "strasse",
+      "map": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        5,
+        6
+      ],
+      "normalized": "strasse",
+      "text": "strasse"
+    },
+    {
+      "input": "İstanbul",
+      "label": "i̇stanbul",
+      "map": [
+        0,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "normalized": "i̇stanbul",
+      "text": "i̇stanbul"
+    },
+    {
+      "input": "老张 \t 养了\n一只猫",
+      "label": "老张 养了 一只猫",
+      "map": [
+        0,
+        1,
+        5,
+        5,
+        6,
+        8,
+        8,
+        9,
+        10
+      ],
+      "normalized": "老张 养了 一只猫",
+      "text": "老张 养了 一只猫"
+    },
+    {
+      "input": "🐱 小白 🐱",
+      "label": "🐱 小白 🐱",
+      "map": [
+        0,
+        2,
+        2,
+        3,
+        5,
+        5
+      ],
+      "normalized": "🐱 小白 🐱",
+      "text": "🐱 小白 🐱"
+    },
+    {
+      "input": "é vs é",
+      "label": "é vs é",
+      "map": [
+        0,
+        1,
+        3,
+        3,
+        4,
+        6,
+        6
+      ],
+      "normalized": "é vs é",
+      "text": "é vs é"
+    }
+  ],
+  "unicode": {
+    "unidata_version": "17.0.0"
+  },
+  "version": 1
+}

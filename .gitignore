@@ -1,0 +1,30 @@
+# Build & Artifacts
+bin/*
+!bin/rolling-memory-*
+dist/
+*.log
+*.db
+!testdata/golden/db/*.db
+*.db-shm
+*.db-wal
+autoresearch-dashboard.html
+
+# IDEs & System
+.DS_Store
+.zcode/
+
+# Local environment, release receipts (self-referential HEAD SHA) & bytecode
+/dev/release/receipts/
+.env
+.env.*
+/MEMORY.md
+__pycache__/
+*.pyc
+
+# Upstream benchmark fetch output (`rmem eval --fetch`): upstream corpus files
+# and the provenance record live in the user data directory; the dev machine's
+# data dir is symlinked to this tree, so never commit them here.
+/evaldata/*/raw_memory/
+/evaldata/*/processed_memory/
+/evaldata/*/atm-bench/
+/evaldata/*/UPSTREAM-PROVENANCE.json

@@ -1,0 +1,23 @@
+# Smithery / MCP Registry configuration for Rolling-Memory
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      scope:
+        type: string
+        default: "default"
+        description: "Memory graph scope identifier (e.g. default or project:my-repo)"
+      dbPath:
+        type: string
+        default: ""
+        description: "Optional custom path to the local SQLite memory database"
+  commandFunction: |-
+    (config) => ({
+      command: "rolling-memory",
+      args: ["mcp"],
+      env: {
+        ...(config.scope ? { ROLLING_MEMORY_SCOPE: config.scope } : {}),
+        ...(config.dbPath ? { ROLLING_MEMORY_DB: config.dbPath } : {})
+      }
+    })

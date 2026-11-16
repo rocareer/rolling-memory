@@ -1,0 +1,2 @@
+{"type": "user", "sessionId": "s1", "timestamp": "2026-03-02T08:00:00Z", "message": {"role": "user", "content": [{"type": "text", "text": "我喜欢猫。我的猫叫小白。"}]}}
+{"type": "assistant", "sessionId": "s1", "timestamp": "2026-03-02T08:00:10Z", "message": {"role": "assistant", "content": [{"type": "text", "text": "记住了。"}]}}

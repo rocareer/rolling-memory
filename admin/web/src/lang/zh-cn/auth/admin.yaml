@@ -1,0 +1,8 @@
+username: 用户名
+nickname: 昵称
+avatar: 头像
+bio: 个人简介
+leaveBlankIfUnchanged: 不修改请留空
+groups: 角色组
+oldPassword: 当前密码
+passwordChanged: 密码已修改，请重新登录

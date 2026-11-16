@@ -1,0 +1,108 @@
+refresh: Refresh
+loading: Loading
+operationSuccess: Operation successful
+operationFailed: Operation failed
+networkError: Network error
+loadResourceFailed: Failed to load page resources. Refresh the page and try again.
+captchaLoadFailed: Failed to load CAPTCHA. Click refresh to try again.
+captchaAreaNotClicked: Incorrect area selected. Please try again!
+verificationSuccess: Verification successful!
+pleaseClick: Please click in order
+arrayKey: Key
+arrayValue: Value
+add: Add
+pleaseInstallEditor: Please install a rich-text editor first
+pleaseSelectIcon: Please select an icon
+icon: Icon
+search: Search
+home: Home
+reload: Reload
+upload: Upload
+screenshotUpload: Upload screenshot
+releaseToUpload: Drop to upload
+copyPasteUploadTip: Paste (Ctrl+V) images or files from the clipboard to upload
+noImageInClipboard: No image in clipboard
+noValidFileInPaste: No uploadable files found in the pasted content
+noValidImageInDrop: No uploadable images found in the dropped content
+noValidFileInDrop: No uploadable files found in the dropped content
+clipboardReadNotSupported: Clipboard read is not supported by this browser
+readClipboardFailed: Failed to read clipboard
+dragSort: Drag to sort
+edit: Edit
+delete: Delete
+cancel: Cancel
+deleteSelectedRecords: Are you sure you want to delete the selected records?
+beyondMovableRange: Cannot move outside the allowed range
+dragSortWeighFieldError: Sort by the {field} field before performing operations
+dragSortTargetWeighError: Invalid target weight
+reset: Reset
+to: To
+startDate: Start date
+endDate: End date
+startTime: Start time
+endTime: End time
+open: Open
+close: Close
+editSelection: Edit selected rows
+deleteSelection: Delete selected rows
+openCommonSearch: Open advanced search
+collapse: Collapse
+expand: Expand
+all: All
+submenu: Submenu
+url: URL
+save: Save
+confirm: Confirm
+saveAndContinue: Save and edit the next item
+status: Status
+disable: Disable
+enable: Enable
+pleaseEnter: Please enter {field}
+pleaseSelect: Please select {field}
+invalidEntry: Please enter a valid {field}
+accountFormatError: Must be 3-16 characters, start with a letter, and contain only letters, digits, and underscores.
+passwordFormatError: 6-32 chars, no & < > " ' allowed.
+varNameFormatError: Only letters, digits and underscores allowed; cannot start with a digit.
+strAttrTip: 'One per line, no quotes. Example: class=test-item'
+content: Content
+required: Required
+mobile: Mobile
+account: Account
+varName: Variable name
+richTextRequired: Rich text is required
+email: Email
+lastLoginAt: Last login at
+updatedAt: Updated at
+createdAt: Created at
+operate: Operate
+noData: No data
+weigh: Weigh
+info: Info
+none: None
+unknown: Unknown
+choice: Choice
+multiple: Multiple
+reminder: Notice
+date: Date
+number: Number
+integer: Integer
+password: Password
+float: Float
+time: Time
+datetime: Date time
+year: Year
+array: Array
+richText: Rich text
+textarea: Textarea
+switch: Switch
+select: Select
+radio: Radio
+checkbox: Checkbox
+file: File
+image: Image
+images: Images
+string: String
+color: Color
+iconSelect: Icon select
+areaSelect: Area select
+remoteSelect: Remote select

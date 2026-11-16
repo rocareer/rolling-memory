@@ -1,0 +1,97 @@
+{
+  "backups": [
+    "<HOME>/.claude.json.rolling-memory.<TS>.bak",
+    "<HOME>/.claude.json.rolling-memory.<TS>.bak",
+    "<HOME>/.claude/CLAUDE.md.rolling-memory.<TS>.bak",
+    "<HOME>/.claude/CLAUDE.md.rolling-memory.<TS>.bak",
+    "<HOME>/.claude/settings.json.rolling-memory.<TS>.bak",
+    "<HOME>/.codebuddy/mcp.json.rolling-memory.<TS>.bak",
+    "<HOME>/.codex/AGENTS.md.rolling-memory.<TS>.bak",
+    "<HOME>/.codex/config.toml.rolling-memory.<TS>.bak",
+    "<HOME>/.codex/config.toml.rolling-memory.<TS>.bak",
+    "<HOME>/.dsh/AGENTS.md.rolling-memory.<TS>.bak",
+    "<HOME>/.dsh/profiles/web/cordis.patch.yml.rolling-memory.<TS>.bak",
+    "<HOME>/.dsh/profiles/web/cordis.patch.yml.rolling-memory.<TS>.bak",
+    "<HOME>/.zcode/cli/config.json.rolling-memory.<TS>.bak",
+    "<HOME>/.zcode/cli/config.json.rolling-memory.<TS>.bak",
+    "<HOME>/.zcode/cli/config.json.rolling-memory.<TS>.bak",
+    "<HOME>/.zcode/cli/config.json.rolling-memory.<TS>.bak"
+  ],
+  "files": [
+    {
+      "content": "# Claude Code notes\n\nKeep answers short. Prefer `rg` over `grep`.\n",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.claude/CLAUDE.md"
+    },
+    {
+      "content": "{\n  \"hooks\": {}\n}\n",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.claude/settings.json"
+    },
+    {
+      "content": "{\n  \"mcpServers\": {\n    \"other-tool\": {\n      \"args\": [\n        \"serve\"\n      ],\n      \"command\": \"/usr/local/bin/other-tool\",\n      \"type\": \"stdio\"\n    }\n  },\n  \"numStartups\": 3\n}\n",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.claude.json"
+    },
+    {
+      "content": "# CodeBuddy workspace\n",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.codebuddy/README.md"
+    },
+    {
+      "content": "{\n  \"mcpServers\": {}\n}\n",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.codebuddy/mcp.json"
+    },
+    {
+      "content": "",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.codex/AGENTS.md"
+    },
+    {
+      "content": "model = \"gpt-5\"\n",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.codex/config.toml"
+    },
+    {
+      "content": "{\n  \"default_lang\": \"en\",\n  \"lang\": \"en\",\n  \"updated_at\": \"2026-10-27T12:00:00Z\"\n}\n",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.config/rolling-memory/ui-lang.json"
+    },
+    {
+      "content": "",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.dsh/AGENTS.md"
+    },
+    {
+      "content": "# dsh web profile patch\ninsert:\n  - id: other-client\n    name: '@deepseek-ai/dsh-mcp-client'\n",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.dsh/profiles/web/cordis.patch.yml"
+    },
+    {
+      "content": "# ZCode notes\n\n<!-- rolling-memory:begin -->\n",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.zcode/AGENTS.md"
+    },
+    {
+      "content": "{\n  \"hooks\": {\n    \"enabled\": true,\n    \"events\": {}\n  },\n  \"mcp\": {\n    \"servers\": {\n      \"other-tool\": {\n        \"args\": [\n          \"serve\"\n        ],\n        \"command\": \"/usr/local/bin/other-tool\",\n        \"type\": \"stdio\"\n      }\n    }\n  }\n}\n",
+      "executable": false,
+      "kind": "text",
+      "path": "<HOME>/.zcode/cli/config.json"
+    }
+  ],
+  "note": "state after 070-uninstall; the launcher binary at <CASE>/bin/rolling-memory is provided by the runner",
+  "root": "<CASE>",
+  "scenario": "240-install"
+}

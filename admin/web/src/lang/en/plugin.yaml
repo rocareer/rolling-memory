@@ -1,0 +1,151 @@
+# Host plugin administration UI copy (management page web/src/views/admin/plugin/index.vue and its
+# detail drawer, landed in P2). Values holding an ASCII ": " are single-quoted (YAML plain scalars
+# cannot carry one) — same convention as web/src/lang/en/common.yaml's strAttrTip.
+# Namespace discipline: the file lives at web/src/lang/en/plugin.yaml ⇒ prefix plugin.* (derived from
+# the physical path); the first-level keys are **host reserved words** (list / get) — plugin names are
+# rejected if they hit a reserved word (render/list/get/read/enable/disable/uninstall), so this file structurally
+# cannot collide with any plugin's plugin.<name>.* subtree (see plugins/README.md).
+list:
+  empty: 'No plugins (factory state: files may exist without any install record)'
+  searchPlaceholder: Search plugin name
+  columns:
+    name: Name
+    title: Title
+    version: Version
+    kind: Kind
+    status: Status
+    entities: Entities
+    wired: Wiring
+    drift: Drift
+    installedAt: Installed at
+  kind:
+    code: Source plugin
+    declarative: Declarative plugin
+    mixed: Mixed plugin
+  status:
+    failed: Half-installed
+    installed: Installed
+    enabled: Enabled
+    disabled: Disabled
+  wired:
+    wired: Wired
+    unwired: Rebuild required
+    unwiredTip: 'Recorded in the ledger but absent from the process: routes appear only after rebuild + restart'
+    orphan: Dangling wiring
+    orphanTip: 'Present in the process but missing from the ledger: install once or drop the register line'
+    missingRegister: Register line missing
+    missingRegisterTip: 'Ledger row exists without a register line: rebuild alone will not activate it'
+    declarative: Declarative
+    declarativeTip: 'Declarative plugins carry no Go register line: entity routes are registered by the engine after a restart'
+    declarativeRegister: Unexpected register line
+    declarativeRegisterTip: 'Declarative plugins ship no Go package: a register line breaks go build and must be removed'
+  runtime:
+    registryUnavailable: 'Register file unreadable (the service does not run inside a source checkout): the per-row "registered" flag is hidden'
+  effect:
+    rebuildRequired: 'Plugin "{name}" is recorded in the ledger but absent from the process: routes appear only after rebuild + restart'
+    declarative: 'Plugin "{name}" is declarative: no Go register line, entity routes are registered after a restart'
+  actions:
+    detail: Detail
+    enable: Enable
+    disable: Disable
+    enableConfirm: 'Enable plugin "{name}"? Its menus and permission nodes follow (effective within one cache cycle, no restart)'
+    disableConfirm: 'Disable plugin "{name}"? Routes return 404 and menus hide (tables and data are kept)'
+  tips:
+    failedCleanup: 'Half-installed state: clean up via the drawer Uninstall (force mode) or aigo plugin uninstall --force <name>'
+    trust: 'A source plugin is equivalent to merging that code into the repository: same privileges, no isolation layer'
+    operatorNote: Actions record a signature only, not an identity; the real boundary is OS / deployment access control
+get:
+  title: Plugin detail
+  # Detail drawer actions (admin write paths): disable/enable + uninstall; grey-out reasons mirror the backend
+  actions:
+    toggleOn: Enable
+    toggleOff: Disable
+    uninstall: Uninstall
+    lifecycleForbidden: 'Installation and uninstallation are forbidden in production (backend environment gate)'
+  uninstall:
+    title: Uninstall plugin
+    intro: 'About to uninstall: {name} (current status: {status})'
+    warning: 'Uninstall is irreversible (no compensating rollback): menu rows, permission nodes and the ledger row are removed together; node IDs change and grants must be re-checked'
+    enabledTip: 'The plugin is enabled: confirming will disable it first, then uninstall (disable-then-uninstall is a hard gate; both steps are audited separately)'
+    failedTip: 'The plugin is half-installed (failed): it will be cleaned up in force mode (--force)'
+    purge: 'Purge (--purge): roll back plugin migrations and drop entity tables and the migration version table'
+    purgeTip: 'When unchecked, tables, data and the migration version table are kept (reinstall reuses them)'
+    purgeAdopted: 'Installed via the legacy-database migration baseline (adopt): --purge requires the explicit CLI triple confirmation and is not offered here'
+    keepFiles: 'Keep source and placed files (--keep-files)'
+    keepFilesTip: 'When checked, only the ledger/owned rows and the register line are cleared; repository files stay untouched (factory state)'
+    confirm: Confirm uninstall
+    confirmDisableFirst: Disable and uninstall
+    done: 'Uninstalled: {name}'
+    effect:
+      rebuildRequired: 'The register line was removed: rebuild and restart the backend (plugin requests are already refused by the runtime gate against the ledger)'
+      gateTtl: 'No Go register line: the runtime gate refuses requests immediately from the ledger (no restart needed)'
+  sections:
+    manifest: Manifest summary
+    files: File list
+    entities: Entities
+    actions: Action audit
+  fields:
+    name: Name
+    version: Version
+    kind: Kind
+    status: Status
+    hostApi: Mechanism API range
+    hostVersion: Host version
+    frameworkReq: Framework version range
+    requires: Required plugins
+    checksum: Package sha256
+    source: Install source
+    signedBy: Signing key fingerprint
+    installedAt: Installed at
+    updatedAt: Updated at
+    remark: Remark
+    titleZh: Title (zh)
+    titleEn: Title (en)
+    tableName: Physical table
+  files:
+    target: Target path
+    bytes: Bytes
+    sha256: sha256
+    conflict: Same name in worktree
+    added: New
+    unavailable: 'Plugin source directory is unreadable (not running inside a source checkout, or the plugin ships no source, e.g. a declarative plugin)'
+  audit:
+    action: Action
+    operator: Operator
+    status: Result
+    createdAt: Time
+    detail: Detail
+  empty: Plugin not found or not installed
+# L2 generic page (web/src/views/admin/plugin/render/index.vue, P4): shared by every L2 entity; field/entity
+# copy comes from the backend per lang (title_zh/title_en bilingual metadata), so only fixed host copy lives
+# here. The first-level key "render" is a host reserved word (manifest.ReservedNames): no plugin can be named
+# render, so it structurally cannot collide with any plugin's plugin.<name>.* subtree.
+render:
+  empty: No data
+  searchPlaceholder: 'Search (fields the entity declared for quick search)'
+  notInstalled: Plugin not installed or disabled
+  notInstalledTip: 'Current coordinate: plugin/{plugin}/{entity}; not installed or disabled always returns 404. Check the ledger with aigo plugin list, then install / enable and retry.'
+  badRoute: 'Cannot resolve the plugin entity coordinate from the current path (expected <admin entry>/plugin/<plugin>/<entity>)'
+  loadFailed: 'Load failed, please retry later'
+  retry: Retry
+# Plugin-channel environment (verdict + basis + the whole-channel gate dialog shown in production;
+# shared by the management / catalog / source pages; single derivation point =
+# web/src/views/admin/plugin/usePluginEnv.ts).
+# The first-level key is deliberately camelCase: plugin names must match ^[a-z][a-z0-9-]{1,31}$
+# (lowercase start only), so envGate structurally cannot collide with any plugin.<name>.* subtree
+# and needs no host reserved word.
+envGate:
+  name:
+    dev: Development
+    prod: Production
+  allow: 'Installation and uninstallation are allowed'
+  forbid: 'Installation and uninstallation are forbidden'
+  basisConfig: 'plugin.env={value} is set explicitly (only dev | prod are accepted)'
+  basisAutoRoot: 'plugin.env is unset; auto-detected a source checkout'
+  basisAutoNoRoot: 'plugin.env is unset; no source checkout detected'
+  title: Plugin channel closed
+  headline: Installation and uninstallation are forbidden in production; the whole plugin channel is closed
+  why: Install and uninstall are source-tree operations (placing files, rewriting the wiring artifact, requiring a rebuild), so they are open only in development; the backend install/uninstall endpoints enforce the same gate (rejection code lifecycle_forbidden).
+  howto: To manage plugins outside production, run the service inside a source checkout, or set plugin.env=dev explicitly and restart; reconcile plugin state in production with aigo plugin list.
+  leave: Back to dashboard
+

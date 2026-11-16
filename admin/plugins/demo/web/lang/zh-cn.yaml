@@ -1,0 +1,18 @@
+# plugin: demo v1.0.0
+# 示例插件的语言包（源 → 落位副本 web/src/lang/zh-cn/plugin/demo.yaml，逐字节一致）。
+# 键前缀 plugin.demo.*（由落位路径的物理分段生成）；插件**不得**改写宿主语言包。
+title: 示例插件
+tag: "kind: mixed"
+intro: 本页是 L1 源码插件的自定义页：后端逻辑在 plugins/demo/plugin.go，前端源在 plugins/demo/web/views/index.vue。下面的数据来自插件自己的端点（POST /admin/plugin/demo/overview）。
+fields:
+  name: 插件名
+  version: 版本
+  kind: 形态
+  hostApi: 机制接口版本
+  hostVersion: 宿主版本
+  entityTable: L2 实体表
+  entity: L2 实体
+  note: 迁移自管表（最新一行）
+  pageHint: 自带配置键
+entityHint: 条目（L2 引擎：列表 / 新增 / 编辑 / 软删 / 拖动排序）
+refresh: 刷新

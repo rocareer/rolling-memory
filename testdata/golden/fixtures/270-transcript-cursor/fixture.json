@@ -1,0 +1,191 @@
+{
+  "config": {},
+  "db": "db/270-transcript-cursor.db",
+  "description": "JSONL import, injected/tool/meta skip rules, cursor advance/idempotency, REAL mtime freeze",
+  "drop_fts": false,
+  "expected": {
+    "import-1": "fixtures/270-transcript-cursor/expected/import-1.json",
+    "import-2": "fixtures/270-transcript-cursor/expected/import-2.json",
+    "import-3": "fixtures/270-transcript-cursor/expected/import-3.json",
+    "rows-after": "fixtures/270-transcript-cursor/expected/rows-after.json",
+    "rows.json": "fixtures/270-transcript-cursor/expected/rows.json",
+    "write-transcript": "fixtures/270-transcript-cursor/expected/write-transcript.json"
+  },
+  "fixed_now": 1793102400,
+  "frozen_meta": {
+    "db_meta.engine": "rolling-memory",
+    "db_meta.schema_version": "1"
+  },
+  "frozen_time_columns": {
+    "activation.updated_at": [],
+    "assertion.created_at": [],
+    "assertion.t_record": [],
+    "assertion.t_source": [],
+    "assertion.t_valid_from": [],
+    "assertion.t_valid_to": [],
+    "db_meta.created_at": [
+      1793102400
+    ],
+    "event.created_at": [
+      1793102400
+    ],
+    "injection_ledger.created_at": [],
+    "mention.created_at": [],
+    "meta_edge.created_at": [],
+    "node.created_at": [],
+    "node.retired_at": [],
+    "node_alias.created_at": [],
+    "replay_state.produced_through": [],
+    "replay_state.updated_at": [],
+    "session_cursor.turn_done": [],
+    "session_cursor.updated_at": [],
+    "sync_state.synced_at": [],
+    "trace.occurred_at": [
+      1772438400,
+      1772438460,
+      1772438520
+    ],
+    "trace.processed_at": [],
+    "trace.recorded_at": [
+      1793102400
+    ],
+    "transcript_cursor.mtime": [
+      1793102400.0
+    ],
+    "transcript_cursor.offset": [
+      5
+    ],
+    "transcript_cursor.size": [
+      852
+    ],
+    "transcript_cursor.updated_at": [
+      1793102400
+    ],
+    "vector.updated_at": []
+  },
+  "inputs": [
+    "transcript.jsonl"
+  ],
+  "ops": [
+    {
+      "args": {
+        "filename": "transcript.jsonl",
+        "messages": [
+          {
+            "message": {
+              "content": "老张养了一只猫。",
+              "role": "user"
+            },
+            "sessionId": "s-transcript",
+            "timestamp": "2026-03-02T08:00:00Z",
+            "type": "user"
+          },
+          {
+            "message": {
+              "content": [
+                {
+                  "text": "小白是白色的。",
+                  "type": "text"
+                }
+              ],
+              "role": "assistant"
+            },
+            "sessionId": "s-transcript",
+            "timestamp": "2026-03-02T08:01:00Z",
+            "type": "assistant"
+          },
+          {
+            "message": {
+              "content": "<rolling-memory-recall>injected</rolling-memory-recall> 老张喜欢咖啡。",
+              "role": "user"
+            },
+            "sessionId": "s-transcript",
+            "timestamp": "2026-03-02T08:02:00Z",
+            "type": "user"
+          },
+          {
+            "message": {
+              "content": "tool output is ignored",
+              "role": "tool"
+            },
+            "sessionId": "s-transcript",
+            "timestamp": "2026-03-02T08:03:00Z",
+            "type": "tool"
+          },
+          {
+            "isMeta": true,
+            "message": {
+              "content": "meta row is ignored",
+              "role": "user"
+            },
+            "sessionId": "s-transcript",
+            "timestamp": "2026-03-02T08:04:00Z",
+            "type": "user"
+          }
+        ]
+      },
+      "op": "write_transcript",
+      "save": "write-transcript"
+    },
+    {
+      "args": {
+        "max_lines": 500,
+        "offset": 0,
+        "path": "transcript.jsonl",
+        "session": "s-transcript"
+      },
+      "op": "import_transcript",
+      "save": "import-1"
+    },
+    {
+      "args": {
+        "max_lines": 500,
+        "offset": "$import-1/offset",
+        "path": "transcript.jsonl",
+        "session": "s-transcript"
+      },
+      "op": "import_transcript",
+      "save": "import-2"
+    },
+    {
+      "args": {
+        "max_lines": 500,
+        "offset": "$import-2/offset",
+        "path": "transcript.jsonl",
+        "session": "s-transcript"
+      },
+      "op": "import_transcript",
+      "save": "import-3"
+    },
+    {
+      "args": {
+        "tables": [
+          "trace",
+          "transcript_cursor"
+        ]
+      },
+      "op": "dump",
+      "save": "rows-after"
+    }
+  ],
+  "scenario": "270-transcript-cursor",
+  "scope": "mem:golden:270",
+  "table_digests": {
+    "activation": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "assertion": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "db_meta": "52a0f8c2396c753d1e0677b94a61721ff84f1f38dffec127830e80813c39d597",
+    "event": "c752571e6983c2e961b40917b9879dc52437d27610f99e168a768338a381d3e6",
+    "injection_ledger": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "mention": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "meta_edge": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "node": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "node_alias": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "replay_state": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "session_cursor": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "sync_state": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "trace": "8c89df3eacfa1f5f9fd5b5a30d3fd4cb7fc9ac725a62f2cefa0daa75e4abdc0a",
+    "transcript_cursor": "cb030bd883a0ed3d688305cc6f1aa67f5ce5699d0f58a3237f719cc0a3194791",
+    "vector": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "timezone": "UTC"
+}

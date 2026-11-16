@@ -1,0 +1,13 @@
+login: 登 录
+username: 请输入管理员账号（默认 rolling）
+password: 请输入登录密码
+loggingIn: 正在进入系统...
+remember: 保持登录状态
+welcomePrompt: 登录以管理本地明文金库、波场 × 星系记忆图谱与基准评测
+usernameRequired: 请输入管理员账号
+passwordRequired: 请输入登录密码
+passwordMinLength: 密码长度不能少于 6 位
+loggedIn: 您已登录，正在进入控制台
+themeDark: 暗黑模式
+themeLight: 亮色模式
+backHome: 返回首页

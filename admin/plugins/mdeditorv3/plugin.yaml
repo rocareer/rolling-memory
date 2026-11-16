@@ -1,0 +1,16 @@
+# plugin: mdeditorv3 v1.0.6
+# Markdown 编辑器与解析器基础插件（kind: code）：
+#   1) 为系统提供基于 md-editor-v3 (v6.4.2) 的 Markdown 富文本编辑（MdEditor）、Markdown 语法解析渲染（MdPreview）
+#      与章节大纲提取（MdCatalog）能力；
+#   2) 落位视图 web/src/views/admin/plugin/mdeditorv3/editor.vue 由宿主编辑器组件 agInput/components/editor.vue
+#      自动发现挂载（支持 name="md-v3" / name="mdeditorv3" 或作为默认编辑器），也可在任意业务页面按组件直接引入；
+#   3) 自动跟随宿主暗黑模式（config.layout.dark）与中英文语言（config.lang.active），图片上传对接宿主 /common/upload。
+name: mdeditorv3
+title: md-editor-v3富文本编辑器
+version: 1.0.6
+kind: code
+host_api: ">=1 <2"
+framework_req: ">=0.1 <2"
+web:
+  views: [web/views]
+  lang: [web/lang/zh-cn.yaml, web/lang/en.yaml]

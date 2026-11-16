@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "rolling-memory": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "-e",
+        "const fs=require('fs'),os=require('os'),p=require('path'),{spawn}=require('child_process');const home=process.env.HOME||process.env.USERPROFILE||os.homedir();const exe=process.platform==='win32'?'.exe':'';const bundle=[];const probe=d=>{try{const f=p.join(d,'bin','rolling-memory-mcp.js');if(fs.existsSync(f))bundle.push(f)}catch(e){}};for(const top of [p.join(home,'.workbuddy','plugins','marketplaces'),p.join(home,'.workbuddy','plugins','cache')]){let l1=[];try{l1=fs.readdirSync(top)}catch(e){continue}for(const a of l1){const d1=p.join(top,a);probe(d1);let l2=[];try{l2=fs.readdirSync(d1)}catch(e){continue}for(const b of l2){const d2=p.join(d1,b);probe(d2);let l3=[];try{l3=fs.readdirSync(d2)}catch(e){continue}for(const c of l3)probe(p.join(d2,c))}}}let cmd,args;if(bundle.length){cmd=process.execPath;args=[bundle[0]]}else{for(const h of [p.join(home,'.local','share','rolling-memory','bin','rolling-memory'+exe),p.join(home,'.local','share','rolling-memory','bin','rolling-memory.sh'),p.join(home,'.local','bin','rolling-memory'+exe)]){try{if(fs.existsSync(h)){cmd=h;args=[];break}}catch(e){}}}if(!cmd){process.stderr.write('[rm-mcp] no rolling-memory launcher found; install the CLI or reinstall the plugin payload');process.exit(127)}const child=spawn(cmd,args,{stdio:'inherit'});['SIGINT','SIGTERM','SIGHUP'].forEach(s=>process.on(s,()=>{try{child.kill(s)}catch(e){}}));child.on('exit',(code,sig)=>process.exit(typeof code==='number'?code:1));"
+      ],
+      "runtime": { "type": "node" },
+      "timeoutMs": 30000
+    }
+  }
+}

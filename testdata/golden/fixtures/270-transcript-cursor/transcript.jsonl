@@ -1,0 +1,5 @@
+{"type": "user", "sessionId": "s-transcript", "timestamp": "2026-03-02T08:00:00Z", "message": {"role": "user", "content": "老张养了一只猫。"}}
+{"type": "assistant", "sessionId": "s-transcript", "timestamp": "2026-03-02T08:01:00Z", "message": {"role": "assistant", "content": [{"type": "text", "text": "小白是白色的。"}]}}
+{"type": "user", "sessionId": "s-transcript", "timestamp": "2026-03-02T08:02:00Z", "message": {"role": "user", "content": "<rolling-memory-recall>injected</rolling-memory-recall> 老张喜欢咖啡。"}}
+{"type": "tool", "sessionId": "s-transcript", "timestamp": "2026-03-02T08:03:00Z", "message": {"role": "tool", "content": "tool output is ignored"}}
+{"type": "user", "sessionId": "s-transcript", "isMeta": true, "timestamp": "2026-03-02T08:04:00Z", "message": {"role": "user", "content": "meta row is ignored"}}

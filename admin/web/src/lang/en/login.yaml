@@ -1,0 +1,13 @@
+login: Sign In
+username: 'Enter administrator username (default: rolling)'
+password: Enter password
+loggingIn: Signing in...
+remember: Keep me signed in
+welcomePrompt: Sign in to manage local vault, memory graph, and evaluations
+usernameRequired: Please enter your username
+passwordRequired: Please enter your password
+passwordMinLength: Password must be at least 6 characters
+loggedIn: Already signed in, redirecting to console
+themeDark: Dark
+themeLight: Light
+backHome: Back to Home

@@ -1,0 +1,82 @@
+{
+  "dumps": [
+    {
+      "compact": true,
+      "ensure_ascii": false,
+      "name": "compact-ensure-ascii-false",
+      "output": "{\"a\":\"老张\",\"emoji\":\"🐱\",\"floats\":[0.0,1.0,-1.5,1e+20,1e-07],\"html\":\"<a>&</a>\",\"line\":\"a b c\",\"nested\":{\"float\":0.1,\"x\":true,\"y\":null},\"z\":1}",
+      "sort_keys": true
+    },
+    {
+      "compact": true,
+      "ensure_ascii": true,
+      "name": "compact-ensure-ascii-true",
+      "output": "{\"a\":\"\\u8001\\u5f20\",\"emoji\":\"\\ud83d\\udc31\",\"floats\":[0.0,1.0,-1.5,1e+20,1e-07],\"html\":\"<a>&</a>\",\"line\":\"a\\u2028b\\u2029c\",\"nested\":{\"float\":0.1,\"x\":true,\"y\":null},\"z\":1}",
+      "sort_keys": true
+    },
+    {
+      "compact": false,
+      "ensure_ascii": false,
+      "name": "default-separators-ensure-ascii-false",
+      "output": "{\"z\": 1, \"a\": \"老张\", \"emoji\": \"🐱\", \"html\": \"<a>&</a>\", \"line\": \"a b c\", \"nested\": {\"x\": true, \"y\": null, \"float\": 0.1}, \"floats\": [0.0, 1.0, -1.5, 1e+20, 1e-07]}",
+      "sort_keys": false
+    },
+    {
+      "compact": false,
+      "ensure_ascii": true,
+      "name": "default-separators-ensure-ascii-true",
+      "output": "{\"z\": 1, \"a\": \"\\u8001\\u5f20\", \"emoji\": \"\\ud83d\\udc31\", \"html\": \"<a>&</a>\", \"line\": \"a\\u2028b\\u2029c\", \"nested\": {\"x\": true, \"y\": null, \"float\": 0.1}, \"floats\": [0.0, 1.0, -1.5, 1e+20, 1e-07]}",
+      "sort_keys": false
+    },
+    {
+      "compact": false,
+      "ensure_ascii": false,
+      "indent": 2,
+      "name": "indent-2",
+      "output": "{\n  \"a\": \"老张\",\n  \"emoji\": \"🐱\",\n  \"floats\": [\n    0.0,\n    1.0,\n    -1.5,\n    1e+20,\n    1e-07\n  ],\n  \"html\": \"<a>&</a>\",\n  \"line\": \"a b c\",\n  \"nested\": {\n    \"float\": 0.1,\n    \"x\": true,\n    \"y\": null\n  },\n  \"z\": 1\n}",
+      "sort_keys": true
+    }
+  ],
+  "event_payloads": [
+    {
+      "ensure_ascii": true,
+      "name": "trace-add-default-ensure-ascii",
+      "output": "{\"session\": \"\\u4f1a\\u8bdd\\u4e00\", \"trace\": \"abc\", \"turn\": 1}",
+      "payload": {
+        "session": "会话一",
+        "trace": "abc",
+        "turn": 1
+      }
+    },
+    {
+      "ensure_ascii": false,
+      "name": "node-add-non-ascii",
+      "output": "{\"kind\": \"referent\", \"label\": \"老张\", \"node\": \"n_abc\"}",
+      "payload": {
+        "kind": "referent",
+        "label": "老张",
+        "node": "n_abc"
+      }
+    }
+  ],
+  "payload": {
+    "a": "老张",
+    "emoji": "🐱",
+    "floats": [
+      0.0,
+      1.0,
+      -1.5,
+      1e+20,
+      1e-07
+    ],
+    "html": "<a>&</a>",
+    "line": "a b c",
+    "nested": {
+      "float": 0.1,
+      "x": true,
+      "y": null
+    },
+    "z": 1
+  },
+  "version": 1
+}

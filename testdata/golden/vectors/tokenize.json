@@ -1,0 +1,147 @@
+{
+  "cap": 48,
+  "cases": [
+    {
+      "input": "",
+      "terms": []
+    },
+    {
+      "input": "老张的猫叫什么？Alice likes SQLite.",
+      "terms": [
+        "老张的猫叫什么",
+        "老张",
+        "张的",
+        "的猫",
+        "猫叫",
+        "叫什",
+        "老张的",
+        "张的猫",
+        "的猫叫",
+        "猫叫什",
+        "叫什么",
+        "alice",
+        "likes",
+        "sqlite"
+      ]
+    },
+    {
+      "input": "我 小白",
+      "terms": [
+        "小白"
+      ]
+    },
+    {
+      "input": "2026 年 3 月 2 日 project-a",
+      "terms": [
+        "2026",
+        "年",
+        "月",
+        "日",
+        "project"
+      ]
+    },
+    {
+      "input": "🐱 小白 🐱",
+      "terms": [
+        "小白"
+      ]
+    },
+    {
+      "input": "SQLite FTS5 bm25",
+      "terms": [
+        "sqlite",
+        "fts5",
+        "bm25"
+      ]
+    },
+    {
+      "input": "the quick brown fox",
+      "terms": [
+        "quick",
+        "brown",
+        "fox"
+      ]
+    },
+    {
+      "input": "老张养了一只猫",
+      "terms": [
+        "老张养了一只猫",
+        "老张",
+        "张养",
+        "养了",
+        "了一",
+        "一只",
+        "只猫",
+        "老张养",
+        "张养了",
+        "养了一",
+        "了一只",
+        "一只猫"
+      ]
+    },
+    {
+      "input": "supercalifragilisticexpialidocious",
+      "terms": [
+        "supercalifragilisticexpialidocious"
+      ]
+    },
+    {
+      "input": "a b c d e f g h i j k l m n o p q r s t u v w x y z",
+      "terms": []
+    },
+    {
+      "input": "term00 term01 term02 term03 term04 term05 term06 term07 term08 term09 term10 term11 term12 term13 term14 term15 term16 term17 term18 term19 term20 term21 term22 term23 term24 term25 term26 term27 term28 term29 term30 term31 term32 term33 term34 term35 term36 term37 term38 term39 term40 term41 term42 term43 term44 term45 term46 term47 term48 term49 term50 term51 term52 term53 term54 term55 term56 term57 term58 term59 term60 term61 term62 term63 term64 term65 term66 term67 term68 term69 term70 term71 term72 term73 term74 term75 term76 term77 term78 term79",
+      "terms": [
+        "term00",
+        "term01",
+        "term02",
+        "term03",
+        "term04",
+        "term05",
+        "term06",
+        "term07",
+        "term08",
+        "term09",
+        "term10",
+        "term11",
+        "term12",
+        "term13",
+        "term14",
+        "term15",
+        "term16",
+        "term17",
+        "term18",
+        "term19",
+        "term20",
+        "term21",
+        "term22",
+        "term23",
+        "term24",
+        "term25",
+        "term26",
+        "term27",
+        "term28",
+        "term29",
+        "term30",
+        "term31",
+        "term32",
+        "term33",
+        "term34",
+        "term35",
+        "term36",
+        "term37",
+        "term38",
+        "term39",
+        "term40",
+        "term41",
+        "term42",
+        "term43",
+        "term44",
+        "term45",
+        "term46",
+        "term47"
+      ]
+    }
+  ],
+  "version": 1
+}

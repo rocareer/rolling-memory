@@ -1,0 +1,101 @@
+<template>
+    <el-main class="layout-main">
+        <el-scrollbar class="layout-main-scrollbar" :style="layoutMainScrollbarStyle" :ref="layoutMainScrollbarRef">
+            <router-view v-slot="{ Component }">
+                <keep-alive :include="state.keepAliveComponentNameList">
+                    <component :is="Component" :key="state.componentKey" />
+                </keep-alive>
+            </router-view>
+        </el-scrollbar>
+    </el-main>
+</template>
+
+<script setup lang="ts">
+import { useGlobalProperties } from '@/hooks/useGlobalProperties'
+import { useNavTab } from '@/stores/navTab'
+import { layoutMainScrollbarRef, layoutMainScrollbarStyle } from '@/stores/ref'
+import { getMenuDataByRoute } from '@/utils/common'
+import { nextTick, onBeforeMount, onMounted, onUnmounted, reactive, watch } from 'vue'
+import { useRoute, type RouteLocationNormalized } from 'vue-router'
+
+defineOptions({
+    name: 'layout/main',
+})
+
+const route = useRoute()
+const navTab = useNavTab()
+const globalProperties = useGlobalProperties()!
+
+const state: {
+    componentKey: string
+    keepAliveComponentNameList: string[]
+} = reactive({
+    componentKey: route.fullPath,
+    keepAliveComponentNameList: [],
+})
+
+const addKeepAliveComponentName = function (keepAliveName: string | undefined) {
+    if (keepAliveName) {
+        let exist = state.keepAliveComponentNameList.find((name: string) => {
+            return name === keepAliveName
+        })
+        if (exist) return
+        state.keepAliveComponentNameList.push(keepAliveName)
+    }
+}
+
+const addActiveRouteKeepAlive = () => {
+    if (navTab.state.activeRoute) {
+        const tabView = getMenuDataByRoute(navTab.state.activeRoute)
+        if (tabView && tabView.meta?.keepalive === 1) {
+            addKeepAliveComponentName(tabView.name as string)
+        }
+    }
+}
+
+onBeforeMount(() => {
+    globalProperties.eventBus.on('onTabViewRefresh', (menu: RouteLocationNormalized) => {
+        state.keepAliveComponentNameList = state.keepAliveComponentNameList.filter((name: string) => menu.name !== name)
+        state.componentKey = ''
+        nextTick(() => {
+            state.componentKey = menu.fullPath
+            addKeepAliveComponentName(menu.name as string)
+        })
+    })
+    globalProperties.eventBus.on('onTabViewClose', (menu: RouteLocationNormalized) => {
+        state.keepAliveComponentNameList = state.keepAliveComponentNameList.filter((name: string) => menu.name !== name)
+    })
+})
+
+onUnmounted(() => {
+    globalProperties.eventBus.off('onTabViewRefresh')
+    globalProperties.eventBus.off('onTabViewClose')
+})
+
+onMounted(() => {
+    // 确保刷新页面时也能正确取得当前路由 keepalive 参数（热更新）
+    addActiveRouteKeepAlive()
+})
+
+watch(
+    () => route.fullPath,
+    () => {
+        state.componentKey = route.fullPath
+        addActiveRouteKeepAlive()
+    }
+)
+</script>
+
+<style scoped lang="scss">
+.layout-container .layout-main {
+    padding: 0 !important;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+.layout-main-scrollbar {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+</style>

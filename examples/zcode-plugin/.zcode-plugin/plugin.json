@@ -1,0 +1,36 @@
+{
+  "name": "rolling-memory",
+  "version": "0.0.1",
+  "description": "Rolling Memory MCP server + harness hooks. Single tool: recall (回忆即记忆) over a local SQLite plaintext vault (local_plain).",
+  "author": {
+    "name": "Albert (Rocareer / Rolling-Memory)",
+    "email": "albert@rocareer.com"
+  },
+  "license": "Apache-2.0",
+  "userConfig": {
+    "db": {
+      "type": "string",
+      "title": "Database path",
+      "description": "Absolute path to the SQLite database. Inside a project, prefer <project>/.rolling-memory/memory.db and add it to .gitignore.",
+      "default": "~/.local/share/rolling-memory/memory.db"
+    },
+    "scope": {
+      "type": "string",
+      "title": "Memory scope",
+      "description": "default (personal memory) or project:<name> (project scope).",
+      "default": "default"
+    }
+  },
+  "mcpServers": {
+    "rolling-memory": {
+      "type": "stdio",
+      "command": "rolling-memory",
+      "args": ["mcp"],
+      "env": {
+        "ROLLING_MEMORY_DB": "${user_config.db}",
+        "ROLLING_MEMORY_SCOPE": "${user_config.scope}"
+      },
+      "timeoutMs": 30000
+    }
+  }
+}

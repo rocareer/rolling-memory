@@ -1,0 +1,114 @@
+Rolling-Memory
+Copyright (c) 2026 Rocareer & Rolling-Memory Organization (Author & Chief Architect: Albert <albert@rocareer.com>). All rights reserved.
+
+This product's first-party source code is licensed under the PolyForm Noncommercial
+License 1.0.0 (SPDX: PolyForm-Noncommercial-1.0.0, see LICENSE): free to use, modify,
+and share for any noncommercial purpose; commercial use and commercial distribution
+require a separate written commercial license. The client SDK libraries under `sdk/`
+are separately licensed under the Apache License 2.0 (see `sdk/LICENSE`). Third-party
+components below remain under their respective upstream licenses.
+
+Required Notice: Copyright (c) 2026 Rocareer & the Rolling-Memory
+Organization (https://github.com/rocareer/rolling-memory)
+
+========================================================================
+Third-Party Open-Source Component Notices
+========================================================================
+
+1. Go Core Runtime Dependencies (linked in `cmd/rolling-memory` and `cmd/rmem`):
+   - modernc.org/sqlite (and modernc.org/{libc,mathutil,memory})
+     License: BSD-3-Clause
+     Copyright (c) The modernc.org/sqlite Authors.
+   - golang.org/x/text, golang.org/x/crypto, golang.org/x/sys
+     License: BSD-3-Clause
+     Copyright (c) The Go Authors.
+   - github.com/pelletier/go-toml/v2
+     License: MIT
+     Copyright (c) Thomas Pelletier.
+   - github.com/google/uuid
+     License: BSD-3-Clause
+     Copyright (c) Google Inc.
+   - github.com/dustin/go-humanize
+     License: MIT
+     Copyright (c) Dustin Sallings.
+   - github.com/mattn/go-isatty
+     License: MIT
+     Copyright (c) Yasuhiro Matsumoto.
+   - github.com/ncruces/go-strftime
+     License: MIT
+     Copyright (c) Nuno Cruces.
+
+2. Optional Web Administration Console (`rolling-memory panel`):
+   - AI GO ADMIN (https://github.com/ai-go-hub/ai-go-admin)
+     Mirrors: https://gitee.com/ai-go-hub/ai-go-admin · https://atomgit.com/ai-go-hub/ai-go-admin
+     Upstream revision: main @ 9f7c34c655f915a733c2aeb9570df4c051365ebe (2026-10-22) — the upstream
+     default-branch head at the time this console was imported (the upstream project publishes no
+     tags or releases).
+     License: Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+     Copyright: AI GO ADMIN contributors
+     Modifications: Adapted by Rocareer for local SQLite storage and Rolling-Memory
+     memory console, ROI monitor, graph visualization, live CLI console, and evaluation dashboards.
+     Rolling-Memory-authored console code (for example `admin/internal/rmconsole/**` and the
+     Rolling-Memory console pages under `admin/web/src/views/admin/`) is this project's own
+     original work and carries this project's copyright header.
+   - BuildAdmin (https://gitee.com/wonderful-code/buildadmin)
+     License: Apache License, Version 2.0
+     Copyright: 妙码生花
+     Scope: UI lineage and plugin catalog page ported from BuildAdmin v2.3.9 (commit 4686522).
+   - Apache ECharts (https://echarts.apache.org/)
+     License: Apache License, Version 2.0
+     Copyright (c) The Apache Software Foundation.
+   - Vue.js, Element Plus, Pinia, Vite
+     License: MIT
+
+3. Bundled Fonts (`admin/asset/font/`, `admin/web/public/fonts/`):
+   - Source Han Sans CN Normal v1.000 (`admin/asset/font/SourceHanSansCN-Normal.ttf`)
+     Upstream: Adobe Source Han Sans — https://github.com/adobe-fonts/source-han-sans (release v1.000)
+     License: Apache License, Version 2.0. The license record embedded in the bundled file states
+     "Licensed under the Apache License, Version 2.0 ... http://www.apache.org/licenses/LICENSE-2.0.html",
+     so the Apache-2.0 terms apply to this file. Later upstream releases (v2.001 and newer) are
+     licensed under the SIL Open Font License 1.1; that relicense does not change the terms of the
+     bundled v1.000 file.
+     Copyright: Copyright © 2014 Adobe Systems Incorporated. All Rights Reserved.
+     Trademark: "Source" is a trademark of Adobe Systems Incorporated in the United States and/or
+     other countries. The name identifies the bundled font only; no trademark rights are granted
+     (Apache License, Version 2.0, section 6) and no Adobe endorsement is implied.
+    License text: `admin/asset/font/LICENSE.txt` (Apache-2.0 full text).
+     Modifications: none declared by this project.
+   - Archivo Latin (`admin/web/public/fonts/Archivo-Latin.woff2`)
+     Upstream: Archivo — The Archivo Project Authors (https://github.com/Omnibus-Type/Archivo)
+     License: SIL Open Font License, Version 1.1
+     Copyright: Copyright 2020 The Archivo Project Authors (https://github.com/Omnibus-Type/Archivo)
+     License text: `admin/web/public/fonts/OFL.txt` (OFL-1.1, verbatim).
+     The font is referenced from stylesheets (`@font-face`); no derivative font is created, so the
+     OFL-1.1 section 5 rename condition does not apply.
+
+4. Benchmark Corpora and Upstream Evaluator Ports:
+   - ATM-Bench SGM Multimodal Personal Memory Corpus (University of Cambridge ATM-Bench)
+     Data license: Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) —
+     Copyright (c) 2026 Jingbiao Mei (data: https://huggingface.co/datasets/Jingbiao/ATM-Bench).
+     The upstream code repository (https://github.com/JingbiaoMei/ATM-Bench) is MIT; the corpus
+     data itself is not.
+     Status: not redistributed with this repository and deliberately kept out of the published
+     tree — the corpus carries its own CC BY-NC terms and the derived tier files carry the same
+     terms, so this project does not re-ship them. The corpus is obtained from the
+     upstream dataset and pinned locally with the `SHA-256` digests published in
+     `docs/benchmarks.md`.
+   - ATM-Bench official evaluator ports — `internal/eval/atmofficial_normalizer.go`,
+     `internal/eval/atmofficial_scoring.go`, `internal/eval/atmofficial_protocol.go`, and the
+     generated copies `admin/internal/rmconsole/atmofficial_{normalizer,scoring}.go`
+     License: MIT — Copyright (c) 2026 Jingbiao Mei (https://github.com/JingbiaoMei/ATM-Bench),
+     ported from `memqa/utils/evaluator/**`. Each ported file keeps its upstream provenance header;
+     the generated copies additionally carry a "Code generated ... DO NOT EDIT." line.
+     License text: `THIRD_PARTY_LICENSES/MIT-ATM-Bench.txt`.
+   - LoCoMo10 (ACL 2024 LoCoMo benchmark snapshot)
+     License: Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) —
+     the LoCoMo authors (https://github.com/snap-research/locomo)
+     Status: not redistributed with this repository and deliberately kept out of the published
+     tree. The corpus carries its own CC BY-NC terms, so no LoCoMo-derived corpus ships; the
+     benchmark is referenced by name only and
+     readers obtain it from upstream under the upstream terms.
+
+Note: the web console's npm dependencies are likewise not shipped as source
+(`admin/web/node_modules/` and `admin/web/dist/` are held back); the delivered evidence is
+`admin/web/package.json`, `admin/web/package-lock.json` and the generated SBOM.

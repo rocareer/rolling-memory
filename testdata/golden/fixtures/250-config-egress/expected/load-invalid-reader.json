@@ -1,0 +1,5 @@
+{
+  "error": "ConfigError",
+  "message": "reader must be one of ('owner', 'deliverable'), got 'everyone'",
+  "ok": false
+}

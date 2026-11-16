@@ -1,0 +1,103 @@
+# Brand and navigation
+brandTriad: AUTONOETIC MEMORY ENGINE
+navWhat: What it does
+navCost: Cost and privacy
+navSavings: Does it help
+navStart: Get started
+navPreview: Preview
+navDocs: Documentation
+navAria: Home navigation
+languageSwitchAria: Switch to 简体中文
+repoAria: Open-source repository
+enterConsole: Open console
+openMenu: Open navigation menu
+closeMenu: Close navigation menu
+backToTop: Back to top
+skipToContent: Skip to main content
+copyCmd: Copy command
+copied: Copied
+copy: Copy
+
+# First screen
+heroEyebrow: Local memory for coding agents
+heroTitleA: Remember every session.
+heroTitleB: Keep it on your machine.
+heroFacts: Free and open source · Searchable as soon as it's saved · Nothing leaves your computer
+ctaConsole: Open console
+
+# 1. What it does
+whatQ: What does it do?
+whatLead: It gives your coding agent a memory of past sessions.
+whatBody: Your conversations with the agent, plus any project folders you add, are saved word for word in one database file on your computer. When the agent needs something from the past, it calls a tool named recall and gets back the original passage and where it came from.
+whatWithoutLabel: Without memory
+whatWithoutText: You ask "where did we fix that status-bar flicker?" The agent guesses keywords and spends three to five rounds of searching files to find out.
+whatWithLabel: With a recall hit
+whatWithText: recall returns the earlier conversation that names the file, so the agent opens it directly.
+whatCost: In a long session the agent's context is often 100k–400k tokens, and every extra round of searching sends all of it to the model again. Skipping even one round saves that much.
+whatAuto: Saving is automatic. Finished conversations are recorded in the background; the agent never has to stop and write notes.
+
+# 2. Cost and privacy
+costQ: What does it cost, and who sees my data?
+costLead: Nothing to pay, and no one in the middle.
+promiseFreeTitle: Free
+promiseFreeText: No model or embedding fees, no hosting, no account, no credit card. Source-available, free for any noncommercial use.
+promiseLiveTitle: No waiting
+promiseLiveText: Nothing is summarized or indexed in the background. A conversation is searchable within milliseconds of being saved.
+promiseLocalTitle: Stays local
+promiseLocalText: One program file and one database file on your machine. Saving and searching make no network requests — only you and the agent you're working with see your code and conversations.
+promiseOwnTitle: Yours to keep
+promiseOwnText: It's a standard SQLite file. Back it up, export it to JSON, or delete it whenever you like.
+costNote: One thing to know — if your agent runs on a hosted model such as Claude or GPT, the passages recall returns become part of what the agent sends to that model, just like the files it reads.
+
+# 3. Does it actually help
+savingsQ: Does it actually help?
+savingsLead: About half the time, by our own count.
+ledgerCaption: 'Our own check over 24 hours on one development machine: {total} agent turns, each reviewed after the fact'
+ledgerHelpedLabel: Helped
+ledgerIdleLabel: No help
+ledgerSaved: The turns that helped saved an estimated {low}–{high} rounds of searching.
+ledgerMiss: When recall misses, that call costs a round instead of saving one. It's a simple keyword-and-statistics search, so it misses when your question shares no words with the record.
+ledgerBench: "On the public ATM-Bench test it finds the right record within the top 10 results {score} of the time (official Recall{'@'}10)."
+ledgerDocLink: See the full token math
+ledgerBenchLink: Reproduce the benchmarks
+
+# 4. Get started
+startQ: How do I get started?
+startLead: Install it, connect your agents, and get back to work.
+stepInstallTitle: Install
+stepInstallText: Needs Go 1.26 or later. On macOS or Linux, this builds the program and connects the agents it finds. On Windows, run install.ps1 in PowerShell instead.
+stepCheckTitle: Check the connection
+stepCheckText: Confirms each agent can see the memory tool.
+stepAdjustTitle: Turn things off if you prefer
+stepAdjustText: In ZCode and Claude Code, the installer also adds a short reminder to each prompt that can bring in relevant past memory, and it keeps a small local record of whether recall helped, which feeds the console's stats. You can keep just the recall tool, switch the record off, or remove everything.
+adjustMcpOnly: Keep only the recall tool — remove the reminders and skill files, then reconnect
+adjustHooksOff: Turn off the local record of whether recall helped (this also turns off repeat filtering)
+adjustUninstall: Remove everything the installer added
+agentsTitle: Works with
+agentsAutoText: Running install with no names connects whichever of these it finds on your machine.
+agentsNamedText: These three are connected when you name them.
+agentsOther: Any other tool that supports MCP can run rolling-memory mcp.
+consoleText: The local console lets you browse what's been saved and see how often recall helps.
+
+# 5. Preview
+previewQ: What's next?
+previewTag: Preview
+previewLead: Pulse mode, a cloud engine that never sees your text.
+previewBody: Still no language model and no vector database. Your computer sends only scrambled, one-way codes; the engine finds matches without ever seeing the words, and the original text is filled back in from your own copy. It's an early exploration of how agent memory could work, and isn't part of this release.
+previewApply: To apply
+previewSupport: Questions and support
+
+# 6. About
+aboutQ: Who makes it?
+aboutLead: A small interdisciplinary team.
+aboutBody: We came out of the Psychology Lake community, where we study how minds and memory work. We wanted long-term memory for coding agents to be something anyone can run, without a subscription or a hidden token bill.
+aboutLicense: The source is published under PolyForm Noncommercial 1.0.0 — free to use, modify, and share for any noncommercial purpose; commercial use is licensed separately. It's provided as is, without warranty.
+linkGithub: GitHub repository
+linkMirror: Gitee mirror
+linkDocs: Documentation
+linkDeclaration: Declaration and disclaimer
+contactTeam: Contact us
+
+# Footer
+footerTagline: Local memory for coding agents
+footerNote: Memory shouldn't cost you ownership of your words.

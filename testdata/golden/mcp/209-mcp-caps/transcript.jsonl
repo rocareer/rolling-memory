@@ -1,0 +1,6 @@
+{"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "recall", "arguments": {"cue": "老张", "caps": 5}}}
+{"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "recall", "arguments": {"cue": "老张", "caps": "wide"}}}
+{"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "recall", "arguments": {"cue": "老张", "caps": null}}}
+{"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "recall", "arguments": {"cue": "老张", "caps": {}}}}
+{"jsonrpc": "2.0", "id": 6, "method": "tools/call", "params": {"name": "recall", "arguments": {"cue": "老张", "caps": {"chars": 40}}}}
+{"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": {"name": "recall", "arguments": {"cue": "老张", "mode": "probe", "caps": 5}}}

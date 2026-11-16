@@ -1,0 +1,65 @@
+# Standalone top-level channel "Help Center (docs/ Interactive Reader)" English language pack
+# (web/src/lang/en/help.yaml ⇒ prefix help.*)
+badge: docs/ Documentation Hub
+title: Help & Open-Source Documentation Center
+subtitle: 'Loads and renders the full Markdown documents, section outlines, and code snippets directly from the root and docs/ directory of rocareer/rolling-memory.'
+searchPlaceholder: Full-text search across 13 documents, paths, or content...
+scopeSwitchLabel: 'Directory Scope:'
+categorySwitchLabel: 'Category:'
+scopeAll: All Docs
+scopeRoot: Root Overview & Legal
+scopeDocs: docs/ Technical Guides
+catAll: All Docs
+enterZen: Focus Mode
+exitZen: Exit Focus
+enterEdit: Live Markdown Editor (md-editor-v3)
+exitEdit: Back to Reader
+resetDraft: Reset Content
+mdEngineTag: md-editor-v3 v1.0.6 Active
+noMatch: No matching documents or sections found
+resetFilter: Reset Filters
+openGitHub: View Source on GitHub
+copyUrl: Copy URL
+copyContent: Copy Full Markdown
+copied: Copied to clipboard
+goReposPage: Repo & Legal Dossier
+goDocsPage: Open Docs Reader
+statusPlaceholder: Pending
+statusReady: Live Synced
+outlineTitle: Key Takeaways & Section Guide
+draftTitle: Full Document
+repoPathLabel: 'File Path:'
+targetUrlLabel: 'GitHub Remote URL:'
+repos:
+  main:
+    name: rocareer/rolling-memory
+    badge: Official Open-Source Repo
+    status: Maintained under GitHub rocareer
+    url: https://github.com/rocareer/rolling-memory
+    desc: 'Open-source repository for the Rolling Memory system (Go core engine, multi-harness plugins, Web console, and root README / DECLARATION / LICENSE / NOTICE).'
+  docsDir:
+    name: rocareer/rolling-memory/docs
+    badge: docs/ Directory
+    status: Maintained with Main Repo
+    url: https://github.com/rocareer/rolling-memory/tree/main/docs
+    desc: 'All public manuals (harness guides harness.md, MCP contracts mcp.md, Web console guides plugin-console.md, benchmarks benchmarks.md, and the privacy & local data statement privacy.md) live in docs/.'
+categories:
+  overview: Overview & Changelog
+  guide: Integration & Eval Guides
+  architecture: Architecture & Contracts
+  legal: Declaration, License & Privacy
+  faq: FAQ
+reposPage:
+  title: Open-Source Repository, Declaration & License Dossier
+  subtitle: 'Hosted under GitHub rocareer/rolling-memory with all documentation and source code provided together.'
+  stageNoticeTitle: 'Repository & Documentation Structure (rocareer/rolling-memory + docs/)'
+  stageNoticeDesc: 'All core code, plugin assets, root legal declarations (DECLARATION.md / LICENSE / NOTICE), and technical manuals under docs/ are provided in rocareer/rolling-memory.'
+  tableTitle: Public Declarations & docs/ Manuals
+  colScope: Scope
+  colPath: Relative Path
+  colCategory: Category
+  colTitle: Document Title & Summary
+  colStatus: Status
+  colAction: Actions
+  previewBtn: Read Full Doc
+  openRemoteBtn: GitHub ↗

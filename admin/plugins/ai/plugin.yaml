@@ -1,0 +1,398 @@
+# plugin: ai v0.2.0
+# AI 路由插件：渠道管理、模型管理（含绑定）、调度与熔断、计费与用量、日志、监控六项，
+# 本批（0.2.0）另加：厂商继承、应用接入（API Key）、异步任务、语音（TTS）、多驱动注册表、
+# 渠道准入（RPM/TPM）、公开面按 Key 限流、SSE 三级上限。
+# 形态 mixed：9 张表全部由本插件迁移自管（migrations/1_init.*.sql + 2..6 增量），entities 留空——
+#   L2 实体段只属声明式由引擎建表的实体；本插件的表需要复合唯一键
+#   （(model_id,channel_id)、(request_id,attempt)）与具名 CHECK，L2 spec 表达不了（L2 的 unique 是字段级布尔）。
+# 后台 42 条路由挂在宿主建好的 plugin/ai 子组上（只写相对段）；4 条公开路由由插件包 MountPublic 逐字对外。
+# 键集闭集：未知键拒装（internal/plugin/manifest）；机制与纪律见 plugins/README.md。
+#
+# 迁移编号（1..N 连续前缀是硬要求，check-plugin-manifest.sh 只校验唯一 + up/down 成对）：
+#   1_init → 2_usage_partial_billing → 3_channel_driver_supplier_gate
+#   → 4_api_key → 5_task → 6_voice。
+#   已装插件要应用 2..6 只能走「disable → uninstall --keep-files → install --enable」：
+#   宿主没有「对已装插件单独应用新迁移」的命令（迁移只在安装编排第 ⑥ 步执行），
+#   且 install 对台账已有行的插件硬拒（internal/plugin/cli/dbwrite.go:45-51）。
+#   代价与回滚凭据见同目录 README「升级流程」节。
+name: ai
+title: AI 路由
+version: 0.2.0
+kind: mixed
+# 公开路由（MountPublic）需要机制接口 >=1.1；上界 <2 锁定 1.x 语义。
+host_api: ">=1.1 <2"
+menus:
+  # ① 分组目录（pid 空 = 根；只作侧栏分组，不产生前端路由）
+  - title: AI 路由
+    type: dir
+    name: plugin/ai
+    path: plugin/ai
+    icon: lucide-bot
+    weigh: 100
+  # ② 9 个功能页（component 必须精确写落位副本路径：前端按 import.meta.glob('/src/views/admin/**/*.vue') 精确查表。
+  #    「调用日志」是菜单与权限节点的锚点，功能页复用「用量统计」的 logs tab，见该菜单下的注）
+  - title: 总览
+    type: menu
+    name: plugin/ai/overview
+    path: plugin/ai/overview
+    component: /src/views/admin/plugin/ai/overview/index.vue
+    pid: plugin/ai
+    icon: lucide-gauge
+    weigh: 100
+  - title: AI 资产体检
+    type: menu
+    name: plugin/ai/index
+    path: plugin/ai/index
+    component: /src/views/admin/plugin/ai/index.vue
+    pid: plugin/ai
+    icon: lucide-stethoscope
+    weigh: 98
+  - title: AI 成本账单
+    type: menu
+    name: plugin/ai/cost
+    path: plugin/ai/cost
+    component: /src/views/admin/plugin/ai/cost.vue
+    pid: plugin/ai
+    icon: lucide-coins
+    weigh: 95
+  - title: 渠道管理
+    type: menu
+    name: plugin/ai/channel
+    path: plugin/ai/channel
+    component: /src/views/admin/plugin/ai/channel/index.vue
+    pid: plugin/ai
+    icon: lucide-server
+    weigh: 90
+  - title: 厂商管理
+    type: menu
+    name: plugin/ai/supplier
+    path: plugin/ai/supplier
+    component: /src/views/admin/plugin/ai/supplier/index.vue
+    pid: plugin/ai
+    icon: lucide-building-2
+    weigh: 85
+  - title: 模型管理
+    type: menu
+    name: plugin/ai/model
+    path: plugin/ai/model
+    component: /src/views/admin/plugin/ai/model/index.vue
+    pid: plugin/ai
+    icon: lucide-boxes
+    weigh: 80
+  - title: 应用接入
+    type: menu
+    name: plugin/ai/apikey
+    path: plugin/ai/apikey
+    component: /src/views/admin/plugin/ai/apikey/index.vue
+    pid: plugin/ai
+    icon: lucide-key-round
+    weigh: 75
+  - title: 用量统计
+    type: menu
+    name: plugin/ai/usage
+    path: plugin/ai/usage
+    component: /src/views/admin/plugin/ai/usage/index.vue
+    pid: plugin/ai
+    icon: lucide-chart-column
+    weigh: 70
+  - title: 调用日志
+    type: menu
+    name: plugin/ai/usage-log
+    path: plugin/ai/usage-log
+    # 日志（含尝试链详情）是「用量统计」页里的 logs tab（权限节点 plugin/ai/usage-log/read|detail
+    # 也挂在那个 tab 上），插件源与落位副本里没有独立的 usage-log 页面：
+    # 指向不存在的 component 会让侧栏菜单点击后不注册任何路由（空落点）。
+    component: /src/views/admin/plugin/ai/usage/index.vue
+    pid: plugin/ai
+    icon: lucide-scroll-text
+    weigh: 60
+  - title: 异步任务
+    type: menu
+    name: plugin/ai/task
+    path: plugin/ai/task
+    component: /src/views/admin/plugin/ai/task/index.vue
+    pid: plugin/ai
+    icon: lucide-list-todo
+    weigh: 55
+  - title: 语音合成
+    type: menu
+    name: plugin/ai/voice
+    path: plugin/ai/voice
+    component: /src/views/admin/plugin/ai/voice/index.vue
+    pid: plugin/ai
+    icon: lucide-audio-lines
+    weigh: 50
+  # ③ 权限节点（36 个）：名字必须与 BuildCheckPath(FullPath) 逐字相等。
+  #    列表/详情（末段 list|get）由中间件按 [同名, 同前缀/read] OR 判定，故只声明 read 一个节点即可覆盖两者。
+  #    v1 的 18 个 + 本批 18 个（厂商 4 / 应用接入 6 / 任务 3 / 语音 5）。
+  # ---- 渠道（plugin/ai/channel/*）----
+  - title: 查看渠道
+    type: node
+    name: plugin/ai/channel/read
+    pid: plugin/ai/channel
+  - title: 新增渠道
+    type: node
+    name: plugin/ai/channel/create
+    pid: plugin/ai/channel
+  - title: 编辑渠道
+    type: node
+    name: plugin/ai/channel/update
+    pid: plugin/ai/channel
+  - title: 删除渠道
+    type: node
+    name: plugin/ai/channel/delete
+    pid: plugin/ai/channel
+  - title: 渠道启停
+    type: node
+    name: plugin/ai/channel/switch
+    pid: plugin/ai/channel
+  - title: 渠道探活
+    type: node
+    name: plugin/ai/channel/probe
+    pid: plugin/ai/channel
+  - title: 人工熔断
+    type: node
+    name: plugin/ai/channel/breaker
+    pid: plugin/ai/channel
+  - title: 熔断事件
+    type: node
+    name: plugin/ai/channel/events
+    pid: plugin/ai/channel
+  # ---- 模型（plugin/ai/model/*）----
+  - title: 查看模型
+    type: node
+    name: plugin/ai/model/read
+    pid: plugin/ai/model
+  - title: 新增模型
+    type: node
+    name: plugin/ai/model/create
+    pid: plugin/ai/model
+  - title: 编辑模型
+    type: node
+    name: plugin/ai/model/update
+    pid: plugin/ai/model
+  - title: 删除模型
+    type: node
+    name: plugin/ai/model/delete
+    pid: plugin/ai/model
+  - title: 绑定渠道
+    type: node
+    name: plugin/ai/model/bind
+    pid: plugin/ai/model
+  # ---- 用量与日志（plugin/ai/usage|usage-log/*）----
+  - title: 查看用量
+    type: node
+    name: plugin/ai/usage/read
+    pid: plugin/ai/usage
+  - title: 查看调用日志
+    type: node
+    name: plugin/ai/usage-log/read
+    pid: plugin/ai/usage-log
+  - title: 尝试链详情
+    type: node
+    name: plugin/ai/usage-log/detail
+    pid: plugin/ai/usage-log
+  # ---- 总览与设置（页面自取数；设置面因宿主配置页不为 plugin.* 分组生成 tab 而由插件自管）----
+  - title: 查看总览
+    type: node
+    name: plugin/ai/overview/index
+    pid: plugin/ai/overview
+  - title: 保存接入设置
+    type: node
+    name: plugin/ai/settings/save
+    pid: plugin/ai
+  # ---- 厂商（plugin/ai/supplier/*，本批 F3）----
+  - title: 查看厂商
+    type: node
+    name: plugin/ai/supplier/read
+    pid: plugin/ai/supplier
+  - title: 新增厂商
+    type: node
+    name: plugin/ai/supplier/create
+    pid: plugin/ai/supplier
+  - title: 编辑厂商
+    type: node
+    name: plugin/ai/supplier/update
+    pid: plugin/ai/supplier
+  - title: 删除厂商
+    type: node
+    name: plugin/ai/supplier/delete
+    pid: plugin/ai/supplier
+  # ---- 应用接入（plugin/ai/apikey/*，本批 F1）----
+  - title: 查看应用接入
+    type: node
+    name: plugin/ai/apikey/read
+    pid: plugin/ai/apikey
+  - title: 签发应用接入
+    type: node
+    name: plugin/ai/apikey/create
+    pid: plugin/ai/apikey
+  - title: 编辑应用接入
+    type: node
+    name: plugin/ai/apikey/update
+    pid: plugin/ai/apikey
+  - title: 删除应用接入
+    type: node
+    name: plugin/ai/apikey/delete
+    pid: plugin/ai/apikey
+  - title: 重置应用接入密钥
+    type: node
+    name: plugin/ai/apikey/reset
+    pid: plugin/ai/apikey
+  - title: 应用接入启停
+    type: node
+    name: plugin/ai/apikey/switch
+    pid: plugin/ai/apikey
+  # ---- 异步任务（plugin/ai/task/*，本批 F5+F6）----
+  - title: 查看任务
+    type: node
+    name: plugin/ai/task/read
+    pid: plugin/ai/task
+  - title: 提交任务
+    type: node
+    name: plugin/ai/task/submit
+    pid: plugin/ai/task
+  - title: 导出任务结果
+    type: node
+    name: plugin/ai/task/export
+    pid: plugin/ai/task
+  # ---- 语音（plugin/ai/voice/*，本批 F7）----
+  - title: 查看音色
+    type: node
+    name: plugin/ai/voice/read
+    pid: plugin/ai/voice
+  - title: 新增音色
+    type: node
+    name: plugin/ai/voice/create
+    pid: plugin/ai/voice
+  - title: 编辑音色
+    type: node
+    name: plugin/ai/voice/update
+    pid: plugin/ai/voice
+  - title: 删除音色
+    type: node
+    name: plugin/ai/voice/delete
+    pid: plugin/ai/voice
+  - title: 试听音色
+    type: node
+    name: plugin/ai/voice/preview
+    pid: plugin/ai/voice
+  # ---- AI 资产体检与成本经济学报告 ----
+  - title: 体检与成本报告
+    type: node
+    name: plugin/ai/report
+    pid: plugin/ai/index
+# 表结构由迁移自管（kind: mixed 允许 entities 为空；L2 引擎不介入本插件的表）。
+entities: []
+web:
+  # 源（本目录）是唯一事实源，落位副本是产物：
+  #   web/views/** → web/src/views/admin/plugin/ai/**
+  #   web/lang/<语言>.yaml → web/src/lang/<语言>/plugin/ai.yaml
+  views: [web/views]
+  lang: [web/lang/zh-cn.yaml, web/lang/en.yaml]
+configs:
+  # 安装器落库名 = plugin_ai_<name>，分组 = plugin.ai（allow_del=0）。
+  # 宿主配置页不会为 plugin.<名> 分组生成 tab ⇒ 读写走插件自管 POST /admin/plugin/ai/settings/save。
+  - name: api_key
+    title: 网关 API Key
+    type: password
+    tip: 公开面 /ai/v1/* 的 Bearer 凭证；留空 = 未配置（公开面 503 fail-closed）
+    value: ""
+    weigh: 99
+  - name: breaker_fail_threshold
+    title: 熔断失败阈值
+    type: number
+    tip: 渠道 fail_threshold=0 时使用（默认 5）
+    value: "5"
+    weigh: 98
+  - name: breaker_cooldown_seconds
+    title: 熔断冷却秒数
+    type: number
+    tip: 渠道 cooldown_seconds=0 时使用（默认 60）
+    value: "60"
+    weigh: 97
+  - name: request_timeout
+    title: 请求超时（秒）
+    type: number
+    tip: 渠道 timeout=0 时使用（默认 60）
+    value: "60"
+    weigh: 96
+  - name: stream_timeout
+    title: 流式总超时（秒）
+    type: number
+    tip: 流式请求的总时长上限（默认 300；不受渠道 timeout 覆盖）
+    value: "300"
+    weigh: 95
+  - name: currency
+    title: 计费币种
+    type: string
+    tip: 金额出口的币种标签（默认 USD）
+    value: "USD"
+    weigh: 94
+  - name: allow_private_hosts
+    title: 允许私网上游
+    type: switch
+    tip: 1=放行 loopback/内网地址；本机 ollama 等自建上游需开启，否则出站护栏会拦下
+    value: "0"
+    weigh: 93
+  # ---- 本批 10 键（0 一律表示「未配」：数值键回落到各自的代码缺省或「不限」）----
+  - name: sse_max_line_bytes
+    title: SSE 单行上限（字节）
+    type: number
+    tip: 单条 SSE 行的字节上限（含行尾换行）；0=缺省 1MiB；超限按上游协议异常终止且不可重试（不静默截断）
+    value: "1048576"
+    weigh: 92
+  - name: sse_max_frame_bytes
+    title: SSE 单帧上限（字节）
+    type: number
+    tip: 同帧多条 data 行拼接后的字节上限；0=缺省 8MiB；超限立即终止该帧解析（不可重试）
+    value: "8388608"
+    weigh: 91
+  - name: sse_max_accumulated_bytes
+    title: SSE 累积上限（字节）
+    type: number
+    tip: 流式累积内容（content+reasoning）上限；0=缺省 32MiB；触顶置截断标记并停止累积（仍逐帧转发）
+    value: "33554432"
+    weigh: 90
+  - name: rate_limit_rpm
+    title: 公开面限流（次/分/Key）
+    type: number
+    tip: 插件全局上限，按出示凭证分桶；0=不限；DB Key 的 rate_limit>0 时覆盖（桶容量取 Key 自身值）
+    value: "0"
+    weigh: 89
+  - name: rate_limit_burst
+    title: 公开面限流突发容量
+    type: number
+    tip: 全局层桶容量；0=按 max(10, ceil(rpm/60)) 自动；DB Key 覆盖层恒用该 Key 的 rate_limit
+    value: "0"
+    weigh: 88
+  - name: rate_limit_max_inflight
+    title: 公开面在飞并发上限
+    type: number
+    tip: 网关进程内在飞请求数上限（所有凭证共用，无 Key 级覆盖）；超限立即 429（不排队）；0=不限
+    value: "0"
+    weigh: 87
+  - name: channel_gate_rpm_default
+    title: 渠道准入 RPM 缺省
+    type: number
+    tip: 渠道 rpm_limit=0 时使用；0=不限（源侧缺省 1000，本插件刻意取 0）
+    value: "0"
+    weigh: 86
+  - name: channel_gate_tpm_default
+    title: 渠道准入 TPM 缺省
+    type: number
+    tip: 渠道 tpm_limit=0 时使用；0=不限；60s 窗口、按已成功尝试的 token 事后扣减（单实例）
+    value: "0"
+    weigh: 85
+  - name: task_poll_seconds
+    title: 任务轮询间隔（秒）
+    type: number
+    tip: 异步任务 worker 每轮间隔；0=缺省 5（下界 clamp ≥1，防忙等）；插件停用时 worker 空转不领活
+    value: "5"
+    weigh: 84
+  - name: task_max_attempts
+    title: 任务最大尝试次数
+    type: number
+    tip: 失败任务重试上限；0=缺省 3（上界 10）；每次尝试各落一行 usage（重试不覆盖上一轮计费行）
+    value: "3"
+    weigh: 83

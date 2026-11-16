@@ -1,0 +1,23 @@
+#!/bin/sh
+# Rolling-Memory 插件内置 Hook 执行器（纯 POSIX sh · SessionStart / UserPromptSubmit / Stop）。
+set -u
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "${SCRIPT_DIR}/rolling-memory-lib.sh"
+
+SUB="${1:-}"
+if [ "$#" -gt 0 ]; then
+  shift
+fi
+if [ -z "$SUB" ]; then
+  exit 0
+fi
+
+BIN="$(rm_resolve_bin 2>/dev/null)" || exit 0
+
+export ROLLING_MEMORY_WORKSPACE="${ROLLING_MEMORY_WORKSPACE:-${ZCODE_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-$PWD}}}"
+
+if [ -z "${ROLLING_MEMORY_BIN:-}" ] && [ "$SUB" = "start" ] && [ -f "${HOME}/.zcode/skills/rolling-memory/SKILL.md" ]; then
+  "$BIN" install zcode --with-hooks >/dev/null 2>&1 || true
+fi
+
+exec "$BIN" hook "$SUB" "$@"
