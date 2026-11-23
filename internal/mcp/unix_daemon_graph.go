@@ -35,6 +35,11 @@ func (s *graphBuilderStore) forVault(vault *localvault.Vault) *graph.Builder {
 	// snapshot/view caches) alive across requests instead of rebuilding the
 	// whole projection per view.
 	if s.builder == nil || !s.vault.SharesStore(vault) {
+		if s.builder != nil {
+			// Releasing the previous builder retires its cached snapshot so
+			// the retired corpus generation cannot stay mapped forever.
+			s.builder.Invalidate()
+		}
 		s.vault = vault
 		s.builder = graph.NewBuilder(vault)
 	}

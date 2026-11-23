@@ -1,6 +1,6 @@
 {
   "name": "rolling-memory",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Rolling Memory 记忆系统：基于 Rolling Autonoetic Memory Engine（洛灵自知记忆引擎 · 100% 向量无关与 LLM 无关）的 Coding Agent 记忆插件，自包含单一技能（rolling-memory）、MCP 单工具（recall · 回忆即记忆）、轻量提示 Hook（UserPromptSubmit）及自动单路去重。",
   "author": { "name": "Albert (Rocareer / Rolling-Memory)", "email": "albert@rocareer.com" },
   "license": "PolyForm-Noncommercial-1.0.0",

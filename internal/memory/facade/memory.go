@@ -42,6 +42,7 @@ type Memory struct {
 	Store  *store.Store
 
 	localVaultOnce sync.Once
+	localVaultMu   sync.RWMutex
 	localVault     *localvault.Vault
 	localVaultErr  error
 	// coldBuildMemoryLimit is the soft memory limit the local vault may apply
@@ -99,6 +100,14 @@ func New(cfg *config.Config) (*Memory, error) {
 
 // Close closes the store (the usb profile checkpoints the WAL first).
 func (m *Memory) Close() error {
+	if m == nil {
+		return nil
+	}
+	m.localVaultMu.Lock()
+	defer m.localVaultMu.Unlock()
+	if m.localVault != nil {
+		m.localVault.CloseRuntimeSnapshots()
+	}
 	if m.Store == nil {
 		return nil
 	}

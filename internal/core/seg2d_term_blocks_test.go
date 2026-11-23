@@ -15,7 +15,7 @@ import (
 // The block fixture is deliberately independent of the 2d scale fixture: a few
 // hundred units with a df=N hub, per-unit flag/width/group overrides and a
 // power-law tail exercise every block semigroup while keeping the parity gates
-// fast enough to run on every `go test ./internal/core`.
+// fast enough to run on every core package test invocation.
 const (
 	seg2dBlockUnits       = 600
 	seg2dBlockVocab       = 400
@@ -170,7 +170,7 @@ func seg2dBlockRefStats(idx *Index, hash uint64) termBlockStats {
 				group = g
 			}
 		}
-		if s.parentGroup == 0 || group < s.parentGroup {
+		if s.parentGroup == 0 || canonicalHostPreferred(idx, group, s.parentGroup) {
 			s.parentGroup = group
 		}
 	}
@@ -737,7 +737,7 @@ func TestSeg2DBlockDegenerateBlocks(t *testing.T) {
 	}
 
 	// A zero-width range builds an explicit empty block with no false rows.
-	empty := buildTermBlock(idx, 2, 2)
+	empty := buildTermBlock(idx, 2, 2, scanParentGroups(idx))
 	if empty == nil {
 		t.Fatal("empty range returned nil")
 	}
@@ -848,7 +848,7 @@ func TestSeg2DBlockConcurrentReaders(t *testing.T) {
 }
 
 // TestSeg2DBlockBuildBudget measures the pre-registered 5 ms single-block
-// budget on the ATM-scale fixture (seg2d report §3.2 / §4d). The hard gate is
+// budget on the reference-scale fixture (seg2d report §3.2 / §4d). The hard gate is
 // the foreground append case (one block of one appended unit); the 32/256/1024
 // rows are the pre-registered B_max curve points and are reported with their
 // margin. The §4b integer columns (df/cf/propCnt/min/max/OR) cost per-posting
@@ -859,17 +859,18 @@ func TestSeg2DBlockBuildBudget(t *testing.T) {
 		t.Skip("measurement")
 	}
 	idx := BuildIndex(seg2dCorpus())
-	if idx.N != seg2dATMUnits {
-		t.Fatalf("fixture N=%d want %d", idx.N, seg2dATMUnits)
+	if idx.N != seg2dScaleUnits {
+		t.Fatalf("fixture N=%d want %d", idx.N, seg2dScaleUnits)
 	}
 	boundary := 0
 	var oneDocMedian time.Duration
+	roots := scanParentGroups(idx)
 	for _, b := range seg2dBuildB {
 		times := make([]time.Duration, 5)
 		var entries, keys int
 		for i := range times {
 			start := time.Now()
-			block := buildTermBlock(idx, 0, b)
+			block := buildTermBlock(idx, 0, b, roots)
 			times[i] = time.Since(start)
 			if block == nil {
 				t.Fatalf("batch %d build returned nil", b)

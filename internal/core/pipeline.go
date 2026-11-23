@@ -35,25 +35,37 @@ func SetQueryDistinctProbe(fn func(int)) {
 }
 
 // [calibrated] anchorConcentrationFloor — calendar-concentration floor at which a
-// word family counts as a temporally localized event anchor. Fitted on the reference
-// corpus; the value coincides with e^-1 but is an empirical operating point, not a
-// derivation. Replacing it with a null-model noise band was measured and regressed
-// (composite 73.67→72.94), so keep the calibrated value; recalibrate only with a
-// paired ATM arm (F-45).
+// word family counts as a temporally localized event anchor. An empirical operating
+// point, not a derivation: the gate separates families whose mentions concentrate on
+// a few days from families whose day-occupancy is indistinguishable from chance, and
+// the value sits on the plateau between those two regimes.
+//
+// A distribution-free replacement (null-model noise band) was measured and rejected:
+// it moves the gate off that separation, so non-localized families survive as anchors
+// and the aggregate ranking falls. Change the value only together with a paired
+// multi-corpus measurement. The value coincides with e^-1; it must not be re-derived
+// from e.
 const anchorConcentrationFloor = 0.36787944117144233
 
 // [calibrated] shellScatterFloor — concentration below which a word family counts as
 // a cross-day scattered colloquial shell and is extinguished outside the anchor cone.
-// Fitted on the reference corpus; the value coincides with e^-2 but is an empirical
-// operating point. Softening this binary boundary was measured and regressed
-// (Main r@10 2 down, composite 73.67→73.60), so keep it binary (F-44).
+// An empirical operating point, not a derivation.
+//
+// Softening this boundary into a continuous fade was measured and rejected: a fade
+// keeps low-concentration families partially alive outside the cone, which adds
+// scattered noise to the delivered set without adding anchors, so the boundary stays
+// binary. Change the value only together with a paired multi-corpus measurement. The
+// value coincides with e^-2; it must not be re-derived from e.
 const shellScatterFloor = 0.1353352832366127
 
 // [calibrated] cloneDampingKernel — strength of the echo/clone redundancy damping
-// applied to a candidate's raw score. The dose ladder selected the right edge of the
-// e^-2 plateau (raising the dose past it regressed), so the value coincides with e^-2
-// but is a calibrated kernel, not a derivation. Recalibrate only with a paired ATM
-// dose arm.
+// applied to a candidate's raw score. A calibrated kernel, not a derivation.
+//
+// A dose sweep put both sides of the plateau below the chosen point: too little
+// damping lets near-duplicate clones keep enough weight to occupy several slots, too
+// much starts damping independent records that merely share vocabulary with an
+// already-selected one. Sweep the dose again before changing it. The value coincides
+// with e^-2; it must not be re-derived from e.
 // The damping factor is math.Max(0, 1-k*penalty) at its call sites, so the factor
 // stays inside [0,1] even if the calibrated kernel or the penalty range changes.
 const cloneDampingKernel = 0.1353352832366127
@@ -103,6 +115,25 @@ const rmFlagDocGainMask uint8 = 1<<2 | 1<<5 | 1<<6 | 1<<7
 const rmFlagCompanion uint8 = 1 << 4
 
 // Engine 是四步流水线的运行体：索引只读，扩散预算与能量口径可配置。
+// SaturationMode 是筛选 rem 通道覆盖衰减权重的形态枚举。零值 SaturationSelf
+// 为现役默认（与无量纲基线逐位等价）；非零值均为预注册判别器材，读数未立项前
+// 不得默认开启。
+type SaturationMode uint8
+
+const (
+	// SaturationSelf 用单元自身匹配质量 m_g(u) 作衰减权重（默认）。
+	SaturationSelf SaturationMode = iota
+	// SaturationPool 用查询面组质量 q_g 作衰减权重：单调次模集合目标的合法
+	// 边际。作为对照臂保留：同一组内后续项共享组质量，第二项起的新增边际被
+	// 前项吸收，整体没有正向贡献，因此默认关闭、只作证伪仪器。
+	SaturationPool
+	// SaturationGeometric 用几何中项 sqrt(m_g(u)·q_g) 作衰减权重：同组内 m_g(u)
+	// 因单元而异，该形式不满足任何集合函数的边际定义（缺少可加分解所需的
+	// 单调次模结构），仅作经验探针，默认关闭。
+	SaturationGeometric
+)
+
+// Engine 是四步双簇检索的查询入口；零值字段组合对应生产默认路径。
 type Engine struct {
 	Index      *Index
 	Hop1Budget int
@@ -123,6 +154,15 @@ type Engine struct {
 	// 组质量与锚点候选的第二阶段复核；没有锚点的查询完全走兼容路径。
 	// 只作用于簇流水线；非簇回退路径保持不变。默认关闭。
 	AnchorGate bool
+	// Saturation 选择筛选 rem 通道的覆盖衰减权重形态（枚举见 SaturationMode）。
+	// 只作用于簇流水线筛选的 rem 通道；novel 与静态通道不变。
+	Saturation SaturationMode
+	// PhraseOccupancySquash 开启 phrase 通道占用概率压缩核：dyad 匹配质量的
+	// 饱和因子从 joint/(1+joint) 换成 1−exp(−joint)（泊松占据 P(k≥1|λ)）。
+	// 已按预注册判负回滚（2026-11-23-phrase-occupancy-squash-prereg §6：Main 配对
+	// Δ=−0.8144pp < −0.5pp，翻转 +1/−11；Hard 0 翻转）——现役失真压缩在承重，
+	// 构成错误形态承重第五条证据；开关仅作判别器材保留，严禁默认开启。
+	PhraseOccupancySquash bool
 	// TimeKernel 开启扩散透射的时空核。
 	TimeKernel bool
 	// ClusterPipeline 默认开启四步簇与短语流水线（EntityCluster × SpacetimeCluster × PhraseDyad）。
@@ -489,6 +529,7 @@ func (e *Engine) OverlayDelta(deltaDocs []Doc, maskedUnitIDs []string) *Engine {
 		FlagsGain:          e.FlagsGain,
 		BitsMass:           e.BitsMass,
 		AnchorGate:         e.AnchorGate,
+		Saturation:         e.Saturation,
 		TimeKernel:         e.TimeKernel,
 		ClusterPipeline:    e.ClusterPipeline,
 		EnableStage3Plugin: e.EnableStage3Plugin,

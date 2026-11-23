@@ -272,6 +272,20 @@ func Check(ctx context.Context, opts Options) (Result, error) {
 			result.Source = "release-version"
 		}
 	}
+	if result.LatestTag == "" && gitee && strings.TrimSpace(opts.GiteeAPIBase) == "" {
+		// Anonymous Gitee API calls can be rate-limited. A failed mirror
+		// discovery must not disable updates when the official GitHub channel
+		// is reachable, so retry the same request there once.
+		retryOpts := opts
+		retryOpts.ReleaseBase = updatesource.ReleaseBase(updatesource.GitHub)
+		retryOpts.APIBase = ""
+		retryOpts.GiteeAPIBase = ""
+		retryOpts.GiteeReleaseBase = ""
+		if retry, retryErr := Check(ctx, retryOpts); retryErr == nil || retry.LatestTag != "" {
+			retry.Source = "github-fallback"
+			return retry, retryErr
+		}
+	}
 	if result.LatestTag == "" {
 		message := joinErrors("no published version found", discoveryErr, manifestErr)
 		failed := failState(result, errors.New(message))
@@ -436,6 +450,22 @@ func GiteeLatest(ctx context.Context, apiBase, repo, current, channel string, ti
 		return versionInfo{}, err
 	}
 	allowPrerelease := channel == updatechannel.Beta
+	// The dedicated latest-release endpoint is one request and is less likely
+	// to hit the anonymous tag-list rate limit. It answers the stable channel
+	// directly; beta still needs the tag list to see prereleases.
+	if !allowPrerelease {
+		var release struct {
+			TagName    string `json:"tag_name"`
+			Prerelease bool   `json:"prerelease"`
+			Draft      bool   `json:"draft"`
+		}
+		if err := getJSON(ctx, base+"/repos/"+repo+"/releases/latest", timeout, &release); err == nil {
+			name := strings.TrimSpace(release.TagName)
+			if name != "" && !release.Draft && !release.Prerelease && isSemverTag(name) {
+				return versionInfo{Tag: name, ReleaseTag: name, Assets: false, Source: "gitee-release-latest"}, nil
+			}
+		}
+	}
 	var tags []githubTag
 	if err := getJSON(ctx, base+"/repos/"+repo+"/tags?per_page=100&sort=name&direction=desc", timeout, &tags); err != nil {
 		return versionInfo{}, err

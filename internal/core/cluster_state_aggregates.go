@@ -164,7 +164,30 @@ func familyEntropy(keys []uint64, counts []int32) (total, entropy float64) {
 	if total <= 0 {
 		return 0, 0
 	}
-	for i := range keys {
+	// 熵按计数升序累加：同计数的伙伴根给出逐位相同的被加项（p·ln p 只依赖
+	// count/total），其内部顺序对浮和无影响；计数序与 atomizer key 无关。
+	// 早期实现按 hash 键序累加——同一多重集在不同 key 下排成不同顺序，使熵值
+	// 差 ULP（key-invariance 缺陷）。
+	order := make([]int32, len(counts))
+	for i := range order {
+		order[i] = int32(i)
+	}
+	slices.SortFunc(order, func(x, y int32) int {
+		if counts[x] != counts[y] {
+			if counts[x] < counts[y] {
+				return -1
+			}
+			return 1
+		}
+		if keys[x] < keys[y] {
+			return -1
+		}
+		if keys[x] > keys[y] {
+			return 1
+		}
+		return 0
+	})
+	for _, i := range order {
 		p := float64(counts[i]) / total
 		entropy -= p * math.Log(p)
 	}
@@ -350,7 +373,7 @@ func buildClusterAggregates(idx *Index, families map[uint64]*clusterFamilyInfo, 
 	copy(agg.termParentKeys, st.termKeys)
 	agg.termParentVals = make([]uint64, len(st.termKeys))
 	for i, h := range st.termKeys {
-		agg.termParentVals[i] = st.parentGroup[h]
+		agg.termParentVals[i] = st.canonicalParentOf(h)
 	}
 	return agg
 }
@@ -358,24 +381,23 @@ func buildClusterAggregates(idx *Index, families map[uint64]*clusterFamilyInfo, 
 // fillEffWeightFromAggregates 用族统计量填充 st.effWeight：每词项取族根统计的权重
 // （未在统计中的根沿用全量路径的零权重），再按同族覆盖取最小值。
 func (st *rmClusterState) fillEffWeightFromAggregates(idx *Index, agg *clusterAggregates) {
+	// Do not seed from parentGroup: that map stores the smallest hash label and
+	// therefore changes when the atomizer key changes. The effective weight is
+	// the minimum over the families the term actually occupies in documents;
+	// that set is key-invariant, so this value is key-invariant as well.
 	for h := range idx.DF {
-		r := h
-		if g, ok := st.parentGroup[h]; ok && g != 0 {
-			r = g
-		}
-		if fa, ok := agg.fams[r]; ok {
-			st.effWeight[h] = fa.weight
-		} else {
-			st.effWeight[h] = 0
-		}
+		st.effWeight[h] = 0
 	}
 	for u := 0; u < idx.N; u++ {
 		for _, entry := range st.docEntriesOf(int32(u)) {
-			if entry.group == 0 {
-				continue
+			g := entry.group
+			if g == 0 {
+				g = entry.id
 			}
-			if fa, ok := agg.fams[entry.group]; ok && fa.weight < st.effWeight[entry.id] {
-				st.effWeight[entry.id] = fa.weight
+			if fa, ok := agg.fams[g]; ok {
+				if st.effWeight[entry.id] == 0 || fa.weight < st.effWeight[entry.id] {
+					st.effWeight[entry.id] = fa.weight
+				}
 			}
 		}
 	}
@@ -395,7 +417,24 @@ type incrementalDelta struct {
 	oldOf      []int32
 }
 
-// scanParentGroups 按构建期同式（每文档取 UnitGroups 覆盖值、跨文档取最小）预扫描族根映射。
+// canonicalHostPreferred reports whether candidate is a better family root than
+// current using only key-independent text statistics: the most frequent host
+// (larger df) wins, then the wider carrier (larger bits). The atomizer key only
+// relabels hashes, so this choice does not change when the key changes.
+func canonicalHostPreferred(idx *Index, candidate, current uint64) bool {
+	dc, dr := idx.TermDF(candidate), idx.TermDF(current)
+	if dc != dr {
+		return dc > dr
+	}
+	bc, br := idx.TermBitsOf(candidate), idx.TermBitsOf(current)
+	if bc != br {
+		return bc > br
+	}
+	return false
+}
+
+// scanParentGroups 按构建期同式（每文档取 UnitGroups 覆盖值）预扫描族根映射。
+// 跨文档不再取最小哈希，而是取 canonicalHostPreferred 的稳定宿主。
 func scanParentGroups(idx *Index) map[uint64]uint64 {
 	pg := make(map[uint64]uint64, len(idx.DF))
 	for u := 0; u < idx.N; u++ {
@@ -410,7 +449,7 @@ func scanParentGroups(idx *Index) map[uint64]uint64 {
 					g = v
 				}
 			}
-			if prev, ok := pg[h]; !ok || g < prev {
+			if prev, ok := pg[h]; !ok || canonicalHostPreferred(idx, g, prev) {
 				pg[h] = g
 			}
 		}
@@ -883,10 +922,7 @@ func (agg *clusterAggregates) extendForDelta(st *rmClusterState, idx *Index, inc
 		return fa
 	}
 	root := func(id uint64) uint64 {
-		if g, ok := st.parentGroup[id]; ok && g != 0 {
-			return g
-		}
-		return id
+		return st.canonicalParentOf(id)
 	}
 	var rootOld func(uint64) uint64
 	if len(inc.dropUnits) > 0 || len(inc.rekeyUnits) > 0 {
@@ -1013,7 +1049,7 @@ func (agg *clusterAggregates) extendForDelta(st *rmClusterState, idx *Index, inc
 	copy(agg.termParentKeys, st.termKeys)
 	agg.termParentVals = make([]uint64, len(st.termKeys))
 	for i, h := range st.termKeys {
-		agg.termParentVals[i] = st.parentGroup[h]
+		agg.termParentVals[i] = st.canonicalParentOf(h)
 	}
 }
 
@@ -1074,10 +1110,7 @@ func (agg *clusterAggregates) refreshTermKeyedWeightsFor(st *rmClusterState, idx
 		return
 	}
 	root := func(h uint64) uint64 {
-		if g, ok := st.parentGroup[h]; ok && g != 0 {
-			return g
-		}
-		return h
+		return st.canonicalParentOf(h)
 	}
 	members := make(map[uint64][]uint64, len(agg.fams))
 	for h := range idx.DF {
@@ -1102,24 +1135,40 @@ func (agg *clusterAggregates) refreshTermKeyedWeightsFor(st *rmClusterState, idx
 				rootCounts[pr] += cnts[i]
 			}
 		}
-		if len(rootKeys) > 1 {
-			slices.SortFunc(rootKeys, func(a, b uint64) int {
-				if a < b {
+		// 熵按计数升序累加：同计数的伙伴根给出逐位相同的被加项（p·ln p 只依赖
+		// count/total），其内部顺序对浮点和无影响；计数序与 atomizer key 无关。
+		// 早期实现按 hash 升序累加——同一多重集在不同 key 下排成不同顺序，使
+		// 熵值差 ULP（key-invariance 缺陷）。
+		type diagCntKey struct {
+			cnt int32
+			h   uint64
+		}
+		ordered := make([]diagCntKey, 0, len(rootKeys))
+		for _, k := range rootKeys {
+			ordered = append(ordered, diagCntKey{cnt: rootCounts[k], h: k})
+		}
+		slices.SortFunc(ordered, func(a, b diagCntKey) int {
+			if a.cnt != b.cnt {
+				if a.cnt < b.cnt {
 					return -1
 				}
-				if a > b {
-					return 1
-				}
-				return 0
-			})
-		}
+				return 1
+			}
+			if a.h < b.h {
+				return -1
+			}
+			if a.h > b.h {
+				return 1
+			}
+			return 0
+		})
 		var total, entropy float64
-		for _, k := range rootKeys {
-			total += float64(rootCounts[k])
+		for _, ck := range ordered {
+			total += float64(ck.cnt)
 		}
 		if total > 0 {
-			for _, k := range rootKeys {
-				p := float64(rootCounts[k]) / total
+			for _, ck := range ordered {
+				p := float64(ck.cnt) / total
 				entropy -= p * math.Log(p)
 			}
 		}
@@ -1152,10 +1201,7 @@ func (agg *clusterAggregates) extendForDeltaTermKeyed(st *rmClusterState, idx *I
 		return fa
 	}
 	root := func(id uint64) uint64 {
-		if g, ok := st.parentGroup[id]; ok && g != 0 {
-			return g
-		}
-		return id
+		return st.canonicalParentOf(id)
 	}
 	rootOld := agg.rootLookup()
 	var docFams []uint64
@@ -1281,6 +1327,6 @@ func (agg *clusterAggregates) extendForDeltaTermKeyed(st *rmClusterState, idx *I
 	copy(agg.termParentKeys, st.termKeys)
 	agg.termParentVals = make([]uint64, len(st.termKeys))
 	for i, h := range st.termKeys {
-		agg.termParentVals[i] = st.parentGroup[h]
+		agg.termParentVals[i] = st.canonicalParentOf(h)
 	}
 }

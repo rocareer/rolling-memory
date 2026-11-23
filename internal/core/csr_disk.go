@@ -21,7 +21,10 @@ const (
 	// zcsrVersion is incremented whenever the serialized CSR layout or precomputed warm-domain values change.
 	// v7 persists exact timestamp-bucket membership and sparse extra bucket edges;
 	// expanded per-unit neighbor rows are no longer part of the format.
-	zcsrVersion         = uint16(7)
+	// v8 persists the canonical (key-invariant) family root per term instead of
+	// the legacy min-hash label, so snapshots written before the key-invariance
+	// fix are rejected and rebuilt from source.
+	zcsrVersion         = uint16(8)
 	zcsrKindRM          = uint16(2)
 	zcsrRMHeaderSize    = 184
 	zcsrHeaderCRCOffset = 176
@@ -1672,6 +1675,7 @@ func parseDiskClusterCSR(data []byte, idx *Index, refreshStrings bool) (*rmClust
 		entryMeanBits:      entryMeanBits,
 		sentenceEnergyMean: sentenceEnergyMean,
 		totalDaysM:         totalDaysM,
+		kappaOrd:           eulerNumber * math.Sqrt(math.Max(1.0, float64(clusterN)/totalDaysM)),
 		fastDocs:           fastDocs,
 		subjRowPtr:         subjRowPtr,
 		subjIDsPool:        subjIDsPool,

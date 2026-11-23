@@ -476,7 +476,14 @@ func TestNeighborVisitorSeamGoldenParity(t *testing.T) {
 	// The dual-order partner index was removed from the state and from this digest's
 	// composition (it is a derived permutation of phraseKeys and served only the
 	// diagnostic TermEnergyVector profile); phraseKeys/Units still cover the logical state.
-	const wantClusterState = "8c71826e767fac7392e89db361601db94e209713ef1800c1d3c11a3aa83a36ee"
+	//
+	// Re-pin 2026-11-23: the log-gap moments moved to the Welford recurrence
+	// (naive sum/n differed by 3 ULP on this constant-3600s fixture: mu bits
+	// ...cc9d -> ...cc9a). The digest hashes raw muLogGap bits, so it moves with
+	// the estimator even though the episode partition (1 component, 64 units)
+	// and the query hit digest below are unchanged; Welford also removes the
+	// ULP-decided episode split observed on constant-interval corpora.
+	const wantClusterState = "0a9b29e41693b974a199cdc0069555c65271e1b9891d42d66960856f5ff87f3e"
 	if got := clusterStateCanonicalDigest(eng.ensureClusterState()); got != wantClusterState {
 		t.Fatalf("cluster state digest = %s, want %s", got, wantClusterState)
 	}

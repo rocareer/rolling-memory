@@ -396,15 +396,23 @@ func ServeAt(in io.Reader, out io.Writer, memory *facade.Memory, attachmentDir s
 	return (&Server{In: in, Out: out, Memory: memory, AttachmentDir: attachmentDir}).Run()
 }
 
-// Lifecycle knobs for the stdio daemon. The tick and deadline are vars so
-// tests can shrink them.
+// Lifecycle knobs for the stdio daemon.
 const (
 	defaultIdleRelease = 30 * time.Minute
 	minWatchdogTick    = 10 * time.Millisecond
 )
 
+// watchdogTickNanos holds the watchdog cadence in nanoseconds. It is atomic because
+// a test shortens it while a server started by an earlier test may still be reading
+// it: a plain global makes those two accesses a data race even when the goroutine
+// only passes through once before winding down.
+var watchdogTickNanos = func() *atomic.Int64 {
+	tick := new(atomic.Int64)
+	tick.Store(int64(30 * time.Second))
+	return tick
+}()
+
 var (
-	watchdogTick     = 30 * time.Second
 	shutdownDeadline = 2 * time.Second
 )
 
@@ -421,7 +429,7 @@ func (s *Server) watchdog(stop <-chan struct{}, activity *atomic.Int64, inFlight
 	idle := s.idleReleaseBudget()
 	birthPPid := s.ppid()
 	startImage, hasImage := s.startImage()
-	tick := watchdogTick
+	tick := time.Duration(watchdogTickNanos.Load())
 	if idle > 0 && idle/4 < tick {
 		tick = idle / 4
 	}

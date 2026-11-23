@@ -99,3 +99,33 @@ func TestGiteeMainHead(t *testing.T) {
 		t.Fatalf("head = %#v", head)
 	}
 }
+
+func TestGiteeLatestPrefersLatestRelease(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/repos/acme/Rolling-Memory/releases/latest":
+			_, _ = w.Write([]byte(`{"tag_name":"v0.0.14","prerelease":false,"draft":false}`))
+		case "/repos/acme/Rolling-Memory/tags":
+			_, _ = w.Write([]byte(`[{"name":"v0.0.15-beta.1"},{"name":"v0.0.13"}]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	stable, err := GiteeLatest(context.Background(), server.URL, "acme/Rolling-Memory", "0.0.12", updatechannel.Stable, 2*time.Second)
+	if err != nil {
+		t.Fatalf("stable GiteeLatest: %v", err)
+	}
+	if stable.Tag != "v0.0.14" || stable.Source != "gitee-release-latest" {
+		t.Fatalf("stable result = %#v", stable)
+	}
+
+	beta, err := GiteeLatest(context.Background(), server.URL, "acme/Rolling-Memory", "0.0.12", updatechannel.Beta, 2*time.Second)
+	if err != nil {
+		t.Fatalf("beta GiteeLatest: %v", err)
+	}
+	if beta.Tag != "v0.0.15-beta.1" {
+		t.Fatalf("beta tag = %q, want v0.0.15-beta.1", beta.Tag)
+	}
+}

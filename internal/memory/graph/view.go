@@ -42,6 +42,11 @@ func (b *Builder) View(ctx context.Context, req graphmodel.ViewRequest) (*graphm
 	if err != nil {
 		return nil, err
 	}
+	// Hold a render lease on the cached engine for the whole projection: the
+	// builder may retire this snapshot as soon as a newer generation lands,
+	// and the backing mmap must outlive every active render.
+	_, releaseEngine, _ := snap.Engine()
+	defer releaseEngine()
 	op := strings.ToLower(strings.TrimSpace(req.Op))
 	cacheable := op == "" || op == "view"
 	cacheKey := ""

@@ -44,9 +44,9 @@ func TestClusterStateDigestLateWriteEqualsFullRebuild(t *testing.T) {
 	assertSameQuery(t, full, inc, digestProbeQuery(combined))
 }
 
-// seg2aMeasureDoc builds one document with a realistic term profile. ATM-scale corpora hold
-// roughly 139 distinct terms per document, so pair computation does profile intersection of
-// that size instead of comparing one-term documents.
+// seg2aMeasureDoc builds one document with a realistic term profile. Reference-scale
+// corpora hold roughly 139 distinct terms per document, so pair computation does profile
+// intersection of that size instead of comparing one-term documents.
 func seg2aMeasureDoc(i int) Doc {
 	doc := epTestDoc(fmt.Sprintf("same-%05d", i), 1700000000)
 	const termsPerDoc = 128

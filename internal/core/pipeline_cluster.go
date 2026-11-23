@@ -412,12 +412,13 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 	} else {
 		clear(anchorKappa)
 	}
-	// 两套凝聚度口径（非对称，均承重，改动须配对 ATM）：
+	// 两套凝聚度口径（非对称，均承重，改动须配对多语料测量）：
 	//   kappaOcc   = 1 - (特异提及的日数) / E0(全部提及数)  —— 分母按总用量计，等价于「特异性
 	//                提及之外的总量被视作可摊开的日子」，对高用量词族更宽松（批量特化折扣）。
 	//   anchorKappa= 1 - (特异提及的日数) / E0(特异提及数) —— 同一观测集上的严格估计量。
-	// 实测：把 kappaOcc 改成任一一致估计量（D_all 配 n_all，或 D_spec 配 n_spec）都会显著退化
-	// （73.67 → 72.71 / 72.76），见 A22.7 与 F-50；故此处的不对称属设计选择，不是笔误。
+	// 已证伪：把 kappaOcc 换成任一一致估计量（D_all 配 n_all，或 D_spec 配 n_spec）都会显著退化。
+	// 原因是两者的分母不同——一致估计量按特异提及计分母，会把词族自身的批量用法当成分散证据，
+	// 从而把实际承重的锚点降级；此处的不对称属设计选择，不是笔误，改动须重跑配对多语料测量。
 	for g, um := range groupUnits {
 		n := float64(len(um))
 		dObs := float64(len(groupDays[g]))
@@ -688,7 +689,11 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 			if g := hashGroup[h]; g == h && !detachedFrag[g] {
 				isPure := qTerms[h].Flags&rmFlagCompanion == 0
 				for _, pos := range qPositions[h] {
-					if prev, exists := slotPrim[pos]; !exists || (isPure && !slotPure[pos]) || (isPure == slotPure[pos] && g < prev) {
+					// 属主决胜与 corpus 侧 canonicalHostPreferred 同哲学：纯词优先，
+					// 同纯度取语料验证更强者（df 大），df 平手才落到 hash 序
+					// （key-invariance：旧的纯 `g < prev` 让两个不同词竞争同一槽位
+					// 时属主随 key 翻转，altG 并组结构性分叉）。
+					if prev, exists := slotPrim[pos]; !exists || (isPure && !slotPure[pos]) || (isPure == slotPure[pos] && (idx.TermDF(g) > idx.TermDF(prev) || (idx.TermDF(g) == idx.TermDF(prev) && g < prev))) {
 						slotPrim[pos] = g
 						slotPure[pos] = isPure
 					}
@@ -816,8 +821,12 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 		// tier eligible for stem folding); specificPropMax bounds proper-anchor
 		// specificity. They serve different roles and keep separate thresholds.
 		// [calibrated] rareInflectedTermMaxDF — document-count tier (≈21 documents) up to
-		// which a stem may fold onto its host word. Fitted on the reference corpus;
-		// unified with other cutoffs it regressed (73.72→73.65), so keep it independent.
+		// which a stem may fold onto its host word. An empirical operating point: the tier
+		// separates inflection variants (few documents each) from vocabulary that is already
+		// common enough to stand on its own, and folding the latter attaches a frequent word
+		// to whichever host happened to co-occur first. Merging it with the neighbouring
+		// cutoffs was measured and rejected — the two bounds answer different questions, so a
+		// shared value over-folds one side; keep it independent and re-measure jointly.
 		const rareInflectedTermMaxDF = 21
 		if h == group && !groupRigid[group] && !groupProper[group] && anchorKappa[group] < anchorConcentrationFloor && (dfH <= rareInflectedTermMaxDF || dfH <= specificPropMax) {
 			for _, ch := range queryHashes {
@@ -1176,7 +1185,15 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 			continue
 		}
 		joint := math.Log1p((float64(idx.N) - float64(dfPhrase) + 0.5) / (float64(dfPhrase) + 0.5))
-		mass := math.Min(wa, wb) * joint / (1.0 + joint)
+		// 失真压缩核（joint/(1+joint)，1+Nats 纯量加法）经预注册判负实验确证承重：
+		// 保量纲替换 1−exp(−joint) 判负回滚（Main 配对 −0.8144pp，翻转 +1/−11；
+		// 正本 2026-11-23-phrase-occupancy-squash-prereg，开关 PhraseOccupancySquash
+		// 仅作判别器材保留）。两式单调关系成立（1−e^{−j} ≥ j/(1+j)），判负非实现误差。
+		phraseSquash := joint / (1.0 + joint)
+		if e.PhraseOccupancySquash {
+			phraseSquash = 1 - math.Exp(-joint)
+		}
+		mass := math.Min(wa, wb) * phraseSquash
 		qaA, qaB := qTerms[pair.a], qTerms[pair.b]
 		if qaA.Flags&rmFlagCompanion != 0 && qaB.Flags&rmFlagCompanion != 0 {
 			orthoCross := (isConservedInflectionLemma(pair.a, qaA) && isCoreClosedBeacon(pair.b, qaB)) ||
@@ -1314,15 +1331,14 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 	}
 	sortInt32Asc(activeEpisodes)
 	sc.activeEpisodes = activeEpisodes
-	// tightBurstAffinityFloor (~0.9514) is the engineering-calibrated temporal
-	// affinity threshold above which two records are treated as a
-	// near-simultaneous burst. It is not exp(-1/e^3): that double is
-	// 0.9514319929004534 and differs by 8.3e-8; the literal keeps the
-	// historical calibration value bit-for-bit.
 	// [calibrated] tightBurstAffinityFloor — affinity floor (dimensionless) above which
-	// two records count as a near-simultaneous burst. Not exp(-1/e^3) (that double is
-	// 0.9514319929004534, 8.3e-8 away); the literal keeps the historical calibration
-	// bit-for-bit. Recalibrate only with a paired ATM arm.
+	// two records count as a near-simultaneous burst. An empirical operating point: the
+	// floor separates co-timed records from records that merely share a coarse timestamp,
+	// and both sides of it were measured to be worse (below it the burst axis degenerates
+	// into same-day adjacency, above it genuine co-timed events drop out).
+	// Not exp(-1/e^3) (that double is 0.9514319929004534, 8.3e-8 away); the literal keeps
+	// the calibration bit-for-bit and must not be re-derived from e. Change it only
+	// together with a paired multi-corpus measurement.
 	const tightBurstAffinityFloor = 0.9514319102438668
 	burstAffFloor := tightBurstAffinityFloor
 	for _, ep := range activeEpisodes {
@@ -1706,7 +1722,7 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 	if queryDistinctProbe != nil {
 		queryDistinctProbe(len(sc.coreUnits))
 	}
-	return st.selectClusterHits(idx, sc, candidates, unitStructGate, detachedFrag, qTerms, groups, total, muQ, topK)
+	return st.selectClusterHits(idx, sc, candidates, unitStructGate, detachedFrag, qTerms, groups, total, muQ, topK, e.Saturation)
 }
 
 // applyHigherOrderLatticeContraction evaluates the telescoping subsumption-lattice

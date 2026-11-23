@@ -135,15 +135,18 @@ func (v *Vault) computeEpisodicIndexFaultDiagnostics(key []byte) (EpisodicIndexF
 						return pc.Report, nil
 					}
 				}
-				if s, sErr := v.loadCorpusSnapshot(context.Background()); sErr == nil && s != nil &&
-					s.docCnt == docCnt &&
-					s.docRowSum == docRowSum &&
-					s.maxRowID == docMaxRowID &&
-					s.docTextLen == docTextLen &&
-					s.episodicRevision == episodicRevision &&
-					s.episodicCodecKey == string(key) {
-					snapValidIDs = s.validEpisodicIDs
+				if s, release, sErr := v.acquireCorpusSnapshot(context.Background()); sErr == nil && s != nil {
+					if s.docCnt == docCnt &&
+						s.docRowSum == docRowSum &&
+						s.maxRowID == docMaxRowID &&
+						s.docTextLen == docTextLen &&
+						s.episodicRevision == episodicRevision &&
+						s.episodicCodecKey == string(key) {
+						snapValidIDs = s.validEpisodicIDs
+					}
+					release()
 				}
+
 			}
 		}
 	}

@@ -12,6 +12,207 @@ import (
 	core "github.com/rocareer/rolling-memory/internal/core"
 )
 
+func (s *vaultCorpusSnapshot) acquireReader() (func(), bool) {
+	if s == nil {
+		return nil, false
+	}
+	s.lifecycleMu.Lock()
+	if s.retired {
+		s.lifecycleMu.Unlock()
+		return nil, false
+	}
+	s.readers++
+	s.lifecycleMu.Unlock()
+	return s.releaseReader, true
+}
+
+func (s *vaultCorpusSnapshot) releaseReader() {
+	if s == nil {
+		return
+	}
+	s.lifecycleMu.Lock()
+	if s.readers > 0 {
+		s.readers--
+	}
+	closeNow := s.retired && s.readers == 0
+	s.lifecycleMu.Unlock()
+	if closeNow {
+		s.closeOwnedEngine()
+	}
+}
+
+func (s *vaultCorpusSnapshot) retire() {
+	if s == nil {
+		return
+	}
+	s.lifecycleMu.Lock()
+	if s.retired {
+		s.lifecycleMu.Unlock()
+		return
+	}
+	s.retired = true
+	closeNow := s.readers == 0
+	s.lifecycleMu.Unlock()
+	if closeNow {
+		s.closeOwnedEngine()
+	}
+}
+
+func (s *vaultCorpusSnapshot) closeOwnedEngine() {
+	if s == nil || !s.ownsCoreEngine || s.coreEngine == nil {
+		return
+	}
+	s.closeOnce.Do(func() { _ = s.coreEngine.Close() })
+}
+
+func (v *Vault) installPublishedSnapshot(snap *vaultCorpusSnapshot, slot string) bool {
+	if v == nil || v.slotCacheMu == nil || v.snapRef == nil || snap == nil {
+		return false
+	}
+	v.slotCacheMu.Lock()
+	if v.snapRef.runtimeClosed {
+		v.slotCacheMu.Unlock()
+		return false
+	}
+	previous := v.snapRef.publishedSnap
+	v.snapRef.publishedSnap = snap
+	v.snapRef.publishedSlot = slot
+	v.snapRef.lastSnapTime = time.Now()
+	v.slotCacheMu.Unlock()
+	if previous != nil && previous != snap {
+		previous.retire()
+	}
+	return true
+}
+
+func (v *Vault) acquireCorpusSnapshot(ctx context.Context) (*vaultCorpusSnapshot, func(), error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	for {
+		snap, err := v.loadCorpusSnapshot(ctx)
+		if err != nil || snap == nil {
+			return snap, nil, err
+		}
+		if release, ok := snap.acquireReader(); ok {
+			return snap, release, nil
+		}
+		if err := ctx.Err(); err != nil {
+			return nil, nil, err
+		}
+	}
+}
+
+func (v *Vault) acquireCachedCorpusSnapshot() (*vaultCorpusSnapshot, func(), bool) {
+	if v == nil || v.slotCacheMu == nil || v.snapRef == nil {
+		return nil, nil, false
+	}
+	v.slotCacheMu.RLock()
+	if v.snapRef.runtimeClosed {
+		v.slotCacheMu.RUnlock()
+		return nil, nil, false
+	}
+	snap := v.snapRef.snap
+	if snap == nil {
+		v.slotCacheMu.RUnlock()
+		return nil, nil, false
+	}
+	release, ok := snap.acquireReader()
+	v.slotCacheMu.RUnlock()
+	if !ok {
+		return nil, nil, false
+	}
+	return snap, release, true
+}
+
+// PublishedSlot reports the generation name CURRENT points at, without opening
+// or loading anything. It is the cheap change probe a background warmer uses.
+func (v *Vault) PublishedSlot() (string, bool) {
+	if v == nil || v.db == nil {
+		return "", false
+	}
+	dbPath := v.mainDBPath()
+	if strings.TrimSpace(dbPath) == "" {
+		return "", false
+	}
+	_, _, _, _, slot, ok := resolvePublishedSnapshotPaths(dbPath)
+	return slot, ok
+}
+
+// PublishedGenerationResident reports whether CURRENT's generation is already
+// opened and mapped in this process, i.e. a query would not pay the open cost.
+func (v *Vault) PublishedGenerationResident() bool {
+	if v == nil || v.slotCacheMu == nil || v.snapRef == nil {
+		return false
+	}
+	slot, ok := v.PublishedSlot()
+	if !ok {
+		return false
+	}
+	v.slotCacheMu.RLock()
+	defer v.slotCacheMu.RUnlock()
+	snap := v.snapRef.publishedSnap
+	return v.snapRef.publishedSlot == slot && snap != nil && snap.coreEngine != nil && snap.coreEngine.HasMmapSegment()
+}
+
+// WarmPublishedGeneration opens the current published generation ahead of the
+// first query. Opening a .zcsr segment costs hundreds of milliseconds on a
+// large corpus, so paying it on the query path turns every first recall after a
+// publication into a slow request. changed reports whether this call opened a
+// generation that was not already the resident one.
+func (v *Vault) WarmPublishedGeneration(ctx context.Context) (slot string, changed bool, err error) {
+	slot, ok := v.PublishedSlot()
+	if !ok {
+		return "", false, nil
+	}
+	if v.slotCacheMu != nil && v.snapRef != nil {
+		v.slotCacheMu.RLock()
+		resident := v.snapRef.publishedSlot == slot &&
+			v.snapRef.publishedSnap != nil &&
+			v.snapRef.publishedSnap.coreEngine != nil
+		v.slotCacheMu.RUnlock()
+		if resident {
+			return slot, false, nil
+		}
+	}
+	snap, release, err := v.acquireCorpusSnapshot(ctx)
+	if err != nil {
+		return slot, false, err
+	}
+	if snap == nil {
+		if release != nil {
+			release()
+		}
+		return slot, false, nil
+	}
+	defer release()
+	if len(snap.docs) == 0 {
+		return slot, false, nil
+	}
+	if eng := snap.ensureSnapshotCoreEngine(v); eng == nil {
+		return slot, false, nil
+	}
+	return slot, true, nil
+}
+
+// CloseRuntimeSnapshots retires the published mmap generation owned by the
+// snapshot-only reader. Existing leases release it after their final read; a
+// loader already in flight cannot install another generation after this call.
+func (v *Vault) CloseRuntimeSnapshots() {
+	if v == nil || v.slotCacheMu == nil || v.snapRef == nil {
+		return
+	}
+	v.snapRef.buildMu.Lock()
+	v.slotCacheMu.Lock()
+	v.snapRef.runtimeClosed = true
+	published := v.snapRef.publishedSnap
+	v.snapRef.publishedSnap = nil
+	v.snapRef.publishedSlot = ""
+	v.slotCacheMu.Unlock()
+	v.snapRef.buildMu.Unlock()
+	published.retire()
+}
+
 // cachedPublishedSnapshot returns the snapshot-only read generation when the
 // active slot, codec key and purge epoch all still match.
 func (v *Vault) cachedPublishedSnapshot(slot, codecKey string, purgeEpoch int64) (*vaultCorpusSnapshot, bool) {
@@ -91,6 +292,12 @@ func (v *Vault) loadPublishedSnapshot(ctx context.Context) (*vaultCorpusSnapshot
 	if err != nil || eng == nil || eng.Index == nil || eng.Index.N <= 0 {
 		return nil, false
 	}
+	keepEngine := false
+	defer func() {
+		if !keepEngine {
+			_ = eng.Close()
+		}
+	}()
 	eng.MaterializeClusterState()
 	docs, header, ok := loadCorpusDocsSidecarAt(docsPath)
 	if !ok || len(docs) == 0 || header.Count != len(docs) ||
@@ -113,15 +320,14 @@ func (v *Vault) loadPublishedSnapshot(ctx context.Context) (*vaultCorpusSnapshot
 	}
 	snap := canonicalSnapshotFromDocs(state, docs, eng)
 	if snap == nil {
+		_ = eng.Close()
 		return nil, false
 	}
 	snap.changeSeq = header.ChangeSeq
-	if v.slotCacheMu != nil && v.snapRef != nil {
-		v.slotCacheMu.Lock()
-		v.snapRef.publishedSnap = snap
-		v.snapRef.publishedSlot = slot
-		v.snapRef.lastSnapTime = time.Now()
-		v.slotCacheMu.Unlock()
+	snap.ownsCoreEngine = true
+	if !v.installPublishedSnapshot(snap, slot) {
+		return nil, false
 	}
+	keepEngine = true
 	return snap, true
 }

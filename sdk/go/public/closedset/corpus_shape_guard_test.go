@@ -12,7 +12,7 @@ import "testing"
 // world-knowledge criterion. Closed-set rows feed the harmonic channel on both
 // the document and the query side, so re-adding any of them changes the
 // inverted-index population and requires the full paired-run protocol
-// (same pool, single variable, ATM + LoCoMo) before landing.
+// (same pool, single variable, multi-corpus) before landing.
 func TestCorpusShapedMicroToponymsStayOut(t *testing.T) {
 	removed := []string{
 		// Part I GB row (Cornwall micro-cluster).

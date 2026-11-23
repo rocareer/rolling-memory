@@ -27,13 +27,14 @@ func (v *Vault) WithCoreEngine(ctx context.Context, fn func(*core.Engine) error)
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	snap, err := v.loadCorpusSnapshot(ctx)
+	snap, release, err := v.acquireCorpusSnapshot(ctx)
 	if err != nil {
 		return err
 	}
 	if snap == nil || len(snap.docs) == 0 {
 		return errors.New("localvault: empty corpus snapshot")
 	}
+	defer release()
 	eng := snap.ensureSnapshotCoreEngine(v)
 	if eng == nil || eng.Index == nil || eng.Index.N == 0 {
 		return errors.New("localvault: core engine unavailable")
@@ -42,6 +43,33 @@ func (v *Vault) WithCoreEngine(ctx context.Context, fn func(*core.Engine) error)
 		return err
 	}
 	return fn(eng)
+}
+
+// AcquireCoreEngine leases the corpus snapshot's retrieval engine to a caller
+// that keeps the pointer beyond one call (the graph projection caches it across
+// view renders). The returned release func must be called exactly once when the
+// caller stops using the engine; until then a replaced published generation
+// stays mapped. Single-shot readers use WithCoreEngine instead.
+func (v *Vault) AcquireCoreEngine(ctx context.Context) (*core.Engine, func(), error) {
+	if v == nil || v.db == nil {
+		return nil, nil, errors.New("localvault: nil vault")
+	}
+	snap, release, err := v.acquireCorpusSnapshot(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	if snap == nil || len(snap.docs) == 0 {
+		if release != nil {
+			release()
+		}
+		return nil, nil, errors.New("localvault: empty corpus snapshot")
+	}
+	eng := snap.ensureSnapshotCoreEngine(v)
+	if eng == nil || eng.Index == nil || eng.Index.N == 0 {
+		release()
+		return nil, nil, errors.New("localvault: core engine unavailable")
+	}
+	return eng, release, nil
 }
 
 // GraphUnits returns the plaintext-free unit metadata used to assemble the

@@ -18,10 +18,11 @@ func (v *Vault) ArchiveVoidProbe(text string) ([]plain.VoidCertificate, plain.Co
 	if v == nil || v.db == nil || strings.TrimSpace(text) == "" {
 		return nil, plain.CoverageReport{}, false
 	}
-	snap, err := v.loadCorpusSnapshot(context.Background())
+	snap, release, err := v.acquireCorpusSnapshot(context.Background())
 	if err != nil || snap == nil || len(snap.docs) == 0 {
 		return nil, plain.CoverageReport{}, false
 	}
+	defer release()
 	eng := snap.ensureSnapshotCoreEngine(v)
 	if eng == nil || eng.Index == nil {
 		return nil, plain.CoverageReport{}, false

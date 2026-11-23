@@ -870,12 +870,12 @@ func TestHandleReturnsResponses(t *testing.T) {
 }
 
 // fastWatchdog shrinks the watchdog tick so retirement tests finish in
-// milliseconds instead of waiting out the production tick.
+// milliseconds instead of waiting out the production tick. The knob is atomic:
+// a server started by an earlier test can still read it while this test runs.
 func fastWatchdog(t *testing.T) {
 	t.Helper()
-	previous := watchdogTick
-	watchdogTick = 20 * time.Millisecond
-	t.Cleanup(func() { watchdogTick = previous })
+	previous := watchdogTickNanos.Swap(int64(20 * time.Millisecond))
+	t.Cleanup(func() { watchdogTickNanos.Store(previous) })
 }
 
 func TestIdleSessionReleasesVaultHandleAndStaysAlive(t *testing.T) {

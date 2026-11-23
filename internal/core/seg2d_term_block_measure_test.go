@@ -302,7 +302,7 @@ func seg2dTrueBlockStatsFromRows(idx *Index, blocks *seg2dTrueBlocks, hash uint6
 				stats.bits = bits
 			}
 			stats.flags |= flags
-			if !haveGroup || group < stats.parentGroup {
+			if !haveGroup || canonicalHostPreferred(idx, group, stats.parentGroup) {
 				stats.parentGroup = group
 				haveGroup = true
 			}

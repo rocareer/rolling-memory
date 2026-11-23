@@ -1357,6 +1357,13 @@ func ServeUnix(sockPath string, memory *facade.Memory, onStart func(context.Cont
 	}
 	active.SetColdBuildMemoryLimit(coldBuildMemoryLimit(memoryState))
 	go func() { _ = active.Warmup(ctx) }()
+	// Keep the newest published cluster opened ahead of the first query: the
+	// builder republishes while the daemon serves, and paying the segment open
+	// inline would turn the first recall after each publication into a slow
+	// request.
+	if warmClient, warmErr := active.LocalVault(); warmErr == nil && warmClient != nil && warmClient.Vault != nil {
+		go warmPublishedGenerations(ctx, warmClient.Vault, publishedWarmInterval)
+	}
 	if onStart != nil {
 		go onStart(ctx)
 	}

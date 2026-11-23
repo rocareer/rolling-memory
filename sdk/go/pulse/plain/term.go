@@ -651,6 +651,8 @@ func (a *TermExtractor) mergeQueryOrdinalSpanBeaconsInto(idx QueryIndexView, sen
 	var anchorMass float64
 	// Anchor rarity tier: proper-name primary terms with document frequency
 	// within [2, N/e] of the corpus (at most ≈36.8% of documents).
+	// 等质量并列取较小 hash：map 迭代序不得决定锚点（df 相同则质量严格相等，
+	// 严格大于比较会让先迭代者赢得并列，推断日信标随迭代序翻出两个查询表征）。
 	dfCeil := float64(idx.CorpusSize()) / eulerNumber
 	for h, tm := range qTerms {
 		if tm.Role != RolePrimary || tm.Flags&FlagHasUpper == 0 {
@@ -665,7 +667,7 @@ func (a *TermExtractor) mergeQueryOrdinalSpanBeaconsInto(idx QueryIndexView, sen
 			g = h
 		}
 		m, ok := idx.TermMassOf(g)
-		if !ok || m <= anchorMass {
+		if !ok || m < anchorMass || (m == anchorMass && h >= anchorH && anchorH != 0) {
 			continue
 		}
 		anchorMass = m

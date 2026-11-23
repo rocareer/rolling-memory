@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.15] - 2026-11-23
+
+### Fixed
+
+- The first recall after an ingest no longer pays for building the projection of a newly published cluster: those clusters are warmed in the background, so the first query returns at steady-state latency.
+- Retiring a replaced vault snapshot no longer invalidates readers that are still using it: a snapshot generation is retired only after its readers release, so a concurrent recall cannot observe a half-retired store.
+- A cached memory-graph projection now holds the corpus lease for as long as it is cached, so the cached view cannot point at a generation that has already been retired.
+- The update check no longer reports an error when the Gitee API rate-limits the request; it falls back to the next configured source.
+- The local MCP daemon no longer trips a data race when the watchdog cadence is shortened while a server started earlier is still winding down.
+
+### Changed
+
+- Engine, SDK and runtime comments now state the mechanism behind a threshold instead of citing a benchmark name or one of its scores; `make check` enforces this with a new comment gate.
+
 ## [0.0.14] - 2026-11-22
 
 ### Added

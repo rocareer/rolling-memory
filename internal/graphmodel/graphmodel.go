@@ -12,8 +12,8 @@
 package graphmodel
 
 // GraphSchemaVersion identifies the word/phrase/cluster graph contract. The
-// admin console uses it to distinguish the engine projection from the legacy
-// LoCoMo preview shape.
+// admin console uses it to distinguish the engine projection from the earlier
+// evaluation-preview shape that lacked cluster containers.
 const GraphSchemaVersion = 2
 
 // Node and edge kinds emitted by the engine projection.

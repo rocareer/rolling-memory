@@ -37,7 +37,7 @@ const (
 	// 模块本身经 registry.RegisterAdmin 静态挂载，不是插件）。
 	Name = "rolling-memory"
 	// Version 软件版本（随 VERSION 文件同步）。
-	Version = "0.0.14"
+	Version = "0.0.15"
 	// CoreVersion 记忆核心版本（Rolling Autonoetic Memory Engine · the memory engine）
 	CoreVersion = "1.0.1"
 	// CoreCodename 记忆核心引擎代号（the memory engine）

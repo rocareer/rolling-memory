@@ -217,7 +217,12 @@ func (m *Memory) RebuildSnapshot(ctx context.Context) (int64, error) {
 }
 
 func (m *Memory) LocalVault() (*localvault.Client, error) {
-	if m == nil || m.Store == nil || m.Store.DB() == nil {
+	if m == nil {
+		return nil, fmt.Errorf("localvault requires an open local SQLite store")
+	}
+	m.localVaultMu.Lock()
+	defer m.localVaultMu.Unlock()
+	if m.Store == nil || m.Store.DB() == nil {
 		return nil, fmt.Errorf("localvault requires an open local SQLite store")
 	}
 	if m.Config == nil {
@@ -227,18 +232,20 @@ func (m *Memory) LocalVault() (*localvault.Client, error) {
 		return nil, err
 	}
 	m.localVaultOnce.Do(func() {
-		m.localVault, m.localVaultErr = localvault.NewVault(m.Store.DB(), nil)
-		if m.localVaultErr == nil {
-			m.localVault.SetColdBuildMemoryLimit(m.coldBuildMemoryLimit.Load())
-			m.localVault.SetBuildAllowed(!m.snapshotOnly.Load())
+		vault, vaultErr := localvault.NewVault(m.Store.DB(), nil)
+		if vaultErr == nil {
+			vault.SetColdBuildMemoryLimit(m.coldBuildMemoryLimit.Load())
+			vault.SetBuildAllowed(!m.snapshotOnly.Load())
 		}
-		if m.localVaultErr == nil && !strings.EqualFold(strings.TrimSpace(os.Getenv("ROLLING_MEMORY_HARMONICS")), "off") {
-			m.localVault.SetCanonicalHarmonics(plain.CanonicalHarmonicOptions{
+		if vaultErr == nil && !strings.EqualFold(strings.TrimSpace(os.Getenv("ROLLING_MEMORY_HARMONICS")), "off") {
+			vault.SetCanonicalHarmonics(plain.CanonicalHarmonicOptions{
 				EnableStructuredDates: true,
 				Expander:              plain.CanonicalCompanionTags,
 			})
-			m.localVault.SetSegmenterOptions(localvault.SegmenterPackOptions{HarmonicOverlay: true})
+			vault.SetSegmenterOptions(localvault.SegmenterPackOptions{HarmonicOverlay: true})
 		}
+		m.localVault = vault
+		m.localVaultErr = vaultErr
 	})
 	if m.localVaultErr != nil {
 		return nil, m.localVaultErr

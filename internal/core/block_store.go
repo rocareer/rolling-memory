@@ -15,7 +15,9 @@ import (
 )
 
 const (
-	blockStoreVersion = 1
+	// v2：parentGrp 列由块局部 min-hash 改为全局 canonical 族根（key-invariance），
+	// 旧块值语义过期，拒读并重建。
+	blockStoreVersion = 2
 	blockTermMagic    = "ZTB1"
 	blockDocMagic     = "ZDB1"
 	blockManifestName = "manifest.json"

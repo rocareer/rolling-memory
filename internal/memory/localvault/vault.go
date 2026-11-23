@@ -378,6 +378,13 @@ type vaultCorpusSnapshot struct {
 	// immutable for this snapshot and each caller works on a shallow engine copy
 	// with its own query scratch.
 	coreWarm bool
+	// ownsCoreEngine is true for a published generation that opened its own mmap.
+	// Derived and delta snapshots share a base engine and never close it.
+	ownsCoreEngine bool
+	lifecycleMu    sync.Mutex
+	readers        int
+	retired        bool
+	closeOnce      sync.Once
 	// stale marks a snapshot served from the last published cluster while the
 	// delta exceeded the in-memory cap; the background builder will republish.
 	stale bool
@@ -439,6 +446,9 @@ type vaultSnapshotRef struct {
 	// the next slot, not before.
 	publishedSnap *vaultCorpusSnapshot
 	publishedSlot string
+	// runtimeClosed prevents a request that was already entering the load path
+	// from installing another published mmap after the owning Memory has closed.
+	runtimeClosed bool
 	// allowBuild is shared by every clone. A long-lived recall surface clears it
 	// so a missing or stale disk cluster degrades to a warming snapshot instead
 	// of running the minute-scale full-corpus build on the query path.
@@ -659,43 +669,39 @@ func (v *Vault) DocAtomCoverageWithCueHashes(docID, fallbackText string, uniqueC
 	if v == nil || len(uniqueCueHashes) == 0 {
 		return 0
 	}
-	if v.slotCacheMu != nil && v.snapRef != nil {
-		v.slotCacheMu.RLock()
-		snap := v.snapRef.snap
-		v.slotCacheMu.RUnlock()
-		if snap != nil {
-			if idx, ok := snap.docIdxByID[docID]; ok && idx >= 0 && idx < len(snap.docs) {
-				doc := snap.docs[idx]
-				if len(doc.termCounts) > 0 || len(doc.allHashes) > 0 {
-					var allSet map[uint64]bool
-					if len(doc.allHashes) > 0 {
-						allSet = make(map[uint64]bool, len(doc.allHashes))
-						for _, h := range doc.allHashes {
-							allSet[h] = true
-						}
+	if snap, release, ok := v.acquireCachedCorpusSnapshot(); ok {
+		defer release()
+		if idx, ok := snap.docIdxByID[docID]; ok && idx >= 0 && idx < len(snap.docs) {
+			doc := snap.docs[idx]
+			if len(doc.termCounts) > 0 || len(doc.allHashes) > 0 {
+				var allSet map[uint64]bool
+				if len(doc.allHashes) > 0 {
+					allSet = make(map[uint64]bool, len(doc.allHashes))
+					for _, h := range doc.allHashes {
+						allSet[h] = true
 					}
-					matched := 0
-					for _, h := range uniqueCueHashes {
-						if doc.termCounts[h] > 0 || (allSet != nil && allSet[h]) {
-							matched++
-						}
-					}
-					return float64(matched) / float64(len(uniqueCueHashes))
 				}
-				if eng := snap.coreEngine; eng != nil {
-					cueSet := make(map[uint64]bool, len(uniqueCueHashes))
-					for _, h := range uniqueCueHashes {
-						cueSet[h] = true
+				matched := 0
+				for _, h := range uniqueCueHashes {
+					if doc.termCounts[h] > 0 || (allSet != nil && allSet[h]) {
+						matched++
 					}
-					matched := 0
-					if eng.ForEachUnitDocEntry(docID, func(ev core.DocEntryView) {
-						if cueSet[ev.ID] {
-							delete(cueSet, ev.ID)
-							matched++
-						}
-					}) {
-						return float64(matched) / float64(len(uniqueCueHashes))
+				}
+				return float64(matched) / float64(len(uniqueCueHashes))
+			}
+			if eng := snap.coreEngine; eng != nil {
+				cueSet := make(map[uint64]bool, len(uniqueCueHashes))
+				for _, h := range uniqueCueHashes {
+					cueSet[h] = true
+				}
+				matched := 0
+				if eng.ForEachUnitDocEntry(docID, func(ev core.DocEntryView) {
+					if cueSet[ev.ID] {
+						delete(cueSet, ev.ID)
+						matched++
 					}
+				}) {
+					return float64(matched) / float64(len(uniqueCueHashes))
 				}
 			}
 		}
@@ -2248,9 +2254,12 @@ func cloudHitLess(a, b QueryHit) bool {
 // snapshot so subsequent Recall queries on a long-lived daemon hit the warm
 // cache without paying the cold SQLite scan cost on the first user query.
 func (v *Vault) WarmupCorpusSnapshot(ctx context.Context) error {
-	snap, err := v.buildCorpusSnapshot(ctx)
+	snap, release, err := v.acquireCorpusSnapshot(ctx)
 	if err != nil {
 		return err
+	}
+	if snap != nil && release != nil {
+		defer release()
 	}
 	if snap != nil && len(snap.docs) > 0 {
 		_ = snap.ensureSnapshotCoreEngine(v)
@@ -2846,10 +2855,11 @@ func (v *Vault) SearchClientSDKDefault(queryText string, topK int) ([]QueryHit, 
 	if strings.TrimSpace(queryText) == "" {
 		return nil, nil
 	}
-	snap, err := v.loadCorpusSnapshot(context.Background())
+	snap, release, err := v.acquireCorpusSnapshot(context.Background())
 	if err != nil || snap == nil {
 		return nil, err
 	}
+	defer release()
 	docs := snap.docs
 	docIdxMap := snap.docIdxByID
 	var hits []QueryHit

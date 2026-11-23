@@ -814,14 +814,19 @@ type rmClusterState struct {
 	// phraseDelta is the append-only delta over the immutable base phrase CSR:
 	// sorted (pair, unit) postings for units appended since the last compaction.
 	// Empty means the base alone is authoritative.
-	phraseDelta   []dyadPosting
-	effWeight     map[uint64]float64
-	properRatio   map[uint64]float64
-	parentGroup   map[uint64]uint64
-	isPrimaryWord map[uint64]bool
-	clusters      []int32
-	clusterN      int
-	bucketTimes   []int64
+	phraseDelta []dyadPosting
+	effWeight   map[uint64]float64
+	properRatio map[uint64]float64
+	parentGroup map[uint64]uint64
+	// canonicalParent is the key-invariant family root (most frequent host by
+	// df, then widest carrier). parentGroupOf serves every scoring/partner/
+	// snapshot consumer from it; parentGroup keeps the legacy min-hash label
+	// only as a fallback for states materialized before canonicalParent.
+	canonicalParent map[uint64]uint64
+	isPrimaryWord   map[uint64]bool
+	clusters        []int32
+	clusterN        int
+	bucketTimes     []int64
 
 	// Exact ordered timestamp-bucket membership is the sole neighborhood backing
 	// in memory and in .zcsr. Each timed unit appears once in bucketUnits.
@@ -844,6 +849,7 @@ type rmClusterState struct {
 	entryMeanBits        float64
 	sentenceEnergyMean   float64
 	totalDaysM           float64
+	kappaOrd             float64
 	fastDocs             []rmFastDocStruct
 	subjRowPtr           []uint32
 	subjIDsPool          []uint64
@@ -1238,7 +1244,17 @@ func (st *rmClusterState) properRatioOf(h uint64) float64 {
 	return 0
 }
 
+// parentGroupOf returns the family root used by scoring and partner paths.
+// Key-invariance contract: the root is the canonical host (most frequent host
+// by df, then widest carrier), so the value does not change when the atomizer
+// key relabels hashes. The legacy min-hash map remains only as a fallback for
+// states materialized before canonicalParent existed.
 func (st *rmClusterState) parentGroupOf(h uint64) (uint64, bool) {
+	if st.canonicalParent != nil {
+		if g, ok := st.canonicalParent[h]; ok && g != 0 {
+			return g, true
+		}
+	}
 	if st.parentGroup != nil {
 		pg, ok := st.parentGroup[h]
 		return pg, ok
@@ -1248,6 +1264,23 @@ func (st *rmClusterState) parentGroupOf(h uint64) (uint64, bool) {
 		return pg, pg != 0
 	}
 	return 0, false
+}
+
+// canonicalParentOf returns the key-invariant family root for weight/partner
+// purposes. parentGroupOf keeps the legacy min-hash contract for the segment
+// block and query layers.
+func (st *rmClusterState) canonicalParentOf(h uint64) uint64 {
+	if st.canonicalParent != nil {
+		if g, ok := st.canonicalParent[h]; ok && g != 0 {
+			return g
+		}
+	}
+	if st.parentGroup != nil {
+		if g, ok := st.parentGroup[h]; ok && g != 0 {
+			return g
+		}
+	}
+	return h
 }
 
 func (st *rmClusterState) isPrimaryOf(h uint64) bool {
@@ -1527,19 +1560,20 @@ func (e *Engine) ensureClusterState() *rmClusterState {
 		}
 	}
 	st := &rmClusterState{
-		builtIndex:     idx,
-		builtIndexGen:  idx.stateGen,
-		docRowPtr:      make([]uint32, idx.N+1),
-		docEntriesFlat: make([]rmDocEntry, totalDocEntries),
-		posPool:        make([]uint32, 0, totalPositions),
-		termKeys:       make([]uint64, 0, len(idx.DF)),
-		termRowPtr:     make([]uint32, len(idx.DF)+1),
-		postingPool:    make([]rmPostingEntry, totalDocEntries),
-		effWeight:      make(map[uint64]float64, len(idx.DF)),
-		parentGroup:    make(map[uint64]uint64, len(idx.DF)),
-		isPrimaryWord:  make(map[uint64]bool, len(idx.DF)),
-		clusters:       make([]int32, idx.N),
-		refTimes:       make([]int64, idx.N),
+		builtIndex:      idx,
+		builtIndexGen:   idx.stateGen,
+		docRowPtr:       make([]uint32, idx.N+1),
+		docEntriesFlat:  make([]rmDocEntry, totalDocEntries),
+		posPool:         make([]uint32, 0, totalPositions),
+		termKeys:        make([]uint64, 0, len(idx.DF)),
+		termRowPtr:      make([]uint32, len(idx.DF)+1),
+		postingPool:     make([]rmPostingEntry, totalDocEntries),
+		effWeight:       make(map[uint64]float64, len(idx.DF)),
+		parentGroup:     make(map[uint64]uint64, len(idx.DF)),
+		canonicalParent: make(map[uint64]uint64, len(idx.DF)),
+		isPrimaryWord:   make(map[uint64]bool, len(idx.DF)),
+		clusters:        make([]int32, idx.N),
+		refTimes:        make([]int64, idx.N),
 	}
 	for h := range idx.DF {
 		st.termKeys = append(st.termKeys, h)
@@ -1657,6 +1691,9 @@ func (e *Engine) ensureClusterState() *rmClusterState {
 						if prevGrp, ok := st.parentGroup[en.id]; !ok || en.group < prevGrp {
 							st.parentGroup[en.id] = en.group
 						}
+						if prevGrp, ok := st.canonicalParent[en.id]; !ok || canonicalHostPreferred(idx, en.group, prevGrp) {
+							st.canonicalParent[en.id] = en.group
+						}
 						if en.bits > 0 {
 							bitSum += float64(en.bits)
 							bitCount++
@@ -1745,6 +1782,9 @@ func (e *Engine) ensureClusterState() *rmClusterState {
 			}
 			if prev, ok := st.parentGroup[h]; !ok || group < prev {
 				st.parentGroup[h] = group
+			}
+			if prev, ok := st.canonicalParent[h]; !ok || canonicalHostPreferred(idx, group, prev) {
+				st.canonicalParent[h] = group
 			}
 			if bits > 0 {
 				bitSum += float64(bits)
@@ -1853,18 +1893,22 @@ func (e *Engine) ensureClusterState() *rmClusterState {
 	for u := range st.ordPos {
 		st.ordPos[u] = -1
 	}
-	var sumLogGap, sumLogGap2 float64
+	// 对数间隔矩按 Welford 在线递推：朴素 Σx/n − (Σx/n)² 在等间隔退化输入下
+	// 的累加舍入会随桶数增长（实测 n=2e4 时 μ 偏 5e-6、经 Expm1 放大为 7.7e-5），
+	// 使情节切分的严格大于比较由舍入误差决胜；Welford 对全等输入逐位返回该值
+	// 本身，退化输入的 μ+σ 与间隔在比较中精确相等。
+	var nG int
 	for i := 1; i < len(buckets); i++ {
 		gap := float64(buckets[i].time - buckets[i-1].time)
 		st.meanGap += (gap - st.meanGap) / float64(i)
+		nG++
 		lg := math.Log1p(gap)
-		sumLogGap += lg
-		sumLogGap2 += lg * lg
+		delta := lg - st.muLogGap
+		st.muLogGap += delta / float64(nG)
+		st.sigLogGap += delta * (lg - st.muLogGap)
 	}
-	if len(buckets) > 1 {
-		nG := float64(len(buckets) - 1)
-		st.muLogGap = sumLogGap / nG
-		st.sigLogGap = math.Sqrt(math.Max(0, sumLogGap2/nG-st.muLogGap*st.muLogGap))
+	if nG > 0 {
+		st.sigLogGap = math.Sqrt(math.Max(0, st.sigLogGap/float64(nG)))
 	}
 	st.clusterN = len(buckets)
 	st.bucketTimes = make([]int64, len(buckets))
@@ -1912,7 +1956,7 @@ func (e *Engine) ensureClusterState() *rmClusterState {
 	st.termIsPrimary = make([]uint8, vLen)
 	for i, h := range st.termKeys {
 		st.termEffWeight[i] = st.effWeight[h]
-		st.termParentGroup[i] = st.parentGroup[h]
+		st.termParentGroup[i] = st.canonicalParentOf(h)
 		if st.isPrimaryWord[h] {
 			st.termIsPrimary[i] = 1
 		}
@@ -2047,6 +2091,11 @@ func (st *rmClusterState) buildFastDocs(idx *Index) {
 	if st.totalDaysM < 1 {
 		st.totalDaysM = 1
 	}
+	// kappaOrd is a state-level loop invariant of temporalAffinity (identical
+	// formula and inputs as the per-call computation it replaces, so the value
+	// is bit-for-bit the same); building it here keeps the hot pair loop free
+	// of a per-call Sqrt/Max.
+	st.kappaOrd = eulerNumber * math.Sqrt(math.Max(1.0, float64(st.clusterN)/st.totalDaysM))
 	// 日余弦是查询无关但随 N 变化的派生量：预计算需要遍历全部邻接对，而每次写入都会
 	// 改变 N。这里不再按代预生成，改由 docSubjectCos 在查询内按需计算（同一函数、数值
 	// 完全一致，按查询的 scratch 有界缓存），发布只维护事实与计数。
@@ -2363,8 +2412,10 @@ func rmPackedOccurrenceCompare(a, b rmPackedOccurrence) int {
 // maxPhraseSlotSpan 定义同句二元短语（dyad）索引的最大词槽跨度：
 // 相邻词槽距离为 1，中间最多允许隔 3 个修饰/功能词槽（总跨度 4），控制短语倒排体积 O(L*W)。
 // [calibrated] maxPhraseSlotSpan — slot-distance span (slots) of the intra-sentence
-// dyad window. A full sweep selected 4 as the only global resonance peak; widening or
-// narrowing it regresses. Recalibrate with the ATM paired arm.
+// dyad window. An empirical operating point: a span sweep put the resonance peak at 4,
+// and both directions were measured to be worse — narrower drops real modifier gaps,
+// wider admits accidental co-occurrence across a clause. Change it only together with
+// a paired multi-corpus measurement.
 const maxPhraseSlotSpan = 4
 
 // hasWidePos 报告语料是否存在超出 16 位打包范围的宽 (句, 槽) 坐标：存在时
@@ -2653,6 +2704,9 @@ func rmQueryDyadsWithPositionsInto(sc *rmQueryScratch, qTerms map[uint64]Term, q
 
 func (st *rmClusterState) buildEffectiveWeightsFromDyads(idx *Index, docDyadRowPtr []uint32, docDyadsFlat []rmDyad) {
 	root := func(id uint64) uint64 {
+		if g, ok := st.canonicalParent[id]; ok && g != 0 {
+			return g
+		}
 		if g, ok := st.parentGroup[id]; ok && g != 0 {
 			return g
 		}
@@ -2753,14 +2807,27 @@ func buildEpisodeComponents(bucketTimes []int64, ordPos []int32, n int, meanGap,
 	if len(bucketTimes) == 0 {
 		return episodeOf, 0
 	}
-	tauEpisode := math.Expm1(muLogGap + sigLogGap)
-	if tauEpisode <= 0 {
-		tauEpisode = meanGap * eulerNumber
+	// 切分判据在 θ 空间（Log1p 严格单调双射）比较：gap > Expm1(μ+σ) ⟺
+	// Log1p(gap) > μ+σ。原式把均值的末位舍入经 Expm1 放大到阈值量级（等间隔
+	// 退化输入下随桶数漂移 1e-11…1e-4），会让严格大于比较由累加舍入决胜——
+	// 实测同一语料 N=10,000 时整库塌缩为单例情节、N=5,000/8,000/12,000 时为
+	// 单一组件。θ 空间比较保持数学等价且不受该放大影响。
+	logThreshold := muLogGap + sigLogGap
+	tauFallback := 0.0
+	if logThreshold <= 0 {
+		tauFallback = meanGap * eulerNumber
 	}
 	bucketEp := make([]int32, len(bucketTimes))
 	epID := int32(0)
 	for i := 1; i < len(bucketTimes); i++ {
-		if tauEpisode > 0 && float64(bucketTimes[i]-bucketTimes[i-1]) > tauEpisode {
+		gap := float64(bucketTimes[i] - bucketTimes[i-1])
+		split := false
+		if logThreshold > 0 {
+			split = math.Log1p(gap) > logThreshold
+		} else if tauFallback > 0 {
+			split = gap > tauFallback
+		}
+		if split {
 			epID++
 		}
 		bucketEp[i] = epID
@@ -2826,6 +2893,13 @@ func (st *rmClusterState) calcMeanSentenceEnergy(idx *Index) float64 {
 // keeps production cost at one branch per call.
 var temporalAffinityProbe func(a, b int32, ta, tb int64, oa, ob int32)
 
+// temporalAffinityUnderflowGapRatio = 1075·ln2 is the |Δt|/meanGap ratio past
+// which Exp(-x) flushes to exact +0 under float64 round-to-nearest (1074
+// subnormal significand bits plus one half-ULP); past it every downstream
+// product of the affinity is an exact zero, so the early return is
+// bit-for-bit identical to the full computation.
+const temporalAffinityUnderflowGapRatio = 1075 * math.Ln2
+
 // SetTemporalAffinityProbe installs the measurement hook; nil removes it.
 func SetTemporalAffinityProbe(fn func(a, b int32, ta, tb int64, oa, ob int32)) {
 	temporalAffinityProbe = fn
@@ -2856,16 +2930,25 @@ func (st *rmClusterState) temporalAffinity(idx *Index, a, b int32) float64 {
 	if st.meanGap <= 0 {
 		return 0
 	}
+	// float64 舍入下溢点：x = gap/meanGap > 1075·ln2（1074 个亚正规位 + 半 ULP
+	// 舍入）后 Exp(-x) 精确等于 +0，下游乘积（含 ordinal 幂因子）全为精确零浮点，
+	// 由此提前返回 0 与原路径逐位相同。
+	if gap > temporalAffinityUnderflowGapRatio*st.meanGap {
+		return 0
+	}
 	// 近核取常数危险率 1/meanGap 的指数生存函数 e^{-x}（x = |Δt|/meanGap，即
-	// Poisson 零假设下间隔超过 |Δt| 的概率）；硬窗阶跃替换经同池配对判负
-	// （ATM 1,044 题：r@10 净 -19 题、composite -0.89），连续形态承重，勿以
-	// 阶跃/窗口替代。
+	// Poisson 零假设下间隔超过 |Δt| 的概率）；硬窗阶跃替换经同池配对判负：
+	// 阶跃把「渐近变远」压成「过窗即断」，相邻而非同期的事件在同一阶跃两侧被
+	// 判成完全无关，连续形态承重，勿以阶跃/窗口替代。
 	worldAff := math.Exp(-gap / st.meanGap)
 	if st.totalDaysM > 0 && int(a) < len(st.ordPos) && int(b) < len(st.ordPos) {
 		oa, ob := st.ordPos[a], st.ordPos[b]
 		if oa >= 0 && ob >= 0 {
 			dk := math.Abs(float64(oa - ob))
-			kappaOrd := eulerNumber * math.Sqrt(math.Max(1.0, float64(st.clusterN)/st.totalDaysM))
+			kappaOrd := st.kappaOrd
+			if kappaOrd <= 0 {
+				kappaOrd = eulerNumber * math.Sqrt(math.Max(1.0, float64(st.clusterN)/st.totalDaysM))
+			}
 			if dk > kappaOrd {
 				excessOrd := (dk - kappaOrd) / kappaOrd
 				worldAff *= math.Pow(1.0+excessOrd*excessOrd, -transmissionPerHop)

@@ -66,6 +66,9 @@ func (b *Builder) Invalidate() {
 		return
 	}
 	b.mu.Lock()
+	if b.snap != nil {
+		b.snap.retire()
+	}
 	b.snap = nil
 	b.key = ""
 	b.mu.Unlock()
@@ -79,6 +82,16 @@ func (b *Builder) Invalidate() {
 	b.lexCache = nil
 	b.lexOrder = nil
 	b.lexMu.Unlock()
+}
+
+// replaceSnapshotLocked installs a freshly built snapshot and retires the
+// previous one; in-flight renders keep the old engine alive through their
+// leases until they finish. Caller holds b.mu.
+func (b *Builder) replaceSnapshotLocked(snap *Snapshot) {
+	if b.snap != nil {
+		b.snap.retire()
+	}
+	b.snap = snap
 }
 
 // Snapshot returns the cached snapshot, rebuilding it when the corpus
@@ -111,7 +124,7 @@ func (b *Builder) Snapshot(ctx context.Context) (*Snapshot, error) {
 		if b.snap != nil && b.key == key {
 			return b.snap, nil
 		}
-		b.snap = &Snapshot{
+		b.replaceSnapshotLocked(&Snapshot{
 			Key:            key,
 			UnitByID:       map[string]*Unit{},
 			Episodes:       map[int32]*Cluster{},
@@ -123,7 +136,7 @@ func (b *Builder) Snapshot(ctx context.Context) (*Snapshot, error) {
 			GroupEnergy:    map[uint64]float64{},
 			TermGroup:      map[uint64]uint64{},
 			BuiltAt:        time.Now(),
-		}
+		})
 		b.key = key
 		return b.snap, nil
 	}
@@ -148,7 +161,7 @@ func (b *Builder) Snapshot(ctx context.Context) (*Snapshot, error) {
 		return nil, err
 	}
 	snap.BuildMS = time.Since(started).Milliseconds()
-	b.snap = snap
+	b.replaceSnapshotLocked(snap)
 	b.key = key
 	return snap, nil
 }
@@ -175,7 +188,70 @@ type Snapshot struct {
 	BuiltAt   time.Time
 	BuildMS   int64
 
-	engine *core.Engine
+	// engine is the immutable corpus engine this snapshot was projected from.
+	// View renders share it through Engine(): the corpus lease (engRelease)
+	// keeps the backing mmap alive until the owner retires the snapshot and
+	// every active render returns its lease.
+	engine     *core.Engine
+	engMu      sync.Mutex
+	engReaders int
+	engClosed  bool
+	engRelease func()
+}
+
+// Engine leases the cached engine for one render pass. The returned release
+// func must be called when the pass ends; retirement cannot unmap the backing
+// segment until every active lease is returned. ok is false when the snapshot
+// carries no engine (empty vault) or was already retired.
+func (s *Snapshot) Engine() (*core.Engine, func(), bool) {
+	if s == nil || s.engine == nil {
+		return nil, func() {}, false
+	}
+	s.engMu.Lock()
+	if s.engClosed {
+		s.engMu.Unlock()
+		return nil, func() {}, false
+	}
+	s.engReaders++
+	s.engMu.Unlock()
+	return s.engine, s.releaseEngineReader, true
+}
+
+func (s *Snapshot) releaseEngineReader() {
+	if s == nil {
+		return
+	}
+	s.engMu.Lock()
+	if s.engReaders > 0 {
+		s.engReaders--
+	}
+	drop := s.engClosed && s.engReaders == 0
+	release := s.engRelease
+	s.engMu.Unlock()
+	if drop && release != nil {
+		release()
+	}
+}
+
+// retire marks the snapshot dropped by its owner (builder replacement or
+// invalidation). The corpus lease is released immediately when no render pass
+// is active, otherwise when the last active pass returns its lease.
+func (s *Snapshot) retire() {
+	if s == nil {
+		return
+	}
+	s.engMu.Lock()
+	if s.engClosed {
+		s.engMu.Unlock()
+		return
+	}
+	s.engClosed = true
+	drop := s.engReaders == 0
+	release := s.engRelease
+	s.engMu.Unlock()
+	if drop && release != nil {
+		release()
+	}
 }
 
 // Unit is one memory record with its engine-derived grouping.
@@ -244,8 +320,16 @@ func (b *Builder) build(ctx context.Context, rows []graphmodel.UnitRow, citation
 		sort.Strings(snap.CitedBy[id])
 	}
 
-	err := b.vault.WithCoreEngine(ctx, func(eng *core.Engine) error {
+	// The projection caches the engine pointer across view renders, so it
+	// leases the corpus snapshot for the snapshot's lifetime instead of the
+	// callback-scoped WithCoreEngine lease; Snapshot.retire returns it.
+	eng, release, err := b.vault.AcquireCoreEngine(ctx)
+	if err != nil {
+		return nil, err
+	}
+	buildErr := func() error {
 		snap.engine = eng
+		snap.engRelease = release
 		units := make([]*Unit, 0, len(rows))
 		for i := range rows {
 			row := rows[i]
@@ -457,9 +541,10 @@ func (b *Builder) build(ctx context.Context, rows []graphmodel.UnitRow, citation
 			})
 		}
 		return nil
-	})
-	if err != nil {
-		return nil, err
+	}()
+	if buildErr != nil {
+		snap.retire()
+		return nil, buildErr
 	}
 	return snap, nil
 }

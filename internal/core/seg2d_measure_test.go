@@ -13,22 +13,22 @@ import (
 	"time"
 )
 
-// The fixture constants are calibrated to the ATM readings recorded before 2d:
-// N = 11,034 units and 12.5M postings from the 2c append profile §1, and the
-// 77,951-term vocabulary from the chunked-cluster-state RFC (G2). The derived
-// per-doc count reproduces the observed 12.5M / 11,034 ≈ 1,133 (doc,term)
-// entries per unit.
+// The fixture constants reproduce the reference measurement footprint recorded
+// before 2d: N = 11,034 units and 12.5M postings from the 2c append profile §1,
+// and the 77,951-term vocabulary from the chunked-cluster-state RFC (G2). The
+// derived per-doc count reproduces the observed 12.5M / 11,034 ≈ 1,133
+// (doc,term) entries per unit.
 const (
-	seg2dATMUnits    = 11034
-	seg2dATMPostings = 12_500_000
-	seg2dATMTerms    = 77_951
-	seg2dTermsPerDoc = (seg2dATMPostings + seg2dATMUnits - 1) / seg2dATMUnits
-	seg2dSeed        = int64(0x2D5EED)
-	seg2dHubTerm     = uint64(0xD2D2D2D2)
-	seg2dRankBase    = uint64(0x1000)
-	seg2dSampleTerms = 512
-	seg2dHottest     = 8
-	seg2dDriftBase   = 10000
+	seg2dScaleUnits    = 11034
+	seg2dScalePostings = 12_500_000
+	seg2dScaleTerms    = 77_951
+	seg2dTermsPerDoc   = (seg2dScalePostings + seg2dScaleUnits - 1) / seg2dScaleUnits
+	seg2dSeed          = int64(0x2D5EED)
+	seg2dHubTerm       = uint64(0xD2D2D2D2)
+	seg2dRankBase      = uint64(0x1000)
+	seg2dSampleTerms   = 512
+	seg2dHottest       = 8
+	seg2dDriftBase     = 10000
 	// seg2dBlockBudget is the 2d foreground append budget for one block
 	// (chunked-cluster-state v1 §七 2d: 11k + 1 append foreground ≤ 5 ms).
 	seg2dBlockBudget = 5 * time.Millisecond
@@ -67,16 +67,16 @@ func (z seg2dZipf) rank() int {
 	return r
 }
 
-// seg2dCorpus builds the ATM-scale fixture. Every unit carries seg2dTermsPerDoc
+// seg2dCorpus builds the reference-scale fixture. Every unit carries seg2dTermsPerDoc
 // distinct terms drawn without replacement with Zipf(s≈1) weights over the
 // 77,951-term vocabulary, plus the explicit df=N hub term. Counts and Positions
 // are left empty: BuildIndex defaults occurrences to 1 and positions do not
 // enter postings, DF, DocMass or DocTerms order, so omitting them keeps the
-// fixture near the ATM footprint instead of tripling it.
+// fixture near the reference footprint instead of tripling it.
 func seg2dCorpus() []Doc {
 	rng := rand.New(rand.NewSource(seg2dSeed))
-	z := seg2dZipf{rng: rng, vocab: seg2dATMTerms, logVocab: math.Log(float64(seg2dATMTerms))}
-	docs := make([]Doc, seg2dATMUnits)
+	z := seg2dZipf{rng: rng, vocab: seg2dScaleTerms, logVocab: math.Log(float64(seg2dScaleTerms))}
+	docs := make([]Doc, seg2dScaleUnits)
 	for i := range docs {
 		doc := Doc{
 			UnitID:     fmt.Sprintf("unit-%d", i),
@@ -405,13 +405,13 @@ func TestSeg2DMeasureBlocks(t *testing.T) {
 	corpus := seg2dCorpus()
 	idx := BuildIndex(corpus)
 
-	// 1. Scale recap against the ATM fixture targets.
+	// 1. Scale recap against the fixture targets.
 	counts := seg2dCountScale(idx)
-	targetPerDoc := float64(seg2dATMPostings) / float64(seg2dATMUnits)
+	targetPerDoc := float64(seg2dScalePostings) / float64(seg2dScaleUnits)
 	t.Logf("scale: N=%d (target %d, dev %+d) distinctTerms=%d (target %d, dev %+.2f%%) postings=%d (target %d, dev %+.3f%%) meanDF=%.2f entriesPerDoc=%.1f (target %.1f) dfEqualsN=%d docTermsTotal=%d",
-		counts.units, seg2dATMUnits, counts.units-seg2dATMUnits,
-		counts.distinct, seg2dATMTerms, 100*float64(counts.distinct-seg2dATMTerms)/float64(seg2dATMTerms),
-		counts.postings, seg2dATMPostings, 100*float64(counts.postings-seg2dATMPostings)/float64(seg2dATMPostings),
+		counts.units, seg2dScaleUnits, counts.units-seg2dScaleUnits,
+		counts.distinct, seg2dScaleTerms, 100*float64(counts.distinct-seg2dScaleTerms)/float64(seg2dScaleTerms),
+		counts.postings, seg2dScalePostings, 100*float64(counts.postings-seg2dScalePostings)/float64(seg2dScalePostings),
 		float64(counts.postings)/float64(counts.distinct), float64(counts.postings)/float64(counts.units), targetPerDoc,
 		counts.dfEqualsN, counts.docTermEntries)
 	if counts.docTermEntries != counts.postings {

@@ -108,8 +108,11 @@ func buildTermBlocks(idx *Index, maxUnits int) *termBlocks {
 		n:       idx.N,
 		gen:     idx.stateGen,
 	}
+	// 全局 canonical 族根（与簇状态 parentGroupOf 同式）：每块重复同一值，
+	// termStats 的 min 合并恒等于该值，且与 atomizer key 无关。
+	roots := scanParentGroups(idx)
 	for i := 0; i < k; i++ {
-		block := buildTermBlock(idx, int(bounds[i]), int(bounds[i+1]))
+		block := buildTermBlock(idx, int(bounds[i]), int(bounds[i+1]), roots)
 		if block == nil {
 			return nil
 		}
@@ -123,7 +126,7 @@ func buildTermBlocks(idx *Index, maxUnits int) *termBlocks {
 //
 // 空区间返回空块（无键、无行、不产生假行）；索引自相矛盾（键在 DocTerms 中
 // 出现却无对应 posting，或 posting 非严格升序）返回 nil，不静默修补。
-func buildTermBlock(idx *Index, lo, hi int) *termBlock {
+func buildTermBlock(idx *Index, lo, hi int, roots map[uint64]uint64) *termBlock {
 	if idx == nil || idx.Postings == nil || len(idx.DocTerms) != idx.N || lo < 0 || lo > hi || hi > idx.N {
 		return nil
 	}
@@ -168,13 +171,18 @@ func buildTermBlock(idx *Index, lo, hi int) *termBlock {
 		block.df[i] = int32(phi - plo)
 		var cf int64
 		var propCnt int32
-		var grp uint64
 		var bitsMax uint16
 		var flags uint8
 		var primary uint8
 		// 词项级声明只随键变化：提到 posting 循环外，避免逐 posting 重复查表。
+		// 族根同理：全局 canonical 根是词项常量（buildTermBlocks 预计算），
+		// 缺表回退自根。
 		termBits := idx.TermBits[h]
 		termFlags := idx.TermFlags[h]
+		grp := h
+		if r, ok := roots[h]; ok {
+			grp = r
+		}
 		prevUnit := int32(-1)
 		for _, p := range posts[plo:phi] {
 			u := p.Unit
@@ -213,16 +221,6 @@ func buildTermBlock(idx *Index, lo, hi int) *termBlock {
 			}
 			if bits > bitsMax {
 				bitsMax = bits
-			}
-
-			group := h
-			if int(u) < len(idx.UnitGroups) && idx.UnitGroups[u] != nil {
-				if g := idx.UnitGroups[u][h]; g != 0 {
-					group = g
-				}
-			}
-			if grp == 0 || group < grp {
-				grp = group
 			}
 		}
 		block.cf[i] = cf
@@ -268,9 +266,9 @@ func (b *termBlock) index(hash uint64) (int, bool) {
 }
 
 // termStats 只用整数半群合成词项跨块统计：df/cf/propCnt 相加，parentGroup
-// 取 min（0 参与比较，与生产 parentGroupOf 一致：0 表示无父组但仍是 min 的
-// 合法值），isPrimary/flags 取 OR，bits 取 max。ok=false 表示该词项在所有块
-// 中都不存在（df=0）。
+// 取 min（0 参与比较；每个块写的是同一词项的全局 canonical 族根，跨块取 min
+// 只是把相同值合并，语义上恒等于该值），isPrimary/flags 取 OR，bits 取 max。
+// ok=false 表示该词项在所有块中都不存在（df=0）。
 func (tb *termBlocks) termStats(hash uint64) (termBlockStats, bool) {
 	var s termBlockStats
 	if tb == nil {
@@ -455,9 +453,10 @@ func (tb *termBlocks) appendTail(idx *Index, maxUnits int, added []Doc, replaced
 	copy(bounds, tb.bounds)
 	blocks := make([]*termBlock, len(tb.blocks), len(tb.blocks)+k)
 	copy(blocks, tb.blocks)
+	roots := scanParentGroups(idx)
 	for i := 1; i <= k; i++ {
 		hi := tb.n + int(int64(i)*int64(idx.N-tb.n)/int64(k))
-		block := buildTermBlock(idx, int(bounds[len(bounds)-1]), hi)
+		block := buildTermBlock(idx, int(bounds[len(bounds)-1]), hi, roots)
 		if block == nil {
 			return nil, false
 		}

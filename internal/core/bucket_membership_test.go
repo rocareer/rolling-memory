@@ -347,8 +347,8 @@ func TestBucketMembershipDiskV7PersistsCompactBacking(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFile: %v", err)
 	}
-	if zcsrVersion != 7 {
-		t.Fatalf("zcsrVersion = %d, want 7", zcsrVersion)
+	if zcsrVersion != 8 {
+		t.Fatalf("zcsrVersion = %d, want 8", zcsrVersion)
 	}
 	if got := binary.LittleEndian.Uint16(data[4:6]); got != zcsrVersion {
 		t.Fatalf("disk version = %d, want %d", got, zcsrVersion)

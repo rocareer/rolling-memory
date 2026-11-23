@@ -1,8 +1,8 @@
 // Copyright 2026 Rocareer & Rolling & PsychologyLake.org.cn
 // Author: Albert <albert@rocareer.com>
 
-// 本件保证「词项化伙伴统计」路径可执行、权重有限且确定性一致；质量对照见
-// eval 的 TestATMTermPartnerQuality（环境变量门控）。
+// 本件保证「词项化伙伴统计」路径可执行、权重有限且确定性一致；质量对照由评测层的
+// 环境变量门控校验承担。
 package core
 
 import (
