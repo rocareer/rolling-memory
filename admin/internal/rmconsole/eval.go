@@ -3419,20 +3419,31 @@ func bucketCountsFromItems(items []EvalQuestionResultItem) map[string]int {
 	return counts
 }
 
-// portableCLIStorePath 将以当前用户 $HOME 开头的路径折叠为 ~/...，
-// 避免在后台生成的可复制 CLI 命令中硬编码特定机器的绝对用户目录。
+// plainReproPath contains only characters that can be emitted as a bare Bash word.
+var plainReproPath = regexp.MustCompile(`^[a-zA-Z0-9_./:+-]+$`)
+
+// portableCLIStorePath formats the store argument for the exported Bash command.
 func portableCLIStorePath(storePath string) string {
-	p := strings.TrimSpace(storePath)
-	if p == "" {
+	p := filepath.ToSlash(storePath)
+	if p == "~" {
 		return p
 	}
-	if home, err := os.UserHomeDir(); err == nil && strings.TrimSpace(home) != "" {
-		cleanHome := strings.TrimRight(filepath.Clean(home), "/")
-		if strings.HasPrefix(p, cleanHome+"/") {
-			return "~" + p[len(cleanHome):]
+	prefix := ""
+	if strings.HasPrefix(p, "~/") {
+		prefix, p = "~/", p[2:]
+	} else if home, err := os.UserHomeDir(); err == nil && filepath.IsAbs(storePath) {
+		if rel, err := filepath.Rel(home, storePath); err == nil && filepath.IsLocal(rel) {
+			if rel == "." {
+				return "~"
+			}
+			prefix, p = "~/", filepath.ToSlash(rel)
 		}
 	}
-	return p
+	if plainReproPath.MatchString(p) {
+		return prefix + p
+	}
+	// Keep the leading ~/ unquoted so Bash expands it on the reader's machine.
+	return prefix + "'" + strings.ReplaceAll(p, "'", `'\''`) + "'"
 }
 
 // buildReproCLICommand 生成任意目录可直接运行的 SDK 契约复现命令。
