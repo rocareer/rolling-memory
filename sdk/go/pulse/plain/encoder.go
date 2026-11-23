@@ -385,6 +385,90 @@ func clampBitsX10(v uint32) uint16 {
 	return uint16(v)
 }
 
+// harmonicGlueWidthX10 is the carrier width at which a long token is handed to
+// the adaptive harmonic glue path instead of being decomposed into sub-terms.
+const harmonicGlueWidthX10 uint16 = 420
+
+// wordCarrierWidth mirrors the carrier-width loop used when a word is packed:
+// runs of three or more identical letters carry a quarter of their width.
+func wordCarrierWidth(w string) uint32 {
+	var raw uint32
+	var prev rune
+	runLen := 0
+	for _, r := range w {
+		if lr := unicode.ToLower(r); lr == prev {
+			runLen++
+		} else {
+			prev, runLen = lr, 1
+		}
+		rw := uint32(CarrierUnits(r))
+		if runLen >= 3 {
+			rw /= 4
+		}
+		raw += rw
+	}
+	return raw
+}
+
+// isUnspacedNonHanRun reports whether w is one continuous run in a script that
+// writes without word spaces and is not an ideograph the bigram path handles.
+func isUnspacedNonHanRun(w string) bool {
+	if w == "" {
+		return false
+	}
+	runes := 0
+	for _, r := range w {
+		if isHanRune(r) || !isUnspacedIdeographic(r) {
+			return false
+		}
+		runes++
+	}
+	return runes >= 2
+}
+
+// expandUnspacedRunWords gives a non-Han unspaced run the same adjacent-bigram
+// then unigram ladder an ideographic run gets, unless the adaptive harmonic
+// glue would take the run instead. Glue needs an encoder without a canonical
+// expander and a carrier width above the glue threshold; when it fires, leaving
+// the run whole is what keeps the glue contract intact.
+//
+// Expansion runs before the declarative form marks are computed, so those marks
+// and the compound-parent table stay index-aligned with the expanded words.
+func (e *BlindEncoder) expandUnspacedRunWords(words []string) []string {
+	glueAvailable := e == nil || e.harmOpts.Expander == nil
+	var out []string
+	changed := false
+	for _, w := range words {
+		if !isUnspacedNonHanRun(w) {
+			out = append(out, w)
+			continue
+		}
+		glueWillFire := glueAvailable &&
+			clampBitsX10(wordCarrierWidth(w)) > harmonicGlueWidthX10 &&
+			len(splitCompoundSubwords(w)) < 2
+		if glueWillFire {
+			out = append(out, w)
+			continue
+		}
+		runes := []rune(w)
+		if len(runes) < 2 {
+			out = append(out, w)
+			continue
+		}
+		changed = true
+		for k := 0; k+1 < len(runes); k++ {
+			out = append(out, string(runes[k:k+2]))
+		}
+		for k := 0; k < len(runes); k++ {
+			out = append(out, string(runes[k:k+1]))
+		}
+	}
+	if !changed {
+		return words
+	}
+	return out
+}
+
 func classifyRuneFlag(r rune, upperAllowed, hasLower bool) (flags uint8, nextHasLower bool) {
 	nextHasLower = hasLower
 	if unicode.IsUpper(r) {
@@ -652,6 +736,7 @@ func (e *BlindEncoder) packSentenceWords(sent string, words []string) []BlindTok
 	if len(words) == 0 {
 		return e.packSymbolTerms(sent)
 	}
+	words = e.expandUnspacedRunWords(words)
 	// 声明式高 4 位形态标志（bit5 焦点头 / bit6 定界包络 / bit7 数值-量纲对）与 words 逐位对齐预计算，
 	// 见 encoder_flags.go（纯 Unicode 形态、零词表、语种无关）。
 	formMarks, compoundParents, bodyStartIdx := blindFormFlagMarksAndMeta(sent, words)
@@ -711,7 +796,7 @@ func (e *BlindEncoder) packSentenceWords(sent string, words []string) []BlindTok
 		}
 		clampedW := clampBitsX10(rawWidth)
 		flags |= formMarks[wordIdx]
-		if (e == nil || e.harmOpts.Expander == nil) && clampedW > 420 && len(splitCompoundSubwords(w)) < 2 {
+		if (e == nil || e.harmOpts.Expander == nil) && clampedW > harmonicGlueWidthX10 && len(splitCompoundSubwords(w)) < 2 {
 			prevLen := len(atoms)
 			atoms = e.appendAdaptiveHarmonicTerms(atoms, w, wordIdx, 420)
 			if len(atoms) > prevLen && formMarks[wordIdx] != 0 {

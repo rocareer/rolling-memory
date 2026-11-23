@@ -417,11 +417,46 @@ type incrementalDelta struct {
 	oldOf      []int32
 }
 
+// termArbiterMode 选择族根裁决的统计量形态（评测器材，与 channelBreakdownProbe
+// 同风格：生产路径永不设置，默认 0 = df 优先）。模式语义：
+//
+//	0 = df 优先，平手 bits 大（现役，逐位等价）；
+//	1 = bits 优先，平手 df 大；
+//	2 = df 小者优先（反向对照，界定自由度）。
+//
+// 只影响族根裁决，不改变任何文本统计量。
+var termArbiterMode uint8
+
+// SetTermArbiterMode 设置族根裁决形态；仅供评测器材使用。
+func SetTermArbiterMode(mode uint8) { termArbiterMode = mode }
+
 // canonicalHostPreferred reports whether candidate is a better family root than
 // current using only key-independent text statistics: the most frequent host
 // (larger df) wins, then the wider carrier (larger bits). The atomizer key only
 // relabels hashes, so this choice does not change when the key changes.
 func canonicalHostPreferred(idx *Index, candidate, current uint64) bool {
+	if termArbiterMode == 1 {
+		bc, br := idx.TermBitsOf(candidate), idx.TermBitsOf(current)
+		if bc != br {
+			return bc > br
+		}
+		dc, dr := idx.TermDF(candidate), idx.TermDF(current)
+		if dc != dr {
+			return dc > dr
+		}
+		return false
+	}
+	if termArbiterMode == 2 {
+		dc, dr := idx.TermDF(candidate), idx.TermDF(current)
+		if dc != dr {
+			return dc < dr
+		}
+		bc, br := idx.TermBitsOf(candidate), idx.TermBitsOf(current)
+		if bc != br {
+			return bc < br
+		}
+		return false
+	}
 	dc, dr := idx.TermDF(candidate), idx.TermDF(current)
 	if dc != dr {
 		return dc > dr

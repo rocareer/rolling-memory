@@ -826,14 +826,27 @@ func applyXDGPathDefaults(text string) string {
 	if os.Getenv("XDG_DATA_HOME") != "" {
 		text = strings.Replace(text,
 			`db = "~/.local/share/rolling-memory/memory.db"`,
-			`db = "`+DefaultDBPath()+`"`, 1)
+			`db = `+tomlBasicString(DefaultDBPath()), 1)
 	}
 	if os.Getenv("XDG_STATE_HOME") != "" {
 		text = strings.Replace(text,
 			`log = "~/.local/state/rolling-memory/rolling-memory.log"`,
-			`log = "`+filepath.Join(DefaultStateDir(), "rolling-memory.log")+`"`, 1)
+			`log = `+tomlBasicString(filepath.Join(DefaultStateDir(), "rolling-memory.log")), 1)
 	}
 	return text
+}
+
+// tomlBasicString renders value as a TOML basic (double-quoted) string. The
+// paths interpolated into the template must go through it: Windows paths
+// contain backslashes, and a backslash inside a basic string starts an escape
+// sequence (`\U...` is a unicode escape), so an unescaped path produced a
+// config file that could not be read back.
+func tomlBasicString(value string) string {
+	encoded, err := ids.PyJSONDump(value, false, false, true)
+	if err != nil {
+		return `""`
+	}
+	return encoded
 }
 
 // PortableDefaultConfigText returns DefaultConfigText adapted for a portable USB
@@ -1264,11 +1277,7 @@ func tomlLiteral(raw string) string {
 	if isTOMLNumber(value) {
 		return value
 	}
-	encoded, err := ids.PyJSONDump(value, false, false, true)
-	if err != nil {
-		return `""`
-	}
-	return encoded
+	return tomlBasicString(value)
 }
 
 func isTOMLNumber(value string) bool {

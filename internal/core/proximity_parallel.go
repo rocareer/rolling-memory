@@ -70,27 +70,20 @@ func dispatchProximityEntity(units []int32, coreLex []float64, candidates []rmCa
 		}
 		return
 	}
-	var next atomic.Int64
 	var wg sync.WaitGroup
-	const chunk = 16
+	// Round-robin static partition: each worker strides the index, so no shared
+	// cursor is contended. A single atomic counter would serialise all workers
+	// on one cache line (the profile showed the resulting park/unpark traffic
+	// as pthread_cond_signal plus usleep), while round-robin keeps balance for
+	// the early-return candidates that dominate the list.
 	for w := 0; w < workers; w++ {
 		wg.Add(1)
-		go func() {
+		go func(w int) {
 			defer wg.Done()
-			for {
-				start := int(next.Add(chunk)) - chunk
-				if start >= n {
-					return
-				}
-				end := start + chunk
-				if end > n {
-					end = n
-				}
-				for i := start; i < end; i++ {
-					evalProximityEntity(units[i], coreLex, candidates, gates, st, groups, total, residual)
-				}
+			for i := w; i < n; i += workers {
+				evalProximityEntity(units[i], coreLex, candidates, gates, st, groups, total, residual)
 			}
-		}()
+		}(w)
 	}
 	wg.Wait()
 }

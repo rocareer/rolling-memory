@@ -219,6 +219,11 @@ func (st *rmClusterState) computeStructuredIncrement(idx *Index, sc *rmQueryScra
 	highDFThresh := idx.HighDFThreshold()
 	wide := st.hasWidePos()
 
+	// Prefilling the effective group costs one pass and one array write per
+	// entry; computing it inline instead was measured to cost more, because the
+	// pass below and the sentence pass both need the value and every inline call
+	// re-runs the function (effectiveEntryGroup cum 0.86s -> 1.31s on the ATM
+	// query profile).
 	effG := sc.docEntryEffGroup
 	if cap(effG) < len(entries) {
 		effG = make([]uint64, len(entries))

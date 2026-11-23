@@ -162,7 +162,38 @@ func TestWriteDefaultKeepsXDGResolvedPaths(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read config: %v", err)
 	}
-	if !strings.Contains(string(raw), before.DB) {
-		t.Fatalf("config file does not record the XDG database path %q:\n%s", before.DB, raw)
+	if !strings.Contains(string(raw), tomlBasicString(before.DB)) {
+		t.Fatalf("config file does not record the XDG database path %q (TOML form %q):\n%s",
+			before.DB, tomlBasicString(before.DB), raw)
+	}
+}
+
+// TestWriteDefaultEscapesXDGPathsInBasicStrings covers the Windows path shape:
+// the XDG defaults contain backslashes there, and an unescaped `\U...` inside a
+// TOML basic string is read as a unicode escape, so the config that WriteDefault
+// wrote could not be loaded back. A backslash in a POSIX directory name
+// reproduces the same text on every platform.
+func TestWriteDefaultEscapesXDGPathsInBasicStrings(t *testing.T) {
+	home := isolateHome(t)
+	root := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", filepath.Join(root, `data\Uhome`))
+	t.Setenv("XDG_STATE_HOME", filepath.Join(root, `state\Uhome`))
+	configPath := filepath.Join(home, "config.toml")
+	before, err := Load(LoadOptions{Path: stringPtr(configPath)})
+	if err != nil {
+		t.Fatalf("load before write: %v", err)
+	}
+	if _, err := WriteDefault(configPath); err != nil {
+		t.Fatalf("write default: %v", err)
+	}
+	after, err := Load(LoadOptions{Path: stringPtr(configPath)})
+	if err != nil {
+		t.Fatalf("config written by WriteDefault does not load back: %v", err)
+	}
+	if before.DB != after.DB {
+		t.Fatalf("database path moved when the config file was created: %q -> %q", before.DB, after.DB)
+	}
+	if before.Log != after.Log {
+		t.Fatalf("log path moved when the config file was created: %q -> %q", before.Log, after.Log)
 	}
 }
