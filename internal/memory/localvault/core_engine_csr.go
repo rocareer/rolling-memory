@@ -147,51 +147,74 @@ func parseCSRFreshnessLine(line string) (csrFreshness, bool) {
 
 // acquireCachedCSREngine 打开或复用与主库同目录的 .zcsr 零拷贝基线引擎（按文件 mtime+size
 // 缓存句柄，避免在增量写入后重复 mmap 同一个数 GB 的 .zcsr 文件）。
-func (v *Vault) acquireCachedCSREngine(dbPath string) (*core.Engine, string, bool) {
+func (v *Vault) acquireCachedCSREngine(dbPath string) (*core.Engine, string, func(), bool) {
 	if v == nil || strings.TrimSpace(dbPath) == "" {
-		return nil, "", false
+		return nil, "", nil, false
 	}
 	csrPath, genPath, _, _, _, resolved := resolvePublishedSnapshotPaths(dbPath)
 	if !resolved {
-		return nil, "", false
+		return nil, "", nil, false
 	}
 	rawGen, err := os.ReadFile(genPath)
 	if err != nil {
-		return nil, "", false
+		return nil, "", nil, false
 	}
 	genLine := strings.TrimSpace(string(rawGen))
 	if _, ok := parseCSRFreshnessLine(genLine); !ok && signatureCodecKey(genLine) == "" {
-		return nil, "", false
+		return nil, "", nil, false
 	}
 	st, err := os.Stat(csrPath)
 	if err != nil || st.Size() <= 0 {
-		return nil, "", false
+		return nil, "", nil, false
 	}
 	mtimeNS, fsize := st.ModTime().UnixNano(), st.Size()
 	if v.slotCacheMu != nil && v.snapRef != nil {
-		v.slotCacheMu.RLock()
+		v.slotCacheMu.Lock()
 		cachedEng := v.snapRef.csrEngine
 		sameFile := cachedEng != nil && cachedEng.Index != nil && cachedEng.Index.N > 0 &&
 			v.snapRef.csrFileMTimeNS == mtimeNS && v.snapRef.csrFileSize == fsize &&
 			v.snapRef.csrFilePath == csrPath
-		v.slotCacheMu.RUnlock()
 		if sameFile {
-			return cachedEng, genLine, true
+			// Lease the cached handle before releasing the lock: a concurrent
+			// cache drop must not unmap it between the hit and the caller's use.
+			v.retainSnapshotEngineLocked(cachedEng)
+			v.slotCacheMu.Unlock()
+			return cachedEng, genLine, func() { v.releaseSnapshotEngine(cachedEng) }, true
 		}
+		v.slotCacheMu.Unlock()
 	}
 	eng, err := core.OpenDiskClusterEngine(csrPath)
 	if err != nil || eng == nil || eng.Index == nil || eng.Index.N <= 0 {
-		return nil, "", false
+		if eng != nil {
+			_ = eng.Close()
+		}
+		return nil, "", nil, false
 	}
+	hold := func() { v.releaseSnapshotEngine(eng) }
 	if v.slotCacheMu != nil && v.snapRef != nil {
 		v.slotCacheMu.Lock()
+		if v.snapRef.runtimeClosed {
+			v.retainSnapshotEngineLocked(eng)
+			v.slotCacheMu.Unlock()
+			return eng, genLine, hold, true
+		}
+		previous := v.snapRef.csrEngine
+		if previous != eng {
+			v.retainSnapshotEngineLocked(eng)
+		}
+		v.retainSnapshotEngineLocked(eng)
 		v.snapRef.csrEngine = eng
 		v.snapRef.csrFileMTimeNS = mtimeNS
 		v.snapRef.csrFileSize = fsize
 		v.snapRef.csrFilePath = csrPath
 		v.slotCacheMu.Unlock()
+		if previous != nil && previous != eng {
+			v.releaseSnapshotEngine(previous)
+		}
+		return eng, genLine, hold, true
 	}
-	return eng, genLine, true
+	v.retainSnapshotEngine(eng)
+	return eng, genLine, hold, true
 }
 
 // snapshotQueryWorker is one per-caller engine copy. Its query scratch carries

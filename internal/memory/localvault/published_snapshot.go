@@ -59,10 +59,17 @@ func (s *vaultCorpusSnapshot) retire() {
 }
 
 func (s *vaultCorpusSnapshot) closeOwnedEngine() {
-	if s == nil || !s.ownsCoreEngine || s.coreEngine == nil {
+	if s == nil {
 		return
 	}
-	s.closeOnce.Do(func() { _ = s.coreEngine.Close() })
+	s.closeOnce.Do(func() {
+		if s.baseRelease != nil {
+			s.baseRelease()
+		}
+		if s.ownsCoreEngine && s.coreEngine != nil {
+			_ = s.coreEngine.Close()
+		}
+	})
 }
 
 func (v *Vault) installPublishedSnapshot(snap *vaultCorpusSnapshot, slot string) bool {
@@ -208,9 +215,14 @@ func (v *Vault) CloseRuntimeSnapshots() {
 	published := v.snapRef.publishedSnap
 	v.snapRef.publishedSnap = nil
 	v.snapRef.publishedSlot = ""
+	cached := v.replaceCachedSnapshotLocked(nil)
 	v.slotCacheMu.Unlock()
 	v.snapRef.buildMu.Unlock()
 	published.retire()
+	if cached != nil {
+		cached.retire()
+	}
+	v.dropCachedCSREngine()
 }
 
 // cachedPublishedSnapshot returns the snapshot-only read generation when the
@@ -283,13 +295,25 @@ func (v *Vault) loadPublishedSnapshot(ctx context.Context) (*vaultCorpusSnapshot
 	if snap, ok := v.cachedPublishedSnapshot(slot, string(codecKey), livePurge); ok {
 		return snap, true
 	}
+	if v.snapshotGenerationRejected(slot) {
+		return nil, false
+	}
 	rawGen, err := os.ReadFile(genPath)
 	if err != nil {
 		return nil, false
 	}
 	genLine := strings.TrimSpace(string(rawGen))
 	eng, err := core.OpenDiskClusterEngine(csrPath)
-	if err != nil || eng == nil || eng.Index == nil || eng.Index.N <= 0 {
+	if err != nil {
+		if snapshotOpenFailureIsFormat(err) {
+			v.markRejectedSnapshotSlot(slot)
+		}
+		return nil, false
+	}
+	if eng == nil || eng.Index == nil || eng.Index.N <= 0 {
+		if eng != nil {
+			_ = eng.Close()
+		}
 		return nil, false
 	}
 	keepEngine := false

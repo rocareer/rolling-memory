@@ -381,10 +381,15 @@ type vaultCorpusSnapshot struct {
 	// ownsCoreEngine is true for a published generation that opened its own mmap.
 	// Derived and delta snapshots share a base engine and never close it.
 	ownsCoreEngine bool
-	lifecycleMu    sync.Mutex
-	readers        int
-	retired        bool
-	closeOnce      sync.Once
+	// baseEngine / baseRelease tie the shared .zcsr baseline to this snapshot.
+	// The release runs when the snapshot is retired and its last reader returns,
+	// so a replaced baseline cannot unmap under a live projection.
+	baseEngine  *core.Engine
+	baseRelease func()
+	lifecycleMu sync.Mutex
+	readers     int
+	retired     bool
+	closeOnce   sync.Once
 	// stale marks a snapshot served from the last published cluster while the
 	// delta exceeded the in-memory cap; the background builder will republish.
 	stale bool
@@ -471,10 +476,15 @@ type vaultSnapshotRef struct {
 	// csrEngine caches the mmap .zcsr baseline engine opened for a freshness-checked
 	// corpus state (file identity = .zcsr mtime+size); csrFileMTimeNS / csrFileSize
 	// anchor that identity so incremental writes never force a re-mmap.
-	csrEngine        *core.Engine
-	csrFileMTimeNS   int64
-	csrFileSize      int64
-	csrFilePath      string
+	csrEngine      *core.Engine
+	csrFileMTimeNS int64
+	csrFileSize    int64
+	csrFilePath    string
+	// engineRefs counts the owners of each baseline engine: the CSR cache plus
+	// every live corpus snapshot projected from it. A replaced engine unmaps only
+	// when the last owner releases, so an in-flight recall never loses its mmap.
+	// Guarded by the owning Vault's slotCacheMu.
+	engineRefs       map[*core.Engine]int
 	faultReady       bool
 	lastFaultTime    time.Time
 	faultDocCnt      int64
@@ -507,19 +517,21 @@ type vaultSnapshotRef struct {
 }
 
 func (v *Vault) clearSlotCache() {
+	var previous *vaultCorpusSnapshot
 	if v != nil && v.slotCacheMu != nil {
 		v.slotCacheMu.Lock()
 		v.slotCache = make(map[string]vaultCachedDocSlots, 256)
 		if v.snapRef != nil {
-			v.snapRef.snap = nil
-			v.snapRef.csrEngine = nil
-			v.snapRef.csrFileMTimeNS = 0
-			v.snapRef.csrFileSize = 0
+			previous = v.replaceCachedSnapshotLocked(nil)
 			v.snapRef.faultReady = false
 			v.snapRef.noeticReady = false
 		}
 		v.slotCacheMu.Unlock()
 	}
+	if previous != nil {
+		previous.retire()
+	}
+	v.dropCachedCSREngine()
 	clearBackgroundChunkCaches()
 }
 
@@ -770,7 +782,7 @@ func (v *Vault) SetColdBuildMemoryLimit(bytes int64) {
 // newVaultSnapshotRef creates the shared snapshot handle with the historical
 // default (builds allowed). Recall surfaces clear the flag before the first use.
 func newVaultSnapshotRef() *vaultSnapshotRef {
-	ref := &vaultSnapshotRef{}
+	ref := &vaultSnapshotRef{engineRefs: make(map[*core.Engine]int, 2)}
 	ref.allowBuild.Store(true)
 	return ref
 }
@@ -2338,6 +2350,9 @@ func (v *Vault) loadCorpusSnapshot(ctx context.Context) (*vaultCorpusSnapshot, e
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	if v.runtimeClosed() {
+		return nil, nil
+	}
 	v.checkExternalDBMutation()
 	if !v.BuildAllowed() {
 		if snap, ok := v.loadPublishedSnapshot(ctx); ok {
@@ -2416,14 +2431,23 @@ func (v *Vault) buildCorpusSnapshot(ctx context.Context) (*vaultCorpusSnapshot, 
 	// Canonical snapshot path: the canonical store is the retrieval truth, so the
 	// mmap baseline and its bounded delta are resolved before any thin-table scan.
 	if canonicalSnap, ok := v.buildCanonicalSnapshotFromCSR(ctx); ok && canonicalSnap != nil {
+		var previous *vaultCorpusSnapshot
 		if v.slotCacheMu != nil && v.snapRef != nil {
 			v.slotCacheMu.Lock()
-			v.snapRef.snap = canonicalSnap
+			if v.snapRef.runtimeClosed {
+				v.slotCacheMu.Unlock()
+				canonicalSnap.retire()
+				return nil, nil
+			}
+			previous = v.replaceCachedSnapshotLocked(canonicalSnap)
 			v.snapRef.lastSnapTime = time.Now()
 			if v.snapRef.snapVerifiedGen < genAtStart {
 				v.snapRef.snapVerifiedGen = genAtStart
 			}
 			v.slotCacheMu.Unlock()
+		}
+		if previous != nil {
+			previous.retire()
 		}
 		return canonicalSnap, nil
 	}
@@ -2827,8 +2851,14 @@ func (v *Vault) buildCorpusSnapshot(ctx context.Context) (*vaultCorpusSnapshot, 
 		docIdxByID:       docIdxByID,
 	}
 	if useCache && v.snapRef != nil {
+		var previous *vaultCorpusSnapshot
 		v.slotCacheMu.Lock()
-		v.snapRef.snap = snap
+		if v.snapRef.runtimeClosed {
+			v.slotCacheMu.Unlock()
+			snap.retire()
+			return nil, nil
+		}
+		previous = v.replaceCachedSnapshotLocked(snap)
 		v.snapRef.lastSnapTime = time.Now()
 		if revGateOK {
 			v.snapRef.lastDocsRev = docsRev
@@ -2838,6 +2868,9 @@ func (v *Vault) buildCorpusSnapshot(ctx context.Context) (*vaultCorpusSnapshot, 
 			v.snapRef.snapVerifiedGen = genAtStart
 		}
 		v.slotCacheMu.Unlock()
+		if previous != nil {
+			previous.retire()
+		}
 	}
 	return snap, nil
 }

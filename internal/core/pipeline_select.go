@@ -222,8 +222,7 @@ func (st *rmClusterState) computeStructuredIncrement(idx *Index, sc *rmQueryScra
 	// Prefilling the effective group costs one pass and one array write per
 	// entry; computing it inline instead was measured to cost more, because the
 	// pass below and the sentence pass both need the value and every inline call
-	// re-runs the function (effectiveEntryGroup cum 0.86s -> 1.31s on the ATM
-	// query profile).
+	// re-runs the function.
 	effG := sc.docEntryEffGroup
 	if cap(effG) < len(entries) {
 		effG = make([]uint64, len(entries))
@@ -477,7 +476,7 @@ func (c *rmCandidate) stage2Bounds(unitStructGate []float64, u int32, groups map
 	return base, structBound, remBound
 }
 
-func (st *rmClusterState) selectClusterHits(idx *Index, sc *rmQueryScratch, candidates []rmCandidate, unitStructGate []float64, detachedFrag map[uint64]bool, qTerms map[uint64]Term, groups map[uint64]float64, total, muQ float64, topK int, saturation SaturationMode) []Hit {
+func (st *rmClusterState) selectClusterHits(idx *Index, sc *rmQueryScratch, candidates []rmCandidate, unitStructGate []float64, detachedFrag map[uint64]bool, qTerms map[uint64]Term, groups map[uint64]float64, total, muQ float64, topK int) []Hit {
 	limit := idx.N
 	if topK > 0 && topK < limit {
 		limit = topK
@@ -655,23 +654,8 @@ func (st *rmClusterState) selectClusterHits(idx *Index, sc *rmQueryScratch, cand
 
 	evalRemaining := func(u int32, c *rmCandidate) float64 {
 		var rem float64
-		switch saturation {
-		case SaturationPool:
-			// 池感知饱和：衰减权重取查询面组质量（𝓕 边际），同组多条目的匹配数
-			// 由逐条累加隐式计入。
-			for _, m := range c.matches {
-				rem += groups[m.group] * math.Exp(-float64(coverage[m.group]))
-			}
-		case SaturationGeometric:
-			// 几何中项：同时承载单元证据质量与查询面价值；两组分的量纲均为
-			// Nats，几何中项量纲齐次，任一侧为零时该项自然为零。
-			for _, m := range c.matches {
-				rem += math.Sqrt(m.mass*groups[m.group]) * math.Exp(-float64(coverage[m.group]))
-			}
-		default:
-			for _, m := range c.matches {
-				rem += m.mass * math.Exp(-float64(coverage[m.group]))
-			}
+		for _, m := range c.matches {
+			rem += m.mass * math.Exp(-float64(coverage[m.group]))
 		}
 		qRem := rem / eulerNumber
 		if c.lex <= 0 {

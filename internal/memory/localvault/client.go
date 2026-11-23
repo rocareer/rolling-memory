@@ -1062,10 +1062,15 @@ func (l *LocalVaultTransport) QueryBlindManifold(ctx context.Context, queryPkt B
 		return nil, err
 	}
 	snap, release, snapErr := l.Vault.acquireCorpusSnapshot(ctx)
-	if snapErr != nil || snap == nil || len(snap.docs) == 0 {
+	if snapErr != nil {
 		return nil, snapErr
 	}
-	defer release()
+	if release != nil {
+		defer release()
+	}
+	if snap == nil || len(snap.docs) == 0 {
+		return nil, nil
+	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}

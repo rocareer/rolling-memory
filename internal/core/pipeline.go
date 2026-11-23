@@ -115,24 +115,6 @@ const rmFlagDocGainMask uint8 = 1<<2 | 1<<5 | 1<<6 | 1<<7
 const rmFlagCompanion uint8 = 1 << 4
 
 // Engine 是四步流水线的运行体：索引只读，扩散预算与能量口径可配置。
-// SaturationMode 是筛选 rem 通道覆盖衰减权重的形态枚举。零值 SaturationSelf
-// 为现役默认（与无量纲基线逐位等价）；非零值均为预注册判别器材，读数未立项前
-// 不得默认开启。
-type SaturationMode uint8
-
-const (
-	// SaturationSelf 用单元自身匹配质量 m_g(u) 作衰减权重（默认）。
-	SaturationSelf SaturationMode = iota
-	// SaturationPool 用查询面组质量 q_g 作衰减权重：单调次模集合目标的合法
-	// 边际。作为对照臂保留：同一组内后续项共享组质量，第二项起的新增边际被
-	// 前项吸收，整体没有正向贡献，因此默认关闭、只作证伪仪器。
-	SaturationPool
-	// SaturationGeometric 用几何中项 sqrt(m_g(u)·q_g) 作衰减权重：同组内 m_g(u)
-	// 因单元而异，该形式不满足任何集合函数的边际定义（缺少可加分解所需的
-	// 单调次模结构），仅作经验探针，默认关闭。
-	SaturationGeometric
-)
-
 // Engine 是四步双簇检索的查询入口；零值字段组合对应生产默认路径。
 type Engine struct {
 	Index      *Index
@@ -154,9 +136,6 @@ type Engine struct {
 	// 组质量与锚点候选的第二阶段复核；没有锚点的查询完全走兼容路径。
 	// 只作用于簇流水线；非簇回退路径保持不变。默认关闭。
 	AnchorGate bool
-	// Saturation 选择筛选 rem 通道的覆盖衰减权重形态（枚举见 SaturationMode）。
-	// 只作用于簇流水线筛选的 rem 通道；novel 与静态通道不变。
-	Saturation SaturationMode
 	// PhraseOccupancySquash 开启 phrase 通道占用概率压缩核：dyad 匹配质量的
 	// 饱和因子从 joint/(1+joint) 换成 1−exp(−joint)（泊松占据 P(k≥1|λ)）。
 	// 已按预注册判负回滚（2026-11-23-phrase-occupancy-squash-prereg §6：Main 配对
@@ -529,7 +508,6 @@ func (e *Engine) OverlayDelta(deltaDocs []Doc, maskedUnitIDs []string) *Engine {
 		FlagsGain:          e.FlagsGain,
 		BitsMass:           e.BitsMass,
 		AnchorGate:         e.AnchorGate,
-		Saturation:         e.Saturation,
 		TimeKernel:         e.TimeKernel,
 		ClusterPipeline:    e.ClusterPipeline,
 		EnableStage3Plugin: e.EnableStage3Plugin,

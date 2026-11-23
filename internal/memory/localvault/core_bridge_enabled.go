@@ -154,7 +154,9 @@ func (s *vaultCorpusSnapshot) ensureSnapshotCoreEngine(v *Vault) *core.Engine {
 	// The disk cluster is the only read-path source. Reopening it is a cheap
 	// mmap and never advances to the full build below.
 	if eng, ok := openSnapshotCoreEngineFromCSR(dbPath, signature); ok {
-		return s.setBaseCoreEngine(eng)
+		s.setBaseCoreEngine(eng)
+		v.attachSnapshotEngine(s, eng)
+		return s.coreEngine
 	}
 	// Recall surfaces run with builds disabled: a missing or stale cluster
 	// degrades to a warming snapshot and the background builder republishes.
@@ -162,7 +164,14 @@ func (s *vaultCorpusSnapshot) ensureSnapshotCoreEngine(v *Vault) *core.Engine {
 		return nil
 	}
 	s.coreOnce.Do(func() {
-		s.setBaseCoreEngine(v.buildAndPersistCorpusEngine(context.Background(), signature, []byte(s.episodicCodecKey)))
+		eng, hold := v.buildAndPersistCorpusEngine(context.Background(), signature, []byte(s.episodicCodecKey))
+		s.setBaseCoreEngine(eng)
+		if eng != nil {
+			v.attachSnapshotEngine(s, eng)
+		}
+		if hold != nil {
+			hold()
+		}
 	})
 	return s.coreEngine
 }
@@ -227,30 +236,26 @@ func (s *vaultCorpusSnapshot) coreEngineWithNoeticCitations(v *Vault, eng *core.
 // buildAndPersistCorpusEngine materialises the full corpus engine and writes the
 // legacy single-slot cluster. Long-lived readers never call it; the background
 // builder publishes a generation directory instead.
-func (v *Vault) buildAndPersistCorpusEngine(ctx context.Context, signature string, codecKey []byte) *core.Engine {
+func (v *Vault) buildAndPersistCorpusEngine(ctx context.Context, signature string, codecKey []byte) (*core.Engine, func()) {
 	eng := v.buildCorpusEngine(ctx)
 	if eng == nil {
-		return nil
+		return nil, nil
 	}
+	// Lease the baseline before it becomes reachable through the shared cache;
+	// the caller releases the hold after the snapshot owns its own reference.
+	hold := v.holdSnapshotEngine(eng)
 	dbPath := v.mainDBPath()
 	if dbPath == "" {
-		return eng
+		return eng, hold
 	}
 	if csrPath, ok := persistSnapshotCoreCSR(dbPath, signature, eng, v, codecKey); ok {
 		_ = core.AttachDiskClusterCSR(csrPath, eng, true)
 		_ = v.persistCanonicalUnitRevisions(dbPath)
 		if st, sErr := os.Stat(csrPath); sErr == nil && st.Size() > 0 {
-			v.slotCacheMu.Lock()
-			if v.snapRef != nil {
-				v.snapRef.csrEngine = eng
-				v.snapRef.csrFileMTimeNS = st.ModTime().UnixNano()
-				v.snapRef.csrFileSize = st.Size()
-				v.snapRef.csrFilePath = csrPath
-			}
-			v.slotCacheMu.Unlock()
+			v.swapCachedCSREngine(eng, csrPath, st.ModTime().UnixNano(), st.Size())
 		}
 	}
-	return eng
+	return eng, hold
 }
 
 // buildCorpusEngine materialises the engine from the canonical store. It is the

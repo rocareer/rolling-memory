@@ -443,6 +443,14 @@ func (e *BlindEncoder) expandUnspacedRunWords(words []string) []string {
 			out = append(out, w)
 			continue
 		}
+		// 闭集扩展器命中时保留整词：闭集谐波（单位/货币/统计标签）按整词匹配，
+		// 先展开会把词拆碎，闭集路径随之永远失效。
+		if e != nil && e.harmOpts.Expander != nil {
+			if harmonics := e.harmOpts.Expander(w); len(harmonics) > 0 {
+				out = append(out, w)
+				continue
+			}
+		}
 		glueWillFire := glueAvailable &&
 			clampBitsX10(wordCarrierWidth(w)) > harmonicGlueWidthX10 &&
 			len(splitCompoundSubwords(w)) < 2

@@ -99,10 +99,11 @@ func TestDeltaSnapshotUsesChangeLog(t *testing.T) {
 	if !ok {
 		t.Fatal("canonical state")
 	}
-	eng, storedLine, ok := v.acquireCachedCSREngine(dbPath)
+	eng, storedLine, hold, ok := v.acquireCachedCSREngine(dbPath)
 	if !ok || eng == nil {
 		t.Fatal("base engine")
 	}
+	defer hold()
 	delta, ok := v.buildDeltaSnapshotFromCSR(context.Background(), state, cached, eng, storedLine)
 	if !ok || delta == nil {
 		t.Fatal("delta path unavailable")

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Memory in scripts written without word spaces (Thai, Kana) is now found by substring queries that span a long run: such runs are split into adjacent bigrams and single characters when the harmonic glue path does not take them, while Han and space-delimited text keep their previous behaviour.
 - Creating a config file while `XDG_DATA_HOME` or `XDG_STATE_HOME` is set no longer writes a file that cannot be loaded back on Windows: the resolved data and log paths are emitted as escaped TOML strings, so the backslashes in a Windows path are no longer read as unicode escapes. (Reported and suggested by @dengboyu412-lang in #3; adopted and rewritten in the source tree.)
+- The reproduction command exported on an eval report page now quotes the eval-store path and folds the Windows home directory, so a store under the user profile keeps its backslashes and a path with spaces or quotes stays a single argument when pasted into Git Bash. (Reported and suggested by @wzm-Epoch in #4; adopted and rewritten in the source tree.)
 
 ## [0.0.15] - 2026-11-23
 

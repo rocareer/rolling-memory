@@ -49,7 +49,9 @@ func (v *Vault) PublishedSnapshotReady() bool {
 	if strings.TrimSpace(dbPath) == "" {
 		return false
 	}
-	return PublishedSnapshotExists(dbPath)
+	// A generation this build already failed to open must not keep the builder
+	// idle; the next publication is what makes readiness true again.
+	return PublishedSnapshotUsable(v.db, dbPath)
 }
 
 // SnapshotBuildGap reports how many corpus writes accumulated since the last
@@ -311,6 +313,7 @@ func (v *Vault) publishBuiltGeneration(ctx context.Context, signature string, ch
 	if _, err := v.publishCorpusSlot(ctx, v.mainDBPath(), signature, changeSeq, docsRev, eng, publishedDocs); err != nil {
 		return err
 	}
+	v.clearRejectedSnapshotSlot()
 	if !v.PublishedSnapshotReady() {
 		return errors.New("localvault: snapshot publish failed")
 	}
@@ -318,10 +321,14 @@ func (v *Vault) publishBuiltGeneration(ctx context.Context, signature string, ch
 		return err
 	}
 	v.slotCacheMu.Lock()
+	var previous *vaultCorpusSnapshot
 	if v.snapRef != nil {
-		v.snapRef.snap = nil
+		previous = v.replaceCachedSnapshotLocked(nil)
 	}
 	v.slotCacheMu.Unlock()
+	if previous != nil {
+		previous.retire()
+	}
 	return nil
 }
 

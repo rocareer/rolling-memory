@@ -303,7 +303,20 @@ func staleCanonicalSnapshot(state canonicalCorpusState, docs []vaultDocEntry, en
 // revision signature matches, or serves baseline + a bounded delta when only a
 // few units changed. Any other drift returns false and the caller rebuilds from
 // Store.LoadIndex.
-func (v *Vault) buildCanonicalSnapshotFromCSR(ctx context.Context) (*vaultCorpusSnapshot, bool) {
+func (v *Vault) buildCanonicalSnapshotFromCSR(ctx context.Context) (outSnap *vaultCorpusSnapshot, found bool) {
+	// Every snapshot returned by this function is projected from one shared
+	// baseline engine. Hold a lease for the snapshot so replacing the cache
+	// cannot unmap the mapping under a live projection.
+	var baseEngine *core.Engine
+	var baseHold func()
+	defer func() {
+		if found && outSnap != nil && baseEngine != nil && outSnap.baseRelease == nil {
+			v.attachSnapshotEngine(outSnap, baseEngine)
+		}
+		if baseHold != nil {
+			baseHold()
+		}
+	}()
 	state, ok := v.canonicalCorpusState(ctx)
 	if !ok {
 		return nil, false
@@ -334,10 +347,14 @@ func (v *Vault) buildCanonicalSnapshotFromCSR(ctx context.Context) (*vaultCorpus
 		if eng == nil {
 			return nil, false
 		}
+		baseEngine = eng
 		return canonicalSnapshotFromDocs(state, docs, eng), true
 	}
-	eng, storedLine, ok := v.acquireCachedCSREngine(dbPath)
+	eng, storedLine, engHold, ok := v.acquireCachedCSREngine(dbPath)
 	if !ok || eng == nil || eng.Index == nil {
+		if engHold != nil {
+			engHold()
+		}
 		// No reusable baseline: build from the canonical store and persist it so
 		// the next start opens the mmap path directly. Reader surfaces never take
 		// this branch; the background builder publishes the cluster instead.
@@ -348,6 +365,9 @@ func (v *Vault) buildCanonicalSnapshotFromCSR(ctx context.Context) (*vaultCorpus
 		if built == nil {
 			return nil, false
 		}
+		// Lease the freshly built baseline before exposing it to the shared
+		// cache, so a concurrent cache drop cannot unmap it mid-projection.
+		baseHold = v.holdSnapshotEngine(built)
 		if csrPath, okPersist := persistSnapshotCoreCSR(dbPath, state.signature, built, v, []byte(state.codecKey)); okPersist {
 			_ = core.AttachDiskClusterCSR(csrPath, built, true)
 			_ = v.persistCanonicalUnitRevisions(dbPath)
@@ -357,8 +377,11 @@ func (v *Vault) buildCanonicalSnapshotFromCSR(ctx context.Context) (*vaultCorpus
 		if err != nil || len(docs) == 0 {
 			return nil, false
 		}
+		baseEngine = built
 		return canonicalSnapshotFromDocs(state, docs, built), true
 	}
+	baseEngine = eng
+	baseHold = engHold
 	// Materialize the mmap baseline's cluster state once. OverlayDelta shares the
 	// base engine's state pointer, so every later write produces a delta snapshot
 	// that reuses this state instead of rebuilding the whole corpus cluster state
@@ -515,12 +538,7 @@ func (v *Vault) cacheCSREngineIdentity(csrPath string, eng *core.Engine) {
 	if err != nil || st.Size() == 0 {
 		return
 	}
-	v.slotCacheMu.Lock()
-	v.snapRef.csrEngine = eng
-	v.snapRef.csrFileMTimeNS = st.ModTime().UnixNano()
-	v.snapRef.csrFileSize = st.Size()
-	v.snapRef.csrFilePath = csrPath
-	v.slotCacheMu.Unlock()
+	v.swapCachedCSREngine(eng, csrPath, st.ModTime().UnixNano(), st.Size())
 }
 
 func clampPosU16(value int) uint16 {

@@ -3419,20 +3419,37 @@ func bucketCountsFromItems(items []EvalQuestionResultItem) map[string]int {
 	return counts
 }
 
-// portableCLIStorePath 将以当前用户 $HOME 开头的路径折叠为 ~/...，
-// 避免在后台生成的可复制 CLI 命令中硬编码特定机器的绝对用户目录。
+// plainReproPath 只放行无需 Bash 引号即可原样构成单个实参的字符。
+var plainReproPath = regexp.MustCompile(`^[a-zA-Z0-9_./:+-]+$`)
+
+// portableCLIStorePath 生成导出 Bash 命令里的 --eval-store 实参：
+//   - 先把当前用户主目录（按原生路径语义判定是否包含）折叠为 ~/...，避免在可复制命令中硬编码特定机器的
+//     绝对用户目录；位于主目录同级或跨卷的路径保持绝对形式；
+//   - 再给需要引号的路径补单引号：Windows 原生路径里的反斜杠在 Git Bash 会被当转义符吞掉，
+//     含空格的路径会被切成多个实参；
+//   - 前导 ~ 不加引号，由读者机器上的 Bash 自行展开。
+//
+// Suggested by @wzm-Epoch in #4 and adopted here; see CHANGELOG.md.
 func portableCLIStorePath(storePath string) string {
-	p := strings.TrimSpace(storePath)
-	if p == "" {
+	p := filepath.ToSlash(storePath)
+	if p == "~" {
 		return p
 	}
-	if home, err := os.UserHomeDir(); err == nil && strings.TrimSpace(home) != "" {
-		cleanHome := strings.TrimRight(filepath.Clean(home), "/")
-		if strings.HasPrefix(p, cleanHome+"/") {
-			return "~" + p[len(cleanHome):]
+	prefix := ""
+	if strings.HasPrefix(p, "~/") {
+		prefix, p = "~/", p[2:]
+	} else if home, err := os.UserHomeDir(); err == nil && filepath.IsAbs(storePath) {
+		if rel, err := filepath.Rel(home, storePath); err == nil && filepath.IsLocal(rel) {
+			if rel == "." {
+				return "~"
+			}
+			prefix, p = "~/", filepath.ToSlash(rel)
 		}
 	}
-	return p
+	if plainReproPath.MatchString(p) {
+		return prefix + p
+	}
+	return prefix + "'" + strings.ReplaceAll(p, "'", `'\''`) + "'"
 }
 
 // buildReproCLICommand 生成任意目录可直接运行的 SDK 契约复现命令。

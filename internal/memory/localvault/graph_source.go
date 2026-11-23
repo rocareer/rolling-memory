@@ -32,6 +32,9 @@ func (v *Vault) WithCoreEngine(ctx context.Context, fn func(*core.Engine) error)
 		return err
 	}
 	if snap == nil || len(snap.docs) == 0 {
+		if release != nil {
+			release()
+		}
 		return errors.New("localvault: empty corpus snapshot")
 	}
 	defer release()

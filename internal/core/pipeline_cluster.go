@@ -45,6 +45,13 @@ func docRepeats(tf int32) float64 {
 // candidates[u].entity, so parallel and serial paths are bit-identical.
 var proximityEntityDispatch func(units []int32, coreLex []float64, candidates []rmCandidate, gates []float64, st *rmClusterState, groups map[uint64]float64, total, residual float64)
 
+// spreadDirtyMissProbe 仅在测量器材安装时非 nil：每次「写 stSpread 的单元尚未
+// 登记进本轮 dirty 集」触发一次，用于量化登记缺口。生产路径只多一次 nil 分支。
+var spreadDirtyMissProbe func()
+
+// SetSpreadDirtyMissProbe 安装上述探针（nil 卸载）。
+func SetSpreadDirtyMissProbe(fn func()) { spreadDirtyMissProbe = fn }
+
 // bgMatch carries the already-computed query-side mass for a background term.
 // The anchor gate skips its posting scan (no candidate generation) and replays
 // the same match formula over the anchor candidates in a second phase.
@@ -1431,13 +1438,18 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 				}
 				exGain := excess * aff * cosMod * exScale
 				allowOverlay := isSub && (rawCos >= transmissionPerHop || (sharedCoreCount >= 2 && aff >= 1.0-transmissionPerHop*transmissionPerHop && rawCos >= transmissionPerHop*transmissionPerHop))
+				if spreadDirtyMissProbe != nil && sc.unitDirtyGen[nb] != dGen {
+					spreadDirtyMissProbe()
+				}
 				if allowOverlay {
+					activateUnit(nb)
 					candSpread := candidates[nb].stSpread + exGain*math.Sqrt(rawCos)*transmissionPerHop
 					if exGain > candSpread {
 						candSpread = exGain
 					}
 					candidates[nb].stSpread = candSpread
 				} else if exGain > candidates[nb].stSpread {
+					activateUnit(nb)
 					candidates[nb].stSpread = exGain
 				}
 			}
@@ -1722,7 +1734,7 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 	if queryDistinctProbe != nil {
 		queryDistinctProbe(len(sc.coreUnits))
 	}
-	return st.selectClusterHits(idx, sc, candidates, unitStructGate, detachedFrag, qTerms, groups, total, muQ, topK, e.Saturation)
+	return st.selectClusterHits(idx, sc, candidates, unitStructGate, detachedFrag, qTerms, groups, total, muQ, topK)
 }
 
 // applyHigherOrderLatticeContraction evaluates the telescoping subsumption-lattice
