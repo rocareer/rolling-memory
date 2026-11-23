@@ -145,6 +145,33 @@ func TestExtractTarGzSkipsTraversal(t *testing.T) {
 	}
 }
 
+// TestPanelStatusStoppedExitsZero pins the status contract: a read-only probe
+// that successfully reports "stopped" is not a command failure, matching
+// `daemon status`, which also exits zero while the daemon is offline.
+func TestPanelStatusStoppedExitsZero(t *testing.T) {
+	dir := t.TempDir()
+	var out bytes.Buffer
+	app := &application{
+		stdout: &out,
+		stderr: &bytes.Buffer{},
+		args:   &Args{values: map[string]any{"json": true}, provided: map[string]bool{"json": true}},
+	}
+	layout := panelLayout{
+		root:    dir,
+		apiPID:  filepath.Join(dir, "admin.pid"),
+		webPID:  filepath.Join(dir, "web.pid"),
+		apiPort: 0,
+		webPort: 0,
+	}
+	if code := app.runPanelStatus(layout); code != 0 {
+		t.Fatalf("panel status exit = %d, want 0 when stopped", code)
+	}
+	text := out.String()
+	if !strings.Contains(text, `"ok": true`) || !strings.Contains(text, `"running": false`) {
+		t.Fatalf("unexpected status envelope:\n%s", text)
+	}
+}
+
 // TestReadPIDFile pins the pid bookkeeping: plain numbers parse, garbage and
 // missing files report zero.
 func TestReadPIDFile(t *testing.T) {

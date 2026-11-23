@@ -595,3 +595,31 @@ func TestUninstallInstructionRemovesBlockOnlyFile(t *testing.T) {
 		t.Fatalf("block-only instruction file survived uninstall: %v", err)
 	}
 }
+
+// A release may rewrite the teaching block. The self-digest proves the block
+// came from this installer, so an older block is upgraded instead of being
+// mistaken for a hand edit; editing inside the block still breaks the digest.
+func TestInstructionBlockUpgradeKeepsOwnership(t *testing.T) {
+	options := InstallOptions{Name: "rolling-memory", SkillName: "rolling-memory", Lang: "zh-CN"}
+	older := withInstructionDigest(strings.Join([]string{
+		InstructionBegin,
+		"## Rolling-Memory (rolling-memory)",
+		"跨会话持久记忆大脑已通过 MCP `rolling-memory`（工具 `recall`）连接。",
+		"既有版本写入的教学块。",
+		InstructionEnd,
+	}, "\n") + "\n")
+	if !instructionBlockIsOurs(older, options) {
+		t.Fatal("a self-digested block from an older release must be recognized")
+	}
+	if got := strings.TrimSuffix(older, "\n"); !instructionBlockIsOurs(got, options) {
+		t.Fatal("the block region excludes the trailing newline; recognition must not depend on it")
+	}
+	crlf := strings.TrimSuffix(strings.ReplaceAll(older, "\n", "\r\n"), "\r\n")
+	if !instructionBlockIsOurs(crlf, options) {
+		t.Fatal("a CRLF block must be recognized")
+	}
+	edited := strings.Replace(older, "既有版本写入的教学块。", "既有版本写入的教学块。\n手工追加的一行", 1)
+	if instructionBlockIsOurs(edited, options) {
+		t.Fatal("a hand edit inside the block must stay a conflict")
+	}
+}

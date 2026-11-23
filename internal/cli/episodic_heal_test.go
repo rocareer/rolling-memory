@@ -556,3 +556,28 @@ func TestPruneRefusesCrossSourceReanchorWithoutExplicitOptIn(t *testing.T) {
 		t.Fatalf("opt-in did not re-anchor onto the alternate: %q err=%v", keptPtr, err)
 	}
 }
+
+// TestEpisodicHealNextCursorLeavesUnprocessedRows pins the cursor contract: a
+// pass that yields or is cancelled before finishing its page must not record
+// the rows it did not reach as inspected.
+func TestEpisodicHealNextCursorLeavesUnprocessedRows(t *testing.T) {
+	rows := []episodicHealRow{{docID: "a"}, {docID: "b"}, {docID: "c"}}
+	cases := []struct {
+		name      string
+		cursor    string
+		rows      []episodicHealRow
+		processed int
+		limit     int
+		want      string
+	}{
+		{"yield after one row", "", rows, 1, 3, "a"},
+		{"yield before any row keeps the cursor", "prev", rows, 0, 3, "prev"},
+		{"full page advances to the last row", "", rows, 3, 3, "c"},
+		{"short page wraps to the beginning", "", rows[:2], 2, 3, ""},
+	}
+	for _, testCase := range cases {
+		if got := episodicHealNextCursor(testCase.cursor, testCase.rows, testCase.processed, testCase.limit); got != testCase.want {
+			t.Fatalf("%s: cursor = %q, want %q", testCase.name, got, testCase.want)
+		}
+	}
+}

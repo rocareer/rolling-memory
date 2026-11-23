@@ -4,6 +4,8 @@
 package harness
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,11 +25,13 @@ func instructionBlock(options InstallOptions) string {
 			fmt.Sprintf("## Rolling-Memory (%s)", options.SkillName),
 			fmt.Sprintf("跨会话持久记忆大脑已通过 MCP `%s`（工具 `recall` · 回忆）连接。", options.Name),
 			"- 任务开始先理解意图；跨会话背景不明、涉及架构或历史裁定、或坐标未知准备盲搜时，用具体 `cue` 调用 `recall`。任务自包含、坐标已知且无历史耦合时免检。任务卡住或报错时必检，再排障。",
+			"- `cue` 写**稠密锚点**：把目标记忆里确实会出现的原文词铺满——意图 + 对象/路径/符号 + 1–2 个硬标识符（报错原文、状态码、版本号、编号、日期）+ 时间场合，典型 12–25 个实词；**禁止用泛化词凑长度**（它们会把无关长会话顶进前排）。2–6 个词只够确认单个已知符号或错误码。",
+			"- 召回内容是**可追溯线索，不是证明**：行动前用实时磁盘（`Read` / `git status` / 真实命令）核对；召回原文是本机私域内容，除用户明确要求外不整段外发。",
 			"- `absent: true` 表示暂无相关历史记忆——这不是报错，严禁编造记忆内容。",
 			fmt.Sprintf("细则见 `%s` 技能。", options.SkillName),
 			InstructionEnd,
 		}
-		return strings.Join(lines, "\n") + "\n"
+		return withInstructionDigest(strings.Join(lines, "\n") + "\n")
 	}
 	lines := []string{
 		InstructionBegin,
@@ -37,12 +41,18 @@ func instructionBlock(options InstallOptions) string {
 			" architectural boundaries or historical decisions, or unknown entrypoints before a blind search." +
 			" Skip recall for self-contained tasks with known coordinates and no historical coupling;" +
 			" call `recall` when stuck or facing an error before troubleshooting.",
+		"- Write a **dense `cue`**: the target memory's own literal words -- intent + object/path/symbol names + 1–2 hard identifiers" +
+			" (verbatim error, status code, version, number, date) + the occasion, typically 12–25 content words." +
+			" Never pad with generic fillers (they pull unrelated long sessions forward);" +
+			" 2–6 tokens only confirm a single known symbol or error code.",
+		"- What you recall is a **traceable lead, not proof**: verify against the live disk (`Read` / `git status` / real commands) before acting;" +
+			" recalled text is local-private and is not sent wholesale to external services unless the user asks.",
 		"- `absent: true` means you have no prior memory of it -- it is not an error;" +
 			" never invent memory content.",
 		fmt.Sprintf("Details: the `%s` skill.", options.SkillName),
 		InstructionEnd,
 	}
-	return strings.Join(lines, "\n") + "\n"
+	return withInstructionDigest(strings.Join(lines, "\n") + "\n")
 }
 
 func instructionTargets(harness Harness, options InstallOptions) []string {
@@ -207,14 +217,91 @@ func instructionBlockIsOurs(block string, options InstallOptions) bool {
 		version.Lang = lang
 		variants = append(variants, instructionBlock(version))
 	}
-	variants = append(variants, legacyInstructionBlock(options))
+	variants = append(variants, legacyInstructionBlock(options), priorTemplateBlock(options))
 	for _, version := range variants {
 		version = strings.TrimSuffix(version, "\n")
 		if block == version || block == strings.ReplaceAll(version, "\n", "\r\n") {
 			return true
 		}
 	}
-	return false
+	return instructionDigestMatches(block, options)
+}
+
+// priorTemplateBlock is the teaching block written before blocks carried a
+// self-digest. Every pre-digest release shipped this text, so an upgrade
+// replaces it instead of mistaking it for a hand edit. Drop it once no
+// pre-digest install remains.
+func priorTemplateBlock(options InstallOptions) string {
+	if norm, _ := NormalizeInstallLang(options.Lang); norm == "zh-CN" {
+		lines := []string{
+			InstructionBegin,
+			fmt.Sprintf("## Rolling-Memory (%s)", options.SkillName),
+			fmt.Sprintf("跨会话持久记忆大脑已通过 MCP `%s`（工具 `recall` · 回忆）连接。", options.Name),
+			"- 任务开始先理解意图；跨会话背景不明、涉及架构或历史裁定、或坐标未知准备盲搜时，用具体 `cue` 调用 `recall`。任务自包含、坐标已知且无历史耦合时免检。任务卡住或报错时必检，再排障。",
+			"- `absent: true` 表示暂无相关历史记忆——这不是报错，严禁编造记忆内容。",
+			fmt.Sprintf("细则见 `%s` 技能。", options.SkillName),
+			InstructionEnd,
+		}
+		return strings.Join(lines, "\n") + "\n"
+	}
+	lines := []string{
+		InstructionBegin,
+		fmt.Sprintf("## Rolling-Memory (%s)", options.SkillName),
+		fmt.Sprintf("Your persistent memory is connected via MCP `%s` (tool `recall` · 回忆).", options.Name),
+		"- At task start, understand intent; call `recall` with a specific `cue` for unclear cross-session context," +
+			" architectural boundaries or historical decisions, or unknown entrypoints before a blind search." +
+			" Skip recall for self-contained tasks with known coordinates and no historical coupling;" +
+			" call `recall` when stuck or facing an error before troubleshooting.",
+		"- `absent: true` means you have no prior memory of it -- it is not an error;" +
+			" never invent memory content.",
+		fmt.Sprintf("Details: the `%s` skill.", options.SkillName),
+		InstructionEnd,
+	}
+	return strings.Join(lines, "\n") + "\n"
+}
+
+// instructionDigestPrefix opens the self-digest line that closes a generated
+// block. A later release can therefore upgrade the block instead of treating
+// its own older text as a foreign edit, while a hand edit inside the block
+// breaks the digest and still surfaces as a conflict.
+const instructionDigestPrefix = "<!-- rolling-memory:template sha256:"
+
+// withInstructionDigest inserts the self-digest line before the end marker.
+func withInstructionDigest(block string) string {
+	body := strings.TrimSuffix(block, "\n")
+	sum := sha256.Sum256([]byte(body))
+	line := instructionDigestPrefix + hex.EncodeToString(sum[:]) + " -->"
+	return strings.Replace(body, InstructionEnd, line+"\n"+InstructionEnd, 1) + "\n"
+}
+
+// instructionDigestMatches reports whether a marker block carries a self-digest
+// that matches its own body. Only uniform line endings are accepted (the writer
+// emits one style), and the block must carry this install's identity, so a block
+// generated for another server or skill stays foreign.
+func instructionDigestMatches(block string, options InstallOptions) bool {
+	if strings.Contains(block, "\r\n") && strings.Contains(strings.ReplaceAll(block, "\r\n", ""), "\n") {
+		return false
+	}
+	norm := strings.TrimSuffix(strings.ReplaceAll(block, "\r\n", "\n"), "\n")
+	if !strings.HasPrefix(norm, InstructionBegin) || !strings.HasSuffix(norm, InstructionEnd) {
+		return false
+	}
+	if !strings.Contains(norm, "## Rolling-Memory ("+options.SkillName+")") ||
+		!strings.Contains(norm, "MCP `"+options.Name+"`") {
+		return false
+	}
+	digestLine := ""
+	for _, line := range strings.Split(norm, "\n") {
+		if strings.HasPrefix(line, instructionDigestPrefix) && strings.HasSuffix(line, " -->") {
+			digestLine = line
+		}
+	}
+	if digestLine == "" {
+		return false
+	}
+	body := strings.Replace(norm, digestLine+"\n", "", 1)
+	sum := sha256.Sum256([]byte(body))
+	return digestLine == instructionDigestPrefix+hex.EncodeToString(sum[:])+" -->"
 }
 
 // legacyInstructionBlock is the instruction text generated before the

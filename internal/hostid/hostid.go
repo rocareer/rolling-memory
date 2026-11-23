@@ -334,6 +334,12 @@ func detectFromEnv(env map[string]string, resolveAncestry func() []Process) (Ide
 			ids = append(ids, h.id)
 		}
 	}
+	// CLI is a known environment identity that intentionally has no registry
+	// entry. Appending it keeps ids non-empty whenever byID is non-empty, so a
+	// CLI-only environment cannot fall through to the slice index below.
+	if _, ok := byID[CLI]; ok {
+		ids = append(ids, CLI)
+	}
 	if len(ids) == 1 {
 		c := byID[ids[0]]
 		return Identity{ID: c.id, Label: Label(c.id), SessionID: c.session, Evidence: c.evidence, Strong: true}, true

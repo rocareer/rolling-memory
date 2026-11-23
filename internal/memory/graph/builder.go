@@ -122,6 +122,9 @@ func (b *Builder) Snapshot(ctx context.Context) (*Snapshot, error) {
 	if len(units) == 0 {
 		key := snapshotKey(units, citations, 0)
 		if b.snap != nil && b.key == key {
+			// The verification pass just revalidated the cached projection;
+			// renew the window so the next request can take the cheap path.
+			b.snap.BuiltAt = time.Now()
 			return b.snap, nil
 		}
 		b.replaceSnapshotLocked(&Snapshot{
@@ -152,6 +155,9 @@ func (b *Builder) Snapshot(ctx context.Context) (*Snapshot, error) {
 	}
 	key := snapshotKey(units, citations, engineGen)
 	if b.snap != nil && b.key == key {
+		// The verification pass just revalidated the cached projection; renew
+		// the window so the next request can take the cheap path.
+		b.snap.BuiltAt = time.Now()
 		return b.snap, nil
 	}
 

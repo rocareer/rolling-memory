@@ -12,6 +12,7 @@ import (
 	"time"
 
 	core "github.com/rocareer/rolling-memory/internal/core"
+	"github.com/rocareer/rolling-memory/internal/graphmodel"
 	"github.com/rocareer/rolling-memory/internal/memory/localvault"
 	_ "modernc.org/sqlite"
 )
@@ -145,5 +146,79 @@ func TestBuilderInvalidationReleasesPublishedGeneration(t *testing.T) {
 	vault.CloseRuntimeSnapshots()
 	if second.engine.HasMmapSegment() {
 		t.Fatal("vault shutdown must release the generation after the graph lease is returned")
+	}
+}
+
+// TestSnapshotReuseWindowRenewsAfterVerifiedScan pins the freshness check
+// cadence: once a scan proves the corpus unchanged, the next request must take
+// the cached fast path instead of rescanning the whole vault again.
+func TestSnapshotReuseWindowRenewsAfterVerifiedScan(t *testing.T) {
+	ctx := context.Background()
+	dbPath := filepath.Join(t.TempDir(), "graph-window.sqlite")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	vault, err := localvault.NewVault(db, []byte("0123456789abcdef0123456789abcdef"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(vault.CloseRuntimeSnapshots)
+	for i := 0; i < 24; i++ {
+		text := fmt.Sprintf("window unit %d records the alpha beta ledger and unique%03d.", i, i)
+		if err := vault.SaveLocalPlaintext(fmt.Sprintf("doc-%03d", i), 1700000000+int64(i)*3600, text, nil, localvault.IngestResponse{Layer: "episodic"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := vault.RebuildCorpusSnapshot(ctx); err != nil {
+		t.Fatal(err)
+	}
+	vault.SetBuildAllowed(false)
+
+	builder := NewBuilder(vault)
+	snap, err := builder.Snapshot(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snap.BuiltAt = time.Now().Add(-snapshotReuseWindow - time.Second)
+	if again, err := builder.Snapshot(ctx); err != nil || again != snap {
+		t.Fatalf("verification scan: %v / same=%v", err, again == snap)
+	}
+
+	// The cached fast path does not consult the context; a renewed window makes
+	// this call succeed, while an unrefreshed window would run GraphUnits and
+	// fail on the cancelled context.
+	dead, cancel := context.WithCancel(ctx)
+	cancel()
+	if _, err := builder.Snapshot(dead); err != nil {
+		t.Fatalf("the verified scan did not renew the reuse window: %v", err)
+	}
+}
+
+// TestViewRendersEmptyVaultWithoutEngine pins the no-engine path: an empty
+// projection must render as an empty graph, not be mistaken for a retired
+// snapshot that needs a lease retry.
+func TestViewRendersEmptyVaultWithoutEngine(t *testing.T) {
+	ctx := context.Background()
+	dbPath := filepath.Join(t.TempDir(), "graph-empty.sqlite")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	vault, err := localvault.NewVault(db, []byte("0123456789abcdef0123456789abcdef"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(vault.CloseRuntimeSnapshots)
+
+	builder := NewBuilder(vault)
+	resp, err := builder.View(ctx, graphmodel.ViewRequest{})
+	if err != nil {
+		t.Fatalf("empty view: %v", err)
+	}
+	if resp == nil || len(resp.Nodes) != 0 || len(resp.Edges) != 0 {
+		t.Fatalf("empty view response = %+v", resp)
 	}
 }

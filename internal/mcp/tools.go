@@ -11,7 +11,7 @@ const instructions = "You have your own persistent memory across sessions (Rolli
 	"\n" +
 	"- Task start (mandatory): understand the user's intent and call recall with a specific cue before blind searching.\n" +
 	"- Task stuck (mandatory): whenever a command/test fails, an error occurs, or a search misses, call recall with the error token or concept before guessing.\n" +
-	"- How to write `cue`: prefix with `[<workspace>]` (e.g. `[Rolling-Memory]`) to prioritize current-repo memories, followed by exact literal tokens, file/symbol names, or error fingerprints (avoid paraphrasing or unrelated buzzwords).\n" +
+	"- How to write `cue`: prefix with `[<workspace>]` (e.g. `[Rolling-Memory]`) to prioritize current-repo memories, then give a dense literal cue — intent, exact literal tokens for the objects themselves (file/symbol/command names), at least 1–2 hard identifiers (error text, status code, route, version, PR/issue number, date) and the occasion, typically 12–25 content words. Every word must really occur in the target memory; never pad with generic fillers (`help / look / that issue / why / how / related`) — they drag unrelated long sessions to the front. A 2–6 token cue is only for confirming one known symbol or error code.\n" +
 	"- Treat what you recall as a traceable lead, not proof: verify against the live disk before acting.\n" +
 	"- `absent: true` means the memory does not hold it; it is not an error, and not a refutation.\n"
 
@@ -28,13 +28,13 @@ var recallTool = map[string]any{
 		"readOnlyHint":  true,
 		"openWorldHint": false,
 	},
-	"description": "Recall from your persistent memory with zero model calls (hitting evidence automatically consolidates L3 memory — never manually write memory). Call before blind file/code searches when context, coordinates, or prior decisions are missing, and immediately when a command/test fails. Prefix cue with [<workspace>] to prioritize same-repository memories and pass 2–6 exact literal tokens, file/symbol names, or error fingerprints (avoid natural-language paraphrasing; if noisy, drop broad words and retry with fewer exact tokens). Returns ranked memory results with anchors, status, and local second-precision timestamps (header `now` carries current time). absent=true means the memory does not hold it; it is not an error. Use mode=full (default) for evidence, mode=probe for a compact JSON existence receipt, or mode=recent for newest entries by time.",
+	"description": "Recall from your persistent memory with zero model calls (hitting evidence automatically consolidates L3 memory — never manually write memory). Call before blind file/code searches when context, coordinates, or prior decisions are missing, and immediately when a command/test fails. Prefix cue with [<workspace>] to prioritize same-repository memories, then pass a dense cue made of the target memory's own exact literal tokens: intent + object/file/symbol names + 1–2 hard identifiers (verbatim error, status code, route, version, commit/PR/issue number, date) + the occasion (typically 12–25 content words; avoid natural-language sentences and generic fillers, which pull unrelated long sessions forward). Use only 2–6 tokens to confirm a single known symbol or error code. If hits are noisy, drop the broad words and keep the exact ones. Returns ranked memory results with anchors, status, and local second-precision timestamps (header `now` carries current time). absent=true means the memory does not hold it; it is not an error. Use mode=full (default) for evidence, mode=probe for a compact JSON existence receipt, or mode=recent for newest entries by time.",
 	"inputSchema": map[string]any{
 		"type": "object",
 		"properties": map[string]any{
 			"cue": map[string]any{
 				"type":        "string",
-				"description": "Literal search clue (required for mode=full/probe): prefix with [<workspace>] to prioritize same-repo memories, followed by 2–6 exact tokens, file/symbol names, or error fingerprints. Avoid natural-language sentences or broad buzzwords.",
+				"description": "Literal search clue (required for mode=full/probe): prefix with [<workspace>] to prioritize same-repo memories, then give a dense literal cue — intent, object/file/symbol names verbatim, 1–2 hard identifiers (error text, status code, route, version, number, date), and the occasion; typically 12–25 content words, space-separated, no full sentences and no generic fillers. Use 2–6 tokens only to confirm a single known symbol or error code.",
 			},
 			"scope":  map[string]any{"type": "string", "description": "Optional memory scope override (defaults to active scope)."},
 			"reader": map[string]any{"enum": []any{"owner", "deliverable"}, "description": "Audience visibility filter (defaults to deliverable)."},

@@ -4,9 +4,11 @@
 package hostid
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestDetectOpenCodeFromSessionMarker(t *testing.T) {
@@ -118,6 +120,59 @@ func TestLedgerLegacyDocumentReportedAsNoLiveHost(t *testing.T) {
 	}
 	if live := LiveAttachments(LoadLedger(dir), 2); len(live) != 0 {
 		t.Fatalf("legacy document produced live sessions: %+v", live)
+	}
+}
+
+func TestDetectCLIOnlyEnvironmentReturnsCLI(t *testing.T) {
+	identity := DetectWith(map[string]string{"AI_AGENT": "cli"}, nil)
+	if identity.ID != CLI || !identity.Strong {
+		t.Fatalf("identity = %+v, want strong cli", identity)
+	}
+	if identity.Label != "CLI" {
+		t.Fatalf("label = %q, want CLI", identity.Label)
+	}
+}
+
+func TestDetectCLIWithRegistryHostPrefersRegistryHost(t *testing.T) {
+	identity := DetectWith(map[string]string{
+		"AI_AGENT":            "cli",
+		"OPENCODE_SESSION_ID": "ses_1",
+	}, nil)
+	if identity.ID != OpenCode || identity.SessionID != "ses_1" {
+		t.Fatalf("identity = %+v, want opencode/ses_1", identity)
+	}
+}
+
+func TestRecordAtRefusesHeldLock(t *testing.T) {
+	dir := t.TempDir()
+	lockPath := LedgerPath(dir) + ".lock"
+	if err := os.WriteFile(lockPath, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	err := RecordAt(dir, Attachment{Host: "cli", SessionID: "s1", LastSeenAt: 1000}, 1000)
+	if !errors.Is(err, errLedgerLockTimeout) {
+		t.Fatalf("RecordAt error = %v, want errLedgerLockTimeout", err)
+	}
+	if _, statErr := os.Stat(LedgerPath(dir)); !errors.Is(statErr, os.ErrNotExist) {
+		t.Fatalf("ledger was written without the lock: %v", statErr)
+	}
+}
+
+func TestRecordAtReclaimsStaleLock(t *testing.T) {
+	dir := t.TempDir()
+	lockPath := LedgerPath(dir) + ".lock"
+	if err := os.WriteFile(lockPath, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	stale := time.Now().Add(-3 * time.Second)
+	if err := os.Chtimes(lockPath, stale, stale); err != nil {
+		t.Fatal(err)
+	}
+	if err := RecordAt(dir, Attachment{Host: "cli", SessionID: "s1", LastSeenAt: 1000}, 1000); err != nil {
+		t.Fatalf("RecordAt with stale lock: %v", err)
+	}
+	if _, statErr := os.Stat(LedgerPath(dir)); statErr != nil {
+		t.Fatalf("ledger missing after stale-lock reclaim: %v", statErr)
 	}
 }
 

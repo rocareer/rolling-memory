@@ -44,8 +44,21 @@ func (b *Builder) View(ctx context.Context, req graphmodel.ViewRequest) (*graphm
 	}
 	// Hold a render lease on the cached engine for the whole projection: the
 	// builder may retire this snapshot as soon as a newer generation lands,
-	// and the backing mmap must outlive every active render.
-	_, releaseEngine, _ := snap.Engine()
+	// and the backing mmap must outlive every active render. Snapshot() and
+	// Engine() are separate steps, so an invalidation can retire the snapshot
+	// in between; retry once with the current snapshot instead of rendering an
+	// unleased generation.
+	_, releaseEngine, ok := snap.Engine()
+	if !ok && snap.engine != nil {
+		snap, err = b.Snapshot(ctx)
+		if err != nil {
+			return nil, err
+		}
+		_, releaseEngine, ok = snap.Engine()
+		if !ok && snap.engine != nil {
+			return nil, fmt.Errorf("graph: snapshot retired during render")
+		}
+	}
 	defer releaseEngine()
 	op := strings.ToLower(strings.TrimSpace(req.Op))
 	cacheable := op == "" || op == "view"

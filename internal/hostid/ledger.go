@@ -5,6 +5,7 @@ package hostid
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,6 +36,11 @@ const (
 	// RecentTTL bounds how long a stale session stays in the document.
 	RecentTTL = 24 * time.Hour
 )
+
+// errLedgerLockTimeout reports that the cross-process ledger lock stayed held
+// through the whole retry budget. The mutation is refused instead of running
+// unsynchronized, which would let two writers overwrite each other's session.
+var errLedgerLockTimeout = errors.New("hostid: attachment ledger lock timeout")
 
 // Attachment is one session-scoped presence record.
 type Attachment struct {
@@ -207,6 +213,7 @@ func mutateLedger(stateDir string, mutate func(*Ledger)) error {
 	}
 	statePath := LedgerPath(stateDir)
 	lockPath := statePath + ".lock"
+	locked := false
 	for attempt := 0; attempt < 8; attempt++ {
 		if info, err := os.Stat(lockPath); err == nil && time.Since(info.ModTime()) > 2*time.Second {
 			_ = os.Remove(lockPath)
@@ -215,9 +222,13 @@ func mutateLedger(stateDir string, mutate func(*Ledger)) error {
 		if err == nil {
 			_ = lock.Close()
 			defer os.Remove(lockPath)
+			locked = true
 			break
 		}
 		time.Sleep(15 * time.Millisecond)
+	}
+	if !locked {
+		return errLedgerLockTimeout
 	}
 	ledger := loadLedgerFile(statePath)
 	mutate(&ledger)

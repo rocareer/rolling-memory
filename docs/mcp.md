@@ -50,7 +50,7 @@ The server opens SQLite lazily on the first `tools/call` so `initialize` and `to
 
 | Parameter | Type | Description |
 |---|---|---|
-| `cue` | string | Literal search clue (required for `mode=full`/`probe`): prefix with `[<workspace>]` (e.g. `[Rolling-Memory]`) to prioritize current-repository memories, followed by 2–6 exact tokens, file/symbol names, status codes, or error fingerprints (avoid natural-language paraphrasing; if noisy, drop broad words and retry with fewer exact tokens) |
+| `cue` | string | Literal search clue (required for `mode=full`/`probe`): prefix with `[<workspace>]` (e.g. `[Rolling-Memory]`) to prioritize current-repository memories, then give a dense literal cue — intent, object/file/symbol names verbatim, 1–2 hard identifiers (error text, status code, route, version, number, date), and the occasion; typically 12–25 content words, space-separated. Every word should really occur in the target memory; avoid generic fillers (they push unrelated long sessions forward). Use 2–6 tokens only to confirm a single known symbol or error code; if noisy, drop the broad words and keep the exact ones |
 | `scope` | string | Override default memory scope |
 | `reader` | `owner` \| `deliverable` | Defaults to `deliverable`; historical audience restrictions may not be enforced across all sources. Review results before sharing. |
 | `mode` | `full` \| `probe` \| `recent` | `full` returns subject bands with ranked evidence; `probe` returns a compact existence receipt (summaries truncated to 160 chars); `recent` lists the newest entries in pure time order (no semantic matching; `cue` is ignored) |

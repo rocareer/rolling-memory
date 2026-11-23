@@ -7,11 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.16] - 2026-11-24
+
+### Added
+
+- Recall guidance now asks for a dense, faithful cue: the intent, the objects named verbatim, one or two hard identifiers (error text, status code, route, version, issue number, date) and the occasion, typically 12–25 content words. Every word should really occur in the memory being sought; generic filler is called out as harmful, and a short cue is reserved for confirming a single known symbol or error code. The same guidance ships in the harness skill, the MCP instructions, and `docs/mcp.md`.
+
 ### Fixed
 
+- The instruction block appended by `install --with-instructions` now upgrades across releases: it carries a self-digest and its own identity, so a new release replaces an older block, while a hand edit inside the block is still reported as a conflict instead of being overwritten.
 - Memory in scripts written without word spaces (Thai, Kana) is now found by substring queries that span a long run: such runs are split into adjacent bigrams and single characters when the harmonic glue path does not take them, while Han and space-delimited text keep their previous behaviour.
 - Creating a config file while `XDG_DATA_HOME` or `XDG_STATE_HOME` is set no longer writes a file that cannot be loaded back on Windows: the resolved data and log paths are emitted as escaped TOML strings, so the backslashes in a Windows path are no longer read as unicode escapes. (Reported and suggested by @dengboyu412-lang in #3; adopted and rewritten in the source tree.)
 - The reproduction command exported on an eval report page now quotes the eval-store path and folds the Windows home directory, so a store under the user profile keeps its backslashes and a path with spaces or quotes stays a single argument when pasted into Git Bash. (Reported and suggested by @wzm-Epoch in #4; adopted and rewritten in the source tree.)
+- A snapshot written by an older build format is now reported as unreadable and republished by the background builder, instead of leaving recall in a permanent warming state after an upgrade.
+- Replacing a cached projection now retires the previous memory-mapped baseline with its readers, so a long-running builder no longer keeps every replaced generation mapped.
+- The memory graph retries the render lease when a concurrent cache invalidation retires the snapshot between lookup and render, and an empty vault still renders as an empty graph.
+- Empty-corpus recall consumers return their snapshot lease.
+- A verified-unchanged graph scan renews its reuse window instead of rescanning the vault on every later request.
 
 ## [0.0.15] - 2026-11-23
 
@@ -287,7 +299,9 @@ Initial public release.
 - **Client SDK (`sdk/`)**: a zero-dependency Go SDK (`v1.11.3`) for local memory encoding and integration, with complete third-party license notices.
 - **Licensing**: source-available under **PolyForm Noncommercial 1.0.0** — free to use, modify, and share for noncommercial purposes; commercial use or distribution requires a separate license.
 
-[Unreleased]: https://github.com/rocareer/rolling-memory/compare/v0.0.13...HEAD
+[Unreleased]: https://github.com/rocareer/rolling-memory/compare/v0.0.16...HEAD
+[0.0.16]: https://github.com/rocareer/rolling-memory/compare/v0.0.15...v0.0.16
+[0.0.15]: https://github.com/rocareer/rolling-memory/compare/v0.0.14...v0.0.15
 [0.0.14]: https://github.com/rocareer/rolling-memory/compare/v0.0.13...v0.0.14
 [0.0.13]: https://github.com/rocareer/rolling-memory/compare/v0.0.12...v0.0.13
 [0.0.12]: https://github.com/rocareer/rolling-memory/compare/v0.0.11...v0.0.12

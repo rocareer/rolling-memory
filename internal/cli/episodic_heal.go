@@ -110,12 +110,7 @@ func healDriftedEpisodicPointers(ctx context.Context, memory *facade.Memory, lim
 	}
 	cursor := string(cursorRaw)
 
-	type healRow struct {
-		docID      string
-		refPointer string
-		occurredAt int64
-	}
-	var rows []healRow
+	var rows []episodicHealRow
 	result, err := db.QueryContext(ctx, `
 		SELECT d.unit_id, COALESCE(NULLIF(m.ref_pointer, ''), d.raw_text), d.occurred_at
 		FROM rm_docs d
@@ -128,7 +123,7 @@ func healDriftedEpisodicPointers(ctx context.Context, memory *facade.Memory, lim
 		return 0, 0, err
 	}
 	for result.Next() {
-		var row healRow
+		var row episodicHealRow
 		if err := result.Scan(&row.docID, &row.refPointer, &row.occurredAt); err != nil {
 			result.Close()
 			return 0, 0, err
@@ -141,23 +136,15 @@ func healDriftedEpisodicPointers(ctx context.Context, memory *facade.Memory, lim
 	}
 	result.Close()
 
-	// 游标前进到本页末行；取满一页说明后面可能还有，否则回卷到开头，下一轮从头巡检。
-	nextCursor := ""
-	if len(rows) == limit {
-		nextCursor = rows[len(rows)-1].docID
-	}
-	if _, err := db.Exec(`INSERT OR REPLACE INTO rm_meta(k, v) VALUES (?, ?)`, cursorKey, []byte(nextCursor)); err != nil {
-		return 0, 0, err
-	}
-
-	scanned, healed := 0, 0
-	for _, row := range rows {
+	scanned, healed, processed := 0, 0, 0
+	for index, row := range rows {
 		if ctx.Err() != nil {
 			break
 		}
 		refPointer := strings.TrimSpace(row.refPointer)
 		if !strings.HasPrefix(refPointer, "@ref:") {
 			// 内联单元没有坐标可漂移，常规巡检不为其付分类成本。
+			processed = index + 1
 			continue
 		}
 		if facade.ShouldYieldToForegroundRecall() {
@@ -178,6 +165,7 @@ func healDriftedEpisodicPointers(ctx context.Context, memory *facade.Memory, lim
 				if _, actualRef, rErr := tc.Vault.LoadVerifiedEpisodicPointerSource(row.docID, refPointer); rErr == nil && sameEpisodicSourceSession(refPointer, actualRef) {
 					if newRef, reErr := tc.Vault.ReanchorRelocatedEpisodicUnit(scope, row.docID, refPointer, row.occurredAt, true); reErr == nil && newRef != "" {
 						healed++
+						processed = index + 1
 						continue
 					}
 				}
@@ -188,6 +176,36 @@ func healDriftedEpisodicPointers(ctx context.Context, memory *facade.Memory, lim
 				healed++
 			}
 		}
+		processed = index + 1
+	}
+	// 游标只跨越本轮真正处理完的行；yield 或取消提前退出时，本页剩余行
+	// 留给下一轮，而不是被记成已巡检。
+	nextCursor := episodicHealNextCursor(cursor, rows, processed, limit)
+	if _, err := db.Exec(`INSERT OR REPLACE INTO rm_meta(k, v) VALUES (?, ?)`, cursorKey, []byte(nextCursor)); err != nil {
+		return 0, 0, err
 	}
 	return scanned, healed, nil
+}
+
+// episodicHealRow is one episodic pointer row fetched for a heal pass.
+type episodicHealRow struct {
+	docID      string
+	refPointer string
+	occurredAt int64
+}
+
+// episodicHealNextCursor advances the scan cursor only across rows this pass
+// completed. A yield or cancellation therefore leaves the rest of the page for
+// the next pass instead of recording it as inspected.
+func episodicHealNextCursor(cursor string, rows []episodicHealRow, processed, limit int) string {
+	if processed < len(rows) {
+		if processed == 0 {
+			return cursor
+		}
+		return rows[processed-1].docID
+	}
+	if limit > 0 && len(rows) == limit {
+		return rows[len(rows)-1].docID
+	}
+	return ""
 }

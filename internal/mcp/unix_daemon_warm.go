@@ -32,8 +32,9 @@ func warmPublishedGenerations(ctx context.Context, vault *localvault.Vault, inte
 	for {
 		slot, ok := vault.PublishedSlot()
 		if ok && slot != last {
-			if warmed, changed, err := vault.WarmPublishedGeneration(ctx); err == nil && changed && warmed != "" {
-				last = warmed
+			warmed, changed, err := vault.WarmPublishedGeneration(ctx)
+			if err == nil && warmed != "" && (changed || warmed == slot) {
+				last = slot
 			}
 		}
 		select {

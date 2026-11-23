@@ -27,6 +27,8 @@ func TestShippedSkillTeachesCurrentContract(t *testing.T) {
 		"保真 ≠ 正确",
 		"absent: true",
 		"## 5. 收口如实评价（本轮调过 `recall` 时必写 · 可选区块）",
+		"稠密是默认",
+		"禁止为凑长度加泛化词",
 		"install --check",
 	} {
 		if !strings.Contains(text, want) {
@@ -54,6 +56,8 @@ func TestShippedSkillTeachesCurrentContract(t *testing.T) {
 		"Fidelity ≠ Correctness",
 		"absent: true",
 		"## 5. Wrap-up Review (Required When `recall` Was Called This Turn · Optional Section)",
+		"Dense by default",
+		"Never pad to reach a length",
 		"install --check",
 	} {
 		if !strings.Contains(enText, want) {

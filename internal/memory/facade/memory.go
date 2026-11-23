@@ -377,12 +377,14 @@ func (m *Memory) Doctor() (map[string]any, error) {
 	}
 	var docsCnt, changeSeq int64
 	_ = m.Store.DB().QueryRow(`SELECT docs_cnt, change_seq FROM rm_revision WHERE id = 1`).Scan(&docsCnt, &changeSeq)
-	snapshotOK := docsCnt == 0 || localvault.PublishedSnapshotExists(m.Config.DB)
+	snapshotOK := docsCnt == 0 || localvault.PublishedSnapshotUsable(m.Store.DB(), m.Config.DB)
 	check("snapshot_cluster", snapshotOK, m.Config.DB+".snapshots")
 	if docsCnt > 0 {
 		if docsPath, ok := localvault.PublishedSnapshotDocsPath(m.Config.DB); ok {
 			if _, statErr := os.Stat(docsPath); statErr != nil {
 				warnings = append(warnings, "snapshot docs sidecar missing; recall falls back to the canonical scan")
+			} else if !snapshotOK {
+				warnings = append(warnings, "the published snapshot cluster cannot be opened by this build; the background builder will republish it")
 			}
 		} else {
 			warnings = append(warnings, "no published snapshot cluster; recall serves warming until the builder runs")

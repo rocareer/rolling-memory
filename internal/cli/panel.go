@@ -527,7 +527,7 @@ func (a *application) runPanelStatus(layout panelLayout) int {
 		fmt.Printf("stopped (backend=%t, web=%t)\n", apiRunning, webRunning)
 	}
 	result := map[string]any{
-		"ok":       running,
+		"ok":       true,
 		"action":   "status",
 		"running":  running,
 		"api":      apiRunning,

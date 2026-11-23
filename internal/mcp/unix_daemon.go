@@ -1460,6 +1460,8 @@ func ServeUnix(sockPath string, memory *facade.Memory, onStart func(context.Cont
 			return
 		}
 		activity.Store(time.Now().UnixNano())
+		inFlight.Add(1)
+		defer inFlight.Add(-1)
 		active := memory
 		if active == nil && lazy != nil {
 			active, _ = lazy.Get()
