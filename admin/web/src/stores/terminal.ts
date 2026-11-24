@@ -59,7 +59,7 @@ export const useTerminal = defineStore('terminal', () => {
         autoScroll: true,
         filterTag: 'ALL' as 'ALL' | 'HOOK' | 'RAME',
         online: true,
-        version: '0.0.16',
+        version: '0.0.17',
         mode: 'local',
         scope: 'mem:self',
         binaryPath: '',
@@ -75,7 +75,7 @@ export const useTerminal = defineStore('terminal', () => {
 
     function applyStreamPayload(d: TerminalApiPayload) {
         state.online = d.online
-        state.version = d.version || '0.0.16'
+        state.version = d.version || '0.0.17'
         state.mode = d.mode || 'local'
         state.scope = d.scope || 'mem:self'
         state.binaryPath = d.binary_path || ''

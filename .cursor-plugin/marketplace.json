@@ -12,7 +12,7 @@
       "name": "rolling-memory",
       "source": ".",
       "description": "Cross-session local memory plugin for Cursor, built on the Rolling Autonoetic Memory Engine (single MCP tool `recall` + automatic background/episodic watch).",
-      "version": "0.0.16",
+      "version": "0.0.17",
       "license": "PolyForm-Noncommercial-1.0.0"
     }
   ]

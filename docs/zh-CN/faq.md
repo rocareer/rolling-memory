@@ -89,7 +89,7 @@
 1. **语料自备 + 一键复现命令**：
    - 基准语料不随本仓库分发：请从上游项目获取 LoCoMo 与剑桥大学 ATM-Bench 语料，用 `--eval-data <dir>` 指向你的副本，并以 [benchmarks.md](benchmarks.md) 公布的 `SHA-256` 摘要钉住；两套基准都可一条命令取数——`rmem eval --fetch-only --fetch atm --accept-upstream-license` 会从钉住的 Hugging Face revision 下载必要上游文件（约 35 MB），在本机重建 pinned 语料与题集并对照上述摘要校验，通过后即完成取数（只给 `--fetch` 会在取数后停下；显式加 `--suite` 才继续评测）；`rmem eval --fetch-only --fetch locomo --accept-upstream-license` 下载上游 `locomo10.json`（约 2.8 MB）并重建上游官方 cat1-4 题集（1,540 题；便捷档 100/200 不再提供）。随后断网运行 `rmem eval --suite atm --tier 1013 --answerer none --judge off --top-k 50` 即可在本地跑完检索评测，并从生成的原始 JSONL 逐题复算官方 `Recall@10` 与 `Any-Hit@10`。测试在无自带语料时跳过（skip），`rmem eval` 本体则明确报错而不会凭空产出读数。
 2. **诚实披露局限**：
-   - 我们在 README 中明确写明：这套检索权重和启发式规则在开发过程中针对上述基准做过多轮错误分析与迭代，并非盲测零样本结论，也不是官方榜单正式提交成绩。
+   - 我们在 README 中明确写明：这套评分规则与阈值在开发过程中经上述基准的多轮误差分析与迭代，因此分数属样本内读数，并非盲测零样本结论。这两行也已登上 ATM-Bench 官方榜单。
 3. **自带体验评价 Hook 与真实使用账单**：
    - 本地模式默认开启了体验评价 Hook 与评价卡（不喜欢可随时通过 `rolling-memory install --mcp-only` 或 `rolling-memory config set hooks.ledger false` 关掉）。关于日常长上下文里怎么算省下或亏掉的 Token，以及我们自己开发机最近 24 小时和整周的正反真实账单，请直接查看 [《省 Token 算账与边界（token-economics.md）》](token-economics.md)。
 
