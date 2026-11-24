@@ -16,7 +16,7 @@ The directory is self-contained: it carries its own `LICENSE`, the bundle patch,
 bash examples/dsh-plugin/pack.sh /absolute/path/to/output-directory
 ```
 
-The helper writes `rocareer-dsh-rolling-memory-0.0.17.tgz` to the output directory and refuses to overwrite an existing package. `npm pack` directly in this directory produces the same complete package. No registry access or install scripts are needed.
+The helper writes `rocareer-dsh-rolling-memory-0.0.18.tgz` to the output directory and refuses to overwrite an existing package. `npm pack` directly in this directory produces the same complete package. No registry access or install scripts are needed.
 
 ## Install and use
 
@@ -31,7 +31,7 @@ DSH requires unique server names within a scope. If an existing Rolling Memory M
 Then install a tarball and inspect the resulting configuration:
 
 ```sh
-dsh plugin --profile web add --offline /absolute/path/to/rocareer-dsh-rolling-memory-0.0.17.tgz
+dsh plugin --profile web add --offline /absolute/path/to/rocareer-dsh-rolling-memory-0.0.18.tgz
 dsh --profile web --dump-config
 dsh --profile web
 ```
@@ -39,7 +39,7 @@ dsh --profile web
 A published tarball URL works the same way, for example:
 
 ```sh
-dsh plugin --profile web add https://github.com/rocareer/rolling-memory/releases/download/dsh-plugin-v0.0.17/rocareer-dsh-rolling-memory-0.0.17.tgz
+dsh plugin --profile web add https://github.com/rocareer/rolling-memory/releases/download/dsh-plugin-v0.0.18/rocareer-dsh-rolling-memory-0.0.18.tgz
 ```
 
 To install from the public Git repository instead, pin the bundle's directory at a commit:

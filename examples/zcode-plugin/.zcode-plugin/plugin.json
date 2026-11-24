@@ -1,6 +1,6 @@
 {
   "name": "rolling-memory",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "Rolling Memory MCP server + harness hooks. Single tool: recall (回忆即记忆) over a local SQLite plaintext vault (local_plain).",
   "author": {
     "name": "Albert (Rocareer / Rolling-Memory)",

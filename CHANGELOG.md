@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.18] - 2026-11-24
+
+### Changed
+
+- The README and benchmarks page now say how to read a published score: it is a point-in-time record for one build, and the in-repo baseline recomputed from the pinned corpus is authoritative for the current build.
+
 ## [0.0.17] - 2026-11-24
 
 ### Fixed

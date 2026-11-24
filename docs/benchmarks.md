@@ -150,6 +150,7 @@ Each run writes `summary-sdk-<arm>-*.json` and `results-sdk-<arm>-*.jsonl` under
 - **Frozen commit**: publish numbers only from a frozen commit and corpus, with the scoring protocol and limitations stated in the same document.
 - **No cross-arm mixing**: a local reading is never presented as a remote-engine result, and historical readings that lack provenance are not reused.
 - **Leaderboards**: ATM-Bench accepted and merged the Rolling-Memory rows on 2026-11-24 (`atmbench/atmbench.github.io`, merge commit `42b8418`), so the ATM readings here are also the official board entries; LoCoMo readings remain local recomputations and are not a LoCoMo leaderboard entry.
+- **Freshness**: a published score is a point-in-time record for one build. The engine keeps changing, so the authoritative reading for the current build is the in-repo baseline recomputed from the pinned corpus; a leaderboard row records the build that was merged, not the current one.
 
 ---
 

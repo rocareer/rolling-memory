@@ -39,7 +39,7 @@
                 <a v-if="config.site.recordNumber" href="http://beian.miit.gov.cn/" target="_blank" rel="noopener">
                     {{ config.site.recordNumber }}
                 </a>
-                <span class="brand-version">v0.0.16 · Core v1.0.1</span>
+                <span class="brand-version">v0.0.18 · Core v1.0.1</span>
             </footer>
         </aside>
 
@@ -144,7 +144,7 @@
                     <a v-if="config.site.recordNumber" href="http://beian.miit.gov.cn/" target="_blank" rel="noopener">
                         {{ config.site.recordNumber }}
                     </a>
-                    <span>v0.0.16 · Core v1.0.1</span>
+                    <span>v0.0.18 · Core v1.0.1</span>
                 </footer>
             </div>
         </main>
