@@ -118,12 +118,12 @@ func TestStripConversationNoise(t *testing.T) {
 		},
 		{
 			name: "claude ide selection envelope",
-			body: "<ide_selection>The user selected the lines 106 to 111 from /Users/albert/app.go</ide_selection>看看这段",
+			body: "<ide_selection>The user selected the lines 106 to 111 from /home/user/app.go</ide_selection>看看这段",
 			want: "看看这段",
 		},
 		{
 			name: "claude ide opened file envelope",
-			body: "<ide_opened_file>The user opened the file /Users/albert/app.go in the IDE.</ide_opened_file>",
+			body: "<ide_opened_file>The user opened the file /home/user/app.go in the IDE.</ide_opened_file>",
 			want: "",
 		},
 		{
@@ -143,7 +143,7 @@ func TestStripConversationNoise(t *testing.T) {
 		},
 		{
 			name: "codex environment context envelope",
-			body: "<environment_context>\n  <cwd>/Users/albert</cwd>\n</environment_context>问题在这里",
+			body: "<environment_context>\n  <cwd>/home/user</cwd>\n</environment_context>问题在这里",
 			want: "问题在这里",
 		},
 		{

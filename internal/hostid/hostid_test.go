@@ -33,9 +33,9 @@ func TestDetectOpenCodeFromAgentMarker(t *testing.T) {
 
 func TestDetectRejectsPlainWorkspaceExports(t *testing.T) {
 	for _, env := range []map[string]string{
-		{"ZCODE_PROJECT_DIR": "/Users/albert/Rolling-Memory"},
-		{"CODEX_HOME": "/Users/albert/.codex"},
-		{"CLAUDE_PROJECT_DIR": "/Users/albert/Rolling-Memory"},
+		{"ZCODE_PROJECT_DIR": "/home/user/Rolling-Memory"},
+		{"CODEX_HOME": "/home/user/.codex"},
+		{"CLAUDE_PROJECT_DIR": "/home/user/Rolling-Memory"},
 		{"TERM_PROGRAM": "zcode"},
 	} {
 		if identity := DetectWith(env, nil); identity.ID != Unknown {
