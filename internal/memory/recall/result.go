@@ -17,21 +17,22 @@ import (
 )
 
 var gapLabels = map[string]string{
-	"no_time":             "缺时间",
-	"bad_anchor":          "锚不可回源",
-	"source_unavailable":  "来源不可回源",
-	"index_incomplete":    "情景索引不完整",
-	"bare_excluded":       "仅提名（bare）",
-	"state_excluded":      "状态排除",
-	"audience_excluded":   "受众排除",
-	"conflicts":           "冲突待裁定",
-	"unresolved_mentions": "未决提及",
-	"budget_exceeded":     "预算截止",
-	"empty_graph":         "图面为空",
+	"no_time":              "缺时间",
+	"bad_anchor":           "锚不可回源",
+	"source_unavailable":   "来源不可回源",
+	"snapshot_unavailable": "检索快照尚未就绪",
+	"index_incomplete":     "情景索引不完整",
+	"bare_excluded":        "仅提名（bare）",
+	"state_excluded":       "状态排除",
+	"audience_excluded":    "受众排除",
+	"conflicts":            "冲突待裁定",
+	"unresolved_mentions":  "未决提及",
+	"budget_exceeded":      "预算截止",
+	"empty_graph":          "图面为空",
 }
 
 var gapOrder = []string{
-	"no_time", "bad_anchor", "source_unavailable", "index_incomplete", "bare_excluded", "state_excluded",
+	"no_time", "bad_anchor", "source_unavailable", "snapshot_unavailable", "index_incomplete", "bare_excluded", "state_excluded",
 	"audience_excluded", "conflicts", "unresolved_mentions",
 	"budget_exceeded", "empty_graph",
 }
@@ -243,7 +244,7 @@ func renderRecall(result *Result, maxChars int) string {
 		nodesTrimmed, _ := truncated["nodes"].(bool)
 		rawTrimmed, _ := truncated["raw"].(bool)
 		if bandsTrimmed || nodesTrimmed || rawTrimmed {
-			lines = append([]string{"（已按预算裁剪：部分结果未显示，可用 caps / offset 调整）"}, lines...)
+			lines = append([]string{"（部分结果未显示；offset 用于翻阅其他结果，不是原文的字符位置）"}, lines...)
 		}
 	}
 

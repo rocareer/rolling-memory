@@ -7,10 +7,14 @@ import "github.com/rocareer/rolling-memory/internal/core"
 
 // deliveredCandidate is one band-level delivery candidate ahead of the adaptive
 // energy window. score is the total collision energy; direct is the candidate's
-// own collision energy without borrowed neighbour corroboration.
+// own collision energy without borrowed neighbour corroboration. text is the
+// full delivered body before any character-budget decision; standalone tells the
+// budget pass whether the body carries the cell-band overhead.
 type deliveredCandidate struct {
 	band       map[string]any
 	rawHit     map[string]any
+	text       string
+	standalone bool
 	score      float64
 	direct     float64
 	locusMatch bool

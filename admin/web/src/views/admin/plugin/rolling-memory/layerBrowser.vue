@@ -78,11 +78,11 @@
                                         {{
                                             row.adoption_outcome === 'adopted_tool'
                                                 ? String(locale).toLowerCase().startsWith('en')
-                                                    ? '🎯 Tool Hit'
-                                                    : '🎯 工具直达'
+                                                    ? '🎯 Tool-input Match'
+                                                    : '🎯 工具输入匹配'
                                                 : String(locale).toLowerCase().startsWith('en')
-                                                  ? '✅ Context Hit'
-                                                  : '✅ 事实采纳'
+                                                  ? '✅ Reply Match'
+                                                  : '✅ 回复匹配'
                                         }}
                                     </el-tag>
                                     <span
@@ -181,7 +181,7 @@
                         <el-descriptions-item
                             v-if="infoRow.layer === 'noetic' && infoRow.adoption_outcome"
                             :span="2"
-                            :label="String(locale).toLowerCase().startsWith('en') ? 'Adoption Audit' : '事后采纳审计'"
+                            :label="String(locale).toLowerCase().startsWith('en') ? 'Evidence Reuse Audit' : '事后证据复用审计'"
                         >
                             <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px">
                                 <el-tag
@@ -198,13 +198,21 @@
                                     {{
                                         infoRow.adoption_outcome === 'adopted_tool'
                                             ? String(locale).toLowerCase().startsWith('en')
-                                                ? '🎯 Tool Hit'
-                                                : '🎯 工具直达'
+                                                ? '🎯 Tool-input Match'
+                                                : '🎯 工具输入匹配'
                                             : infoRow.adoption_outcome === 'adopted_context'
                                               ? String(locale).toLowerCase().startsWith('en')
-                                                  ? '✅ Context Hit'
-                                                  : '✅ 事实采纳'
-                                              : infoRow.adoption_outcome
+                                                  ? '✅ Reply Match'
+                                                  : '✅ 回复匹配'
+                                              : infoRow.adoption_outcome === 'unadopted'
+                                                ? String(locale).toLowerCase().startsWith('en')
+                                                    ? 'No Match'
+                                                    : '未匹配'
+                                                : infoRow.adoption_outcome === 'pending'
+                                                  ? String(locale).toLowerCase().startsWith('en')
+                                                      ? 'Pending'
+                                                      : '待结算'
+                                                  : infoRow.adoption_outcome
                                     }}
                                 </el-tag>
                                 <span v-if="infoRow.assistant_id && infoRow.assistant_id !== 'default'" style="font-size: 12px; color: var(--el-color-primary)">

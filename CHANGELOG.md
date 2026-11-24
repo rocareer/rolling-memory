@@ -5,7 +5,19 @@ All notable user-facing changes to **Rolling Memory** are documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.19] - 2026-11-24
+
+### Changed
+
+- MCP `recall` uses the configured delivery budget. Send the search cue, not a `caps` object; use the optional `delivery_window` only to change the breadth of results. Clients that send `caps` must remove it.
+- The assistant now looks up missing decisions, failed attempts and entrypoints that could change its next action. When an error already points to a file and line, the guidance is to inspect that location first.
+- The dashboard distinguishes observed evidence reuse from time saved. When a recall cannot be paired with its follow-up, the audit does not count it as unused.
+
+### Fixed
+
+- A newly imported vault no longer reports missing memories while waiting for its first search snapshot. The recall response identifies the unavailable snapshot instead.
+- A recall delivery that fits the configured budget is no longer cut early: results skipped by paging or ranking no longer shrink the delivered excerpts.
+- The evidence-reuse audit only pairs a recall with a confirmed follow-up receipt in the same session; ambiguous or unobserved recalls stay unsettled instead of counting as unused.
 
 ## [0.0.18] - 2026-11-24
 

@@ -80,7 +80,7 @@ func recallHook(memory *facade.Memory, cfg *config.Config, payload map[string]an
 		// anchor verification, never as an extracted fact.
 		captureUserPrompt(memory, cfg, session, prompt, presence)
 		if isCadenceReminderDue(memory, cfg.Scope, session) {
-			cadenceText := "[Rolling-Memory 4轮节律锚点] 盘中遇报错/盲搜无果或需核对前序决策与文件入口时，请直接带具体 cue 调 MCP `recall`（回忆即记忆，命中证据后自动巩固结晶 L3 Noetic，无需手动写记忆）。"
+			cadenceText := "[Rolling-Memory 4轮节律锚点] 已知文件或报错行就直接核验。若下一步取决于过去的决定、试过的办法或找不到的入口，用具体 cue 调 MCP `recall`；只采用能核实的新线索。"
 			logHook(cfg, "recall", map[string]any{"injected": 0, "absent": 1, "cadence": 1})
 			return additionalContext(cadenceText, o.JSONOutput, "UserPromptSubmit")
 		}

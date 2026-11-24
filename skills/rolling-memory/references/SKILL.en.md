@@ -1,11 +1,11 @@
 ---
 name: rolling-memory
-description: Persistent memory across sessions (`recall`). Retrieve when history, architectural boundaries, or unknown entrypoints matter; recall when stuck or facing an error, then verify current facts.
+description: Persistent memory across sessions (`recall`). Retrieve when history, architectural boundaries, or unknown entrypoints matter; recover a past decision, failed attempt or entrypoint that would change your next action; check known locations directly.
 ---
 
 # Your Memory Brain (`recall`)
 
-This is **your persistent memory** across sessions. Conversations and workspace context are remembered in the background; you do not need to save memory manually. Understand the user's intent first and retrieve when information gaps make recall useful; recall before guessing when a task gets stuck.
+This is **your persistent memory** across sessions. Conversations and workspace context are remembered in the background; you do not need to save memory manually. Use it for leads missing from the conversation and the evidence at hand; a hit is not a goal in itself.
 
 > **Fidelity ≠ Correctness — do not trust memory blindly.**
 > **Memory is faithful to what happened, but past sessions can be wrong**: memory records what was said or tried at the time, which may include mistaken assumptions, superseded decisions, or bugs that have since been fixed.
@@ -15,8 +15,9 @@ This is **your persistent memory** across sessions. Conversations and workspace 
 
 1. **Task start — understand intent, then retrieve for information gaps**:
    - Use a concrete `cue` when cross-session context or intent is unclear, an architectural boundary or historical decision matters, or an entrypoint is unknown before a blind search. Skip recall when the task is self-contained, coordinates are known, and history is irrelevant.
-2. **Task Stuck — Mandatory Obstacle Recall**:
-   - Whenever you get stuck mid-task — a command/build/test fails, a counter-intuitive error appears, a symbol or file path is missing, or you are unsure how something was done before — **immediately call `recall`** with the error token, symbol, or concept as `cue` before guessing or retrying.
+2. **When blocked, ask which past fact would change your next action.**
+   - If an error already names the file and line, inspect it directly. If you are about to retry an approach without knowing why it was abandoned, retrieve the earlier attempt and check whether its failure conditions still hold. When asked what was decided last time, find the decision and rationale rather than inferring them from today's implementation.
+   - Open a recalled location to verify it; check the premise of a recalled counterexample. If you get nothing beyond a topic match, continue from current evidence rather than citing the hit to justify the call.
 
 ## 2. How to Call `recall`
 
@@ -35,8 +36,8 @@ Call `recall` with a concrete `cue`. Retrieval is **literal** (not semantic asso
 - **A short `cue` only confirms a single known symbol or error code**: 2–6 exact tokens suffice for "what is this symbol like now"; for "which turn / how was it handled / why was it decided", write the dense cue once — probing with three or four short cues is slower and easier to mislead by generic candidates.
 - **For troubleshooting, use error fingerprints**: verbatim error text, exception types, status codes, route/module literals (e.g. `Failed to fetch dynamically imported module`, `504`, `/admin/loading`) plus the command, path or version that triggered it — a single status code is too broad; a co-occurring set is unique.
 - **Vet the hits yourself**: read entries containing fix recipes and pitfall records first and treat generic descriptions as background only; actively drop hits that contradict your stated exclusions (e.g. "exclude evaluation / leaderboards"). When hits misfire, split the repair in two: **same topic but shallow, missing that one event** ⇒ add the episode's own hard identifiers (path / number / date / artifact name); **drowned by an unrelated topic** ⇒ delete the stray word rather than shrinking the whole `cue` to two or three characters.
-- **`absent: true` is not an error**: it only means that exact phrasing matched nothing. Rephrase once; if still absent, say plainly that no prior memory was found and switch to physical verification (`Read` / `Grep` / `git log`). Never fabricate past memories.
-- **Smart Adaptive Delivery Window (`delivery_window`, default `auto` = `0-16`; never cap character count manually)**: the engine uses a zero-floor natural physical information energy envelope ($E(u_k) \ge E(u_1)/e$) — delivering `0` items when nothing matches, `1–5` items on sharp single-fact hits, and automatically expanding along the energy plateau for multi-event queries. **In normal turns, omit `delivery_window` (or pass `"auto"`, which follows the console setting, `0-16` by default) and do not pass conservative item caps that truncate evidence**. Specify an explicit tier only when:
+- **`absent: true` is not an error**: retry only if you have a new literal clue. Otherwise say that no prior record was found and verify with `Read` / `Grep` / `git log`; a miss does not mean the event never happened.
+- **Source excerpts**: for a normal query, send just `cue`. Let the local settings govern delivery; do not guess the length of an unseen source. If a result is marked truncated, verify the source before relying on an omitted condition, negation or exception. `delivery_window` changes the number of results, not excerpt length; the default `auto` follows local settings.
   - **`"0-32"` (balanced span)**: cross-session or multi-module troubleshooting, or when an initial `0-16` recall indicates additional companion units in the same event cluster;
   - **`"0-64"` (deep synthesis)**: architectural evolution audits, multi-period inventories, or comprehensive post-mortem reviews requiring a wide horizon;
   - **`"0-16"` (focused)**: main context is nearly full or you only need a single known coordinate's latest state.
@@ -61,7 +62,7 @@ rolling-memory install --check                             # verify static regis
 
 > **Customization**: If you do not want this wrap-up review in agent replies, simply delete or edit this section at the bottom of your local `SKILL.md`.
 
-Whenever you called `recall` in this turn, append the following structured review line at the end of your final reply (omit if `recall` was not called; fill in candidly without boilerplate praise):
+If you called `recall`, say which action changed. If you cannot identify a step you actually skipped, report zero saved steps. A relevant hit, a fact you already knew, or a symbol repeated later does not establish savings. Omit the line if you did not call `recall`:
 
 ```text
 [Rolling-Memory Review] Calls: <N> | Saved round-trips: <M> (basis: <file coordinate/pitfall hit, or none>) | Verdict: <helpful|partial|unhelpful> — <what it unlocked or why it missed/staled/noised>

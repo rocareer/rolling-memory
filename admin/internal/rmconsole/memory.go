@@ -3161,8 +3161,8 @@ func efficacyUnavailableSnapshot(dbPath, scope, reason string) map[string]any {
 	}
 	if bundle := readROIFactsVaultBundle(dbPath); bundle.vault != nil {
 		result["vault_roi"] = bundle.vault
-		// 事后采纳审计的窗口明细（1h/24h/7d/30d/all）随附到首页 KPI：产品「有效命中」仅代表
-		// 证据已送达，真实有用率以「实质采纳率」呈现（命中 ≠ 有用），两口径在同一张卡上对齐。
+		// 事后证据复用审计的窗口明细（1h/24h/7d/30d/all）随附到首页 KPI：产品「有效命中」仅代表
+		// 证据已送达，证据复用率仅表示后续工具输入/回复与交付锚点匹配（匹配 ≠ 省下一步），两口径在同一张卡上对齐。
 		if len(bundle.vaultWindows) > 0 {
 			windows := make([]map[string]any, 0, len(bundle.vaultWindows))
 			for _, w := range bundle.vaultWindows {

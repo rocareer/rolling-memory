@@ -4,7 +4,6 @@ package rollingmemory
 import (
 	"context"
 	"database/sql"
-	"path/filepath"
 	"testing"
 	"time"
 )
@@ -14,7 +13,7 @@ import (
 // settled outcomes split by tool/context adoption, pending stays out of the rate,
 // and buckets from earlier days aggregate independently.
 func TestROIFactsDailySeriesCarryAdoption(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "memory.db")
+	home, path := adoptionTestHome(t)
 	memDB, err := sql.Open("sqlite", "file:"+path)
 	if err != nil {
 		t.Fatal(err)
@@ -46,25 +45,37 @@ func TestROIFactsDailySeriesCarryAdoption(t *testing.T) {
 	if _, err := memDB.Exec(`
 		INSERT INTO rm_units VALUES
 			('ep_src_1', 'episodic', ?, 'Fix located in admin/internal/rmconsole/roi_facts.go and ComputeDBFingerprint.', '[]', 'C6:L3:B001#01', '', '[]', 'Rolling-Memory'),
-			('ep_src_2', 'episodic', ?, 'Base zero-shot score is 0.362 on ModernBERT-large.', '[]', 'C6:L3:B002#01', '', '[]', 'Rolling-Memory'),
-			('ep_follow_tool', 'episodic', ?, '[tool] {"file_path":"/workspace/Rolling-Memory/admin/internal/rmconsole/roi_facts.go"}', '[]', 'C6:L3:B001#06', '', '[]', 'Rolling-Memory'),
-			('ep_follow_reply', 'episodic', ?, '[assistant] Because laya uses ModernBERT-large with 0.362 base score, we should use intersection auditing.', '[]', 'C6:L3:B002#06', '', '[]', 'Rolling-Memory'),
-			('ep_follow_unadopted', 'episodic', ?, '[assistant] Mentioning only echoed token_xyz in reply.', '[]', 'C6:L3:B003#02', '', '[]', 'Rolling-Memory');
-	`, nowUnix-200, nowUnix-190, nowUnix-95, nowUnix-55, nowUnix-25); err != nil {
+			('ep_src_2', 'episodic', ?, 'Base zero-shot score is 0.362 on ModernBERT-large.', '[]', 'C6:L3:B002#01', '', '[]', 'Rolling-Memory');
+	`, nowUnix-200, nowUnix-190); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := memDB.Exec(`
 		INSERT INTO rm_noetic VALUES
-			('nt_tool_1', ?, 'active', 'ComputeDBFingerprint bug', 'Check admin/internal/rmconsole/roi_facts.go and ComputeDBFingerprint', '["ep_src_1"]', '["admin/internal/rmconsole/roi_facts.go"]', 'C6:L3:B001#05', '', 'zcode', 'inc1'),
-			('nt_ctx_2', ?, 'active', 'laya CPU performance', 'Base zero-shot score is 0.362 on ModernBERT-large', '["ep_src_2"]', '["ModernBERT-large 0.362"]', 'C6:L3:B002#05', '', 'zcode', 'inc1'),
-			('nt_unadopted_3', ?, 'active', 'unrelated query token_xyz', 'Check internal/store/unused_file.go', '[]', '["internal/store/unused_file.go"]', 'C6:L3:B003#01', '', 'zcode', 'inc1'),
-			('nt_pending_4', ?, 'active', 'latest query', 'Check cmd/rmem/main.go', '[]', '["cmd/rmem/main.go"]', 'C6:L3:B004#01', '', 'zcode', 'inc1'),
-			('nt_stale_5', ?, 'stale', 'retired query', 'Retired answer', '[]', '["retired/anchor.go"]', 'C6:L3:B005#01', '', 'zcode', 'inc1'),
-			('nt_yesterday_6', ?, 'active', 'yesterday query', 'yesterday answer', '[]', '["yesterday/anchor.go"]', 'C6:L3:B006#01', '', 'zcode', 'inc1');
+			('nt_tool_1', ?, 'active', 'ComputeDBFingerprint bug', 'Check admin/internal/rmconsole/roi_facts.go and ComputeDBFingerprint', '["ep_src_1"]', '["admin/internal/rmconsole/roi_facts.go"]', 'C6:L3:B001#05', '', 'default', 'inc1'),
+			('nt_ctx_2', ?, 'active', 'laya CPU performance', 'Base zero-shot score is 0.362 on ModernBERT-large', '["ep_src_2"]', '["ModernBERT-large 0.362"]', 'C6:L3:B002#05', '', 'default', 'inc1'),
+			('nt_unadopted_3', ?, 'active', 'unrelated query token_xyz', 'Check internal/store/unused_file.go', '[]', '["internal/store/unused_file.go"]', 'C6:L3:B003#01', '', 'default', 'inc1'),
+			('nt_pending_4', ?, 'active', 'latest query', 'Check cmd/rmem/main.go', '[]', '["cmd/rmem/main.go"]', 'C6:L3:B004#01', '', 'default', 'inc1'),
+			('nt_stale_5', ?, 'stale', 'retired query', 'Retired answer', '[]', '["retired/anchor.go"]', 'C6:L3:B005#01', '', 'default', 'inc1'),
+			('nt_yesterday_6', ?, 'active', 'yesterday query', 'yesterday answer', '[]', '["yesterday/anchor.go"]', 'C6:L3:B006#01', '', 'default', 'inc1');
 	`, nowUnix-100, nowUnix-60, nowUnix-30, nowUnix-5, nowUnix-110, yNoon.Unix()); err != nil {
 		t.Fatal(err)
 	}
 	_ = memDB.Close()
+
+	lines := adoptionRecallLines("call_tool_1", "ComputeDBFingerprint bug",
+		"<rolling-memory-recall scope=\"mem:self\" results=\"1\" absent=\"false\">\nFix located in admin/internal/rmconsole/roi_facts.go and ComputeDBFingerprint.\n</rolling-memory-recall>", nowUnix-99)
+	lines = append(lines, adoptionToolUseLine("call_tool_1_read", "Read",
+		`{"file_path":"/workspace/Rolling-Memory/admin/internal/rmconsole/roi_facts.go"}`, nowUnix-96))
+	lines = append(lines, adoptionRecallLines("call_ctx_2", "laya CPU performance",
+		"Base zero-shot score is 0.362 on ModernBERT-large.", nowUnix-59)...)
+	lines = append(lines, adoptionAssistantTextLine(
+		"Because laya uses ModernBERT-large with 0.362 base score, we should use intersection auditing.", nowUnix-56))
+	lines = append(lines, adoptionRecallLines("call_unadopted_3", "unrelated query token_xyz",
+		"Check internal/store/unused_file.go.", nowUnix-29)...)
+	lines = append(lines, adoptionAssistantTextLine("Mentioning only echoed token_xyz in reply.", nowUnix-26))
+	lines = append(lines, adoptionRecallLines("call_pending_4", "latest query",
+		"Check cmd/rmem/main.go.", nowUnix-4)...)
+	writeAdoptionJSONL(t, home, lines)
 
 	got := queryROIFacts(context.Background(), path, roiFactsRequest{Scope: "mem:self"})
 	if len(got.DailySeries) != 14 {

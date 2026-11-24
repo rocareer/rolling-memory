@@ -105,8 +105,8 @@ func recordRecallFact(memory *facade.Memory, presence *text.PresenceCoordinates,
 	writeFact()
 }
 
-// recallOutcome reads the receipt the tool already returned: absent or an empty
-// band set is an empty recall, anything else carries evidence back.
+// recallOutcome distinguishes delivered evidence from a certified absence.
+// A receipt with neither cannot establish a hit or a miss.
 func recallOutcome(structured any) string {
 	payload, ok := structured.(map[string]any)
 	if !ok {
@@ -115,10 +115,13 @@ func recallOutcome(structured any) string {
 	if absent, ok := payload["absent"].(bool); ok && absent {
 		return "empty"
 	}
-	if bands, ok := payload["bands"].([]map[string]any); ok && len(bands) == 0 {
-		return "empty"
+	if bands, ok := payload["bands"].([]map[string]any); ok && len(bands) > 0 {
+		return "hits"
 	}
-	return "hits"
+	if hits, ok := payload["hits"].([]any); ok && len(hits) > 0 {
+		return "hits"
+	}
+	return "unknown"
 }
 
 // recallHarness reads the host channel from presence coordinates

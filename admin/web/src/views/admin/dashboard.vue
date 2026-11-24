@@ -22,7 +22,7 @@
                             <span class="live-dot"></span>
                             <span>
                                 {{ rmData.engine_online ? $t('dashboard.engineOnline') : $t('dashboard.engineOffline') }}
-                                · v{{ rmData.version || '0.0.18' }} · Core v1.0.1
+                                · v{{ rmData.version || '0.0.19' }} · Core v1.0.1
                             </span>
                         </div>
                         <div class="meta-item meta-mode-switch" data-testid="dashboard-mode-switch">
@@ -257,7 +257,7 @@
             </div>
         </div>
 
-        <!-- ==================== 第二排：ROI 与记忆效能统计卡片行（今日计费净省 × 历史计费净省 × 四维采纳 × 静默防噪） ==================== -->
+        <!-- ==================== 第二排：ROI 与记忆效能统计卡片行（今日计费净省 × 历史计费净省 × 证据复用 × 静默防噪） ==================== -->
         <div v-if="efficacyUnavailable" class="roi-unavailable-banner">
             <Icon :size="14" name="lucide-info" />
             <span v-if="config.lang.active === 'en'">
@@ -1213,7 +1213,7 @@ interface VaultRoiSummary {
     adoption_rate_pct?: number
 }
 
-/** 事后采纳审计的窗口读数（1h/24h/7d/30d/all），随 dashboard payload 的 efficacy 节点下发。 */
+/** 事后证据复用审计的窗口读数（1h/24h/7d/30d/all），随 dashboard payload 的 efficacy 节点下发。 */
 interface AdoptionWindowRow {
     key: string
     audited_recalls: number
@@ -1729,12 +1729,13 @@ type KpiItem = {
     subTip: string
     icon: string
     spark: number[]
-    /** 该卡与事后采纳审计同源时指向 ROI 监控屏（点击整卡跳转）。 */
+    /** 该卡与事后证据复用审计同源时指向 ROI 监控屏（点击整卡跳转）。 */
     toRoi?: boolean
 }
 const kpiList = computed<KpiItem[]>(() => {
     const isEn = config.lang.active === 'en'
-    // 「有效命中」只代表证据已送达；真实有用率＝实质采纳率（事后采纳审计），
+    // 「有效命中」只代表证据已送达；下方「证据复用率」严格限于可观测证据：
+    // 已结算召回中，后续工具输入/回复与交付锚点匹配的比例，不代表因果节省。
     // 与 ROI 监控屏同源：全时段取自金库汇总，近 24 小时取自审计窗口。
     const adoptionAll = vaultRoi.value?.adoption_rate_pct
     const adoption24h = (efficacyData.value.adoption_windows || []).find((w) => w.key === '24h')?.adoption_rate_pct
@@ -1810,8 +1811,8 @@ const kpiList = computed<KpiItem[]>(() => {
             key: 'visit',
             title: t('dashboard.pageVisits'),
             tooltip: isEn
-                ? 'MCP `recall` queries and deliveries: total calls made by the agent, and calls that matched and delivered verified evidence. An "effective hit" only means evidence was delivered — not that it was actually used. See the adopted rate (post-hoc adoption audit) for real usefulness.'
-                : 'MCP `recall` 检索与交付：Agent 调取 `recall` 工具执行检索的总次数，以及命中底层记忆并交付证据的次数。有效命中只代表「证据已送达」，不等于「是否真的被用上」——真实有用率见本卡的实质采纳率（事后采纳审计）。',
+                ? 'MCP `recall` queries and deliveries: total calls made by the agent, and calls that matched and delivered verified evidence. An "effective hit" only means evidence was delivered. The evidence-reuse share below is strictly observational: among settled recalls, it is the share whose delivered anchors later appear in the agent\'s tool inputs or replies. Not observing a match does not mean the recall was useless, and a match does not prove a step was saved.'
+                : 'MCP `recall` 检索与交付：Agent 调取 `recall` 工具执行检索的总次数，以及命中底层记忆并交付证据的次数。有效命中只代表「证据已送达」；下方的证据复用率严格限于可观测证据：在已结算的召回中，交付锚点后来出现在 Agent 工具输入或回复里的比例。未观测到匹配不等于没有用，匹配也不证明省下一步。',
             value: `${rmData.total_hook_events.toLocaleString()} (${rmData.injected_events.toLocaleString()})`,
             valueTip: isEn
                 ? `Total MCP Recalls: ${rmData.total_hook_events} · Effective Hits Delivered: ${rmData.injected_events} (${rmData.inject_ratio}%)`
@@ -1821,13 +1822,13 @@ const kpiList = computed<KpiItem[]>(() => {
             kind: 'ratio',
             sub: adoptionKnown
                 ? isEn
-                    ? `Hit Rate · Adopted Rate ${adoptionAll}% (24h ${adoption24h}%)`
-                    : `有效命中率 · 实质采纳率 ${adoptionAll}%（24h ${adoption24h}%）`
+                    ? `Hit Rate · Evidence Reuse ${adoptionAll}% (24h ${adoption24h}%)`
+                    : `有效命中率 · 证据复用率 ${adoptionAll}%（24h ${adoption24h}%）`
                 : t('dashboard.kpiSubHooks'),
             subTip: adoptionKnown
                 ? isEn
-                    ? `Real usefulness (adopted · post-hoc adoption audit): all-time ${adoptionAll}% (${vaultRoi.value?.adopted_recalls ?? 0}/${vaultRoi.value?.audited_recalls ?? 0} settled; ${vaultRoi.value?.adopted_tool_count ?? 0} direct + ${vaultRoi.value?.adopted_context_count ?? 0} context) · last 24h ${adoption24h}%. Zero-model deterministic anchor-intersection audit over each recall's follow-up tool calls and replies; see ROI Monitor for details.`
-                    : `真实有用率（实质采纳 · 事后采纳审计）：全时段 ${adoptionAll}%（${vaultRoi.value?.adopted_recalls ?? 0}/${vaultRoi.value?.audited_recalls ?? 0} 次已结算；工具直达 ${vaultRoi.value?.adopted_tool_count ?? 0} + 事实采纳 ${vaultRoi.value?.adopted_context_count ?? 0}）· 近 24 小时 ${adoption24h}%。口径：对每次召回后的后续工具调用与回复做零模型确定性锚点交集审计；明细见 ROI 监控屏。`
+                    ? `Observable evidence reuse (post-hoc audit): all-time ${adoptionAll}% (${vaultRoi.value?.adopted_recalls ?? 0}/${vaultRoi.value?.audited_recalls ?? 0} settled; ${vaultRoi.value?.adopted_tool_count ?? 0} tool-input matches + ${vaultRoi.value?.adopted_context_count ?? 0} reply matches) · last 24h ${adoption24h}%. Zero-model deterministic anchor intersection between each recall's delivered evidence and its follow-up tool inputs/replies; a match is observational and does not prove a step was saved, and no match does not prove the recall was useless. See ROI Monitor for details.`
+                    : `可观察证据复用（事后审计）：全时段 ${adoptionAll}%（${vaultRoi.value?.adopted_recalls ?? 0}/${vaultRoi.value?.audited_recalls ?? 0} 次已结算；工具输入匹配 ${vaultRoi.value?.adopted_tool_count ?? 0} + 回复匹配 ${vaultRoi.value?.adopted_context_count ?? 0}）· 近 24 小时 ${adoption24h}%。口径：对每次召回交付的证据与其后续工具输入/回复做零模型确定性锚点交集；匹配只是可观察证据，不证明省下一步；未观测到匹配也不等于没有用。明细见 ROI 监控屏。`
                 : isEn
                   ? 'Effective Hit Rate = Recalls Returning Evidence / Total MCP Recall Calls'
                   : '有效命中率 = 命中并交付证据的次数 / MCP recall 检索总次数',

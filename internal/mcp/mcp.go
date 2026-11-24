@@ -650,9 +650,6 @@ func (s *Server) tryProxyToolCall(raw any) (any, bool) {
 	if _, err := recallRequest(arguments); err != nil {
 		return nil, false
 	}
-	if _, err := renderMaxChars(arguments, 16000); err != nil {
-		return nil, false
-	}
 	presence := resolveMCPPresence(nil, arguments, true)
 	return ForwardToolCallToUnixDaemon(object["id"], arguments, presence)
 }
@@ -784,6 +781,10 @@ func toolCall(requestID any, rawParams any, memory *facade.Memory, lazy *LazyMem
 	if name != "recall" {
 		return errorResponse(requestID, codeInvalidParams, "unknown tool: "+pyStr(params["name"]))
 	}
+	request, err := recallRequest(arguments)
+	if err != nil {
+		return toolError(requestID, err, debugOut)
+	}
 	active := memory
 	if active == nil {
 		if lazy == nil {
@@ -797,7 +798,8 @@ func toolCall(requestID any, rawParams any, memory *facade.Memory, lazy *LazyMem
 	}
 	presence := resolveMCPPresence(active, arguments, clientProcess)
 	recallStarted := time.Now()
-	structured, text, err := recallResponse(active, arguments, presence)
+	request.Presence = presence
+	structured, text, err := recallResponse(active, request)
 	elapsedMS := time.Since(recallStarted).Milliseconds()
 	if err != nil {
 		return toolError(requestID, err, debugOut)
@@ -832,11 +834,12 @@ func toolError(requestID any, err error, debugOut io.Writer) any {
 	})
 }
 
+const capsRetiredMessage = "caps is not supported; omit caps and send the cue"
+
 // recallRequest maps the tool arguments onto facade.RecallRequest.
 func recallRequest(arguments map[string]any) (facade.RecallRequest, error) {
-	caps := map[string]any{}
-	if typed, ok := arguments["caps"].(map[string]any); ok {
-		caps = typed
+	if _, present := arguments["caps"]; present {
+		return facade.RecallRequest{}, errors.New(capsRetiredMessage)
 	}
 	offset := 0
 	if pyTruthy(arguments["offset"]) {
@@ -845,16 +848,6 @@ func recallRequest(arguments map[string]any) (facade.RecallRequest, error) {
 			return facade.RecallRequest{}, err
 		}
 		offset = parsed
-	}
-	rawLimit := 10
-	if value := intOrNil(caps["raw"]); value != nil && *value != 0 {
-		rawLimit = *value
-	}
-	if rawLimit < 1 || rawLimit > 64 {
-		return facade.RecallRequest{}, fmt.Errorf("caps.raw must be between 1 and 64")
-	}
-	if bands := intOrNil(caps["bands"]); bands != nil && (*bands < 0 || *bands > 64) {
-		return facade.RecallRequest{}, fmt.Errorf("caps.bands must be between 0 and 64")
 	}
 	mode := "full"
 	if pyTruthy(arguments["mode"]) {
@@ -867,14 +860,11 @@ func recallRequest(arguments map[string]any) (facade.RecallRequest, error) {
 	scope := optionalText(arguments["scope"])
 	reader := optionalText(arguments["reader"])
 	deliveryWindow := strings.TrimSpace(textOrEmpty(arguments["delivery_window"]))
-	if deliveryWindow == "" {
-		deliveryWindow = strings.TrimSpace(textOrEmpty(caps["delivery_window"]))
-	}
 	if deliveryWindow != "" {
 		if _, _, ok := config.NormalizeDeliveryWindow(deliveryWindow, "0-16"); !ok {
 			return facade.RecallRequest{}, fmt.Errorf("delivery_window must be one of ('auto', '0-16', '0-32', '0-64')")
 		}
-	} else if caps["bands"] == nil && caps["raw"] == nil {
+	} else {
 		deliveryWindow = "auto"
 	}
 	return facade.RecallRequest{
@@ -882,28 +872,18 @@ func recallRequest(arguments map[string]any) (facade.RecallRequest, error) {
 		Scope:          scope,
 		Reader:         reader,
 		Mode:           mode,
-		CapsBands:      intOrNil(caps["bands"]),
-		CapsNodes:      intOrNil(caps["nodes"]),
-		CapsChars:      intOrNil(caps["chars"]),
 		DeliveryWindow: deliveryWindow,
 		Offset:         offset,
-		RawLimit:       rawLimit,
 	}, nil
 }
 
 // recallResponse assembles the probe/full payload and its text rendering.
-func recallResponse(memory *facade.Memory, arguments map[string]any, presence *text.PresenceCoordinates) (any, string, error) {
-	request, err := recallRequest(arguments)
-	if err != nil {
-		return nil, "", err
-	}
-	request.Presence = presence
+func recallResponse(memory *facade.Memory, request facade.RecallRequest) (any, string, error) {
 	result, err := memory.Recall(request)
 	if err != nil {
 		return nil, "", err
 	}
-	mode, _ := arguments["mode"].(string)
-	if mode == "probe" {
+	if request.Mode == "probe" {
 		structured := result.ToProbe()
 		text, err := ids.PyJSONDumpIndent(structured, false, true, 2)
 		if err != nil {
@@ -911,30 +891,12 @@ func recallResponse(memory *facade.Memory, arguments map[string]any, presence *t
 		}
 		return structured, text, nil
 	}
-	maxChars, err := renderMaxChars(arguments, memory.Config.Recall.Chars)
-	if err != nil {
-		return nil, "", err
+	maxChars := 0
+	if memory.Config != nil {
+		maxChars = memory.Config.Recall.Chars
 	}
 	text := result.Render(maxChars)
 	return result.ToDict(), text, nil
-}
-
-// renderMaxChars reads the render budget from the raw caps value:
-// a truthy non-object caps becomes isError.
-func renderMaxChars(arguments map[string]any, fallback int) (int, error) {
-	caps := map[string]any{}
-	if value := arguments["caps"]; pyTruthy(value) {
-		typed, ok := value.(map[string]any)
-		if !ok {
-			return 0, fmt.Errorf("'%s' object has no attribute 'get'", pyTypeName(value))
-		}
-		caps = typed
-	}
-	chars := caps["chars"]
-	if !pyTruthy(chars) {
-		return fallback, nil
-	}
-	return pyInt(chars)
 }
 
 // optionalText maps a slot the standard client may pass as a non-string value
@@ -946,17 +908,6 @@ func optionalText(value any) *string {
 	}
 	text := pyStr(value)
 	return &text
-}
-
-func intOrNil(value any) *int {
-	if value == nil {
-		return nil
-	}
-	parsed, err := pyInt(value)
-	if err != nil {
-		return nil
-	}
-	return &parsed
 }
 
 func resultResponse(requestID any, result any) map[string]any {

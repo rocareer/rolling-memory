@@ -33,7 +33,7 @@ func TestToolsListIsExactlyRecall(t *testing.T) {
 
 func TestToolDescriptionsCarryBehaviorGuidance(t *testing.T) {
 	description := stringField(recallTool, "description")
-	for _, marker := range []string{"zero model calls", "absent=true", "[<workspace>]", "exact literal tokens"} {
+	for _, marker := range []string{"zero model calls", "absent=true", "[<workspace>]", "exact literal tokens", "would change your next action", "inspect it directly"} {
 		if !strings.Contains(description, marker) {
 			t.Errorf("recall description is missing marker %q", marker)
 		}
@@ -43,8 +43,9 @@ func TestToolDescriptionsCarryBehaviorGuidance(t *testing.T) {
 func TestInstructionsCarryRecallDoctrine(t *testing.T) {
 	for _, marker := range []string{
 		"persistent memory",
-		"Task start (mandatory)",
-		"Task stuck (mandatory)",
+		"would change your next action",
+		"inspect it directly",
+		"nothing new",
 		"How to write `cue`",
 		"[<workspace>]",
 		"call recall",

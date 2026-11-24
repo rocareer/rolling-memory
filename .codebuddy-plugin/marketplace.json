@@ -10,7 +10,7 @@
       "name": "rolling-memory",
       "description": "Rolling Memory 记忆插件（单工具 recall · 回忆即记忆 + 后台自动同步）",
       "description_en": "Rolling Memory plugin (single tool `recall` + automatic background/episodic sync)",
-      "version": "0.0.18",
+      "version": "0.0.19",
       "source": ".",
       "category": "development",
       "license": "PolyForm-Noncommercial-1.0.0"

@@ -108,7 +108,8 @@ func TestRecallDeliveryReportsUpstreamTextTruncation(t *testing.T) {
 	if err := client.Vault.SaveLocalPlaintext("ep_long", testNow, text, nil, localvault.IngestResponse{Layer: localvault.LayerEpisodic}); err != nil {
 		t.Fatal(err)
 	}
-	responses := runSession(t, memory, toolCallMessage(1, "recall", map[string]any{"cue": "quartz nebula evidence", "mode": "full", "caps": map[string]any{"chars": 1000}}))
+	memory.Config.Recall.Chars = 1000
+	responses := runSession(t, memory, toolCallMessage(1, "recall", map[string]any{"cue": "quartz nebula evidence", "mode": "full"}))
 	if len(responses) != 1 || isError(t, responses[0]) {
 		t.Fatalf("unexpected response: %#v", responses)
 	}

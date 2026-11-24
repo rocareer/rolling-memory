@@ -18,7 +18,7 @@ Because the engine evolves quickly, APIs, file formats and behaviors may change 
 - Protect sensitive data in local storage, backups, and any data shared with external services.
 - Every memory unit must have a verbatim anchor. Do not add a “fill in the anchor” path.
 - Writes are append-only. Do not add a code path that edits the content of an existing unit.
-- Read paths must stay deterministic for the same DB/scope/cue/asof/caps.
+- Read paths must stay deterministic for the same vault, scope, cue, point in time and delivery settings.
 - `absent` must stay a first-class state, distinct from errors.
 
 ## Development

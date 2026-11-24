@@ -54,13 +54,12 @@ The server opens SQLite lazily on the first `tools/call` so `initialize` and `to
 | `scope` | string | Override default memory scope |
 | `reader` | `owner` \| `deliverable` | Defaults to `deliverable`; historical audience restrictions may not be enforced across all sources. Review results before sharing. |
 | `mode` | `full` \| `probe` \| `recent` | `full` returns subject bands with ranked evidence; `probe` returns a compact existence receipt (summaries truncated to 160 chars); `recent` lists the newest entries in pure time order (no semantic matching; `cue` is ignored) |
-| `delivery_window` | `auto` \| `0-16` \| `0-32` \| `0-64` | **Smart Adaptive Delivery Window** (default `auto` uses the console setting, `0-16` by default): delivers `0` to `N` memories within the natural physical information energy envelope $E(u_k) \ge E(u_1)/e$ with no minimum floor. Omit or pass `auto` for normal turns; pass `0-32` (balanced span) or `0-64` (deep synthesis) only for cross-session history audits or broad multi-event synthesis. (In benchmark evaluations, ATM-Bench defaults to `0-64` and LoCoMo defaults to `0-96`.) |
-| `caps` | object | `{delivery_window, bands, nodes, chars, raw}` delivery budget overrides: band count, total nodes, character budget, and raw-hit cap. |
+| `delivery_window` | `auto` \| `0-16` \| `0-32` \| `0-64` | Optional breadth of the search results, not the length of an excerpt. Omit for normal queries; use a wider window when comparing several past events. |
 | `offset` | int | Band pagination offset |
 
 ### 2.2 Full Receipt & Real-Time `Noetic` Crystallization
 
-In full mode, the tool returns a budget-capped `<rolling-memory-recall ...>` block ready for context injection.
+For a normal lookup, send just the cue, for example `{"cue":"[calendar] shared rota Friday handover decision"}`. Full mode returns source excerpts in a `<rolling-memory-recall ...>` block. The local delivery limit still applies. A truncation notice means the excerpt is incomplete: verify the cited source before relying on a missing condition or exception. The offset selects other results, not the next characters of the same excerpt.
 
 Key fields:
 - `absent`: no matching memory found. **This is not an error** (`isError = false`); state "no record" and continue.

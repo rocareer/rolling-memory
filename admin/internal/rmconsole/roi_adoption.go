@@ -39,6 +39,10 @@ type followupCorpusPair struct {
 	replyCorpus string
 	delivered   string
 	cue         string
+	// incomplete marks a trusted host window whose follow-up observation has not
+	// closed yet (no later recall and the ten-minute time boundary is still open).
+	// An incomplete window may confirm adoption, but must never settle as unused.
+	incomplete bool
 }
 
 // byteShannonInfoMass computes the continuous byte-level Shannon information mass
@@ -436,20 +440,22 @@ type vaultDocFollowupRow struct {
 	locus      string
 	text       string
 	isTool     bool
-	jsonlPath  string
 }
 
 type jsonlRecallWindow struct {
-	harnessID   string
-	sessionKey  string
-	callID      string
-	timestampMS int64
-	cue         string
-	delivered   string
-	toolCorpus  string
-	replyCorpus string
-	outputBytes int64
-	isError     bool
+	harnessID         string
+	sessionKey        string
+	sourcePath        string
+	callID            string
+	timestampMS       int64
+	timestampReliable bool
+	confirmedAtMS     int64
+	cue               string
+	delivered         string
+	toolCorpus        string
+	replyCorpus       string
+	outputBytes       int64
+	isError           bool
 }
 
 type jsonlParseCacheEntry struct {
@@ -615,6 +621,67 @@ func extractTextFromContentBlocks(raw any) string {
 	return ""
 }
 
+// isReasoningOrToolContentType reports whether a transcript content block is a
+// model-internal reasoning trace or a tool envelope rather than assistant body.
+// Adoption evidence only ever consumes assistant body text, never the model's
+// reasoning and never a tool return.
+func isReasoningOrToolContentType(raw string) bool {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "thinking", "reasoning", "reasoning_text", "analysis", "summary_text",
+		"tool", "tool_use", "tool_call", "tool_result", "function_call", "function_call_output":
+		return true
+	}
+	return false
+}
+
+// extractAssistantBodyFromContentBlocks extracts only assistant-visible body text
+// from a transcript content value, dropping reasoning/thinking blocks and tool
+// envelopes. It is deliberately narrower than extractTextFromContentBlocks, which
+// is also used for recall output and tool results.
+func extractAssistantBodyFromContentBlocks(raw any) string {
+	switch v := raw.(type) {
+	case string:
+		return strings.TrimSpace(v)
+	case []any:
+		var parts []string
+		for _, elem := range v {
+			switch item := elem.(type) {
+			case string:
+				if strings.TrimSpace(item) != "" {
+					parts = append(parts, strings.TrimSpace(item))
+				}
+			case map[string]any:
+				bType, _ := item["type"].(string)
+				if isReasoningOrToolContentType(bType) {
+					continue
+				}
+				txt, _ := item["text"].(string)
+				if strings.TrimSpace(txt) == "" {
+					txt, _ = item["content"].(string)
+				}
+				if strings.TrimSpace(txt) != "" {
+					parts = append(parts, strings.TrimSpace(txt))
+				}
+			}
+		}
+		return strings.Join(parts, "\n")
+	case map[string]any:
+		bType, _ := v["type"].(string)
+		if isReasoningOrToolContentType(bType) {
+			return ""
+		}
+		if c, ok := v["content"]; ok {
+			if s := extractAssistantBodyFromContentBlocks(c); s != "" {
+				return s
+			}
+		}
+		if s, ok := v["text"].(string); ok && strings.TrimSpace(s) != "" {
+			return strings.TrimSpace(s)
+		}
+	}
+	return ""
+}
+
 // parseJSONLRecallWindows parses a single harness JSONL session transcript and extracts all
 // recall tool invocations along with their delivered output and subsequent tool/reply corpora:
 //   - Family A (Claude Code / WorkBuddy / CodeBuddy / Cursor / Windsurf / Cline):
@@ -661,23 +728,14 @@ func parseJSONLRecallWindows(path string) []jsonlRecallWindow {
 	callIdxByID := make(map[string]int, 8)
 	activeIdx := -1
 
-	ensureRecallCall := func(callID, cue, delivered string, tsMS int64, isErr bool) int {
+	ensureRecallCall := func(callID, cue string, tsMS int64) int {
 		cid := strings.TrimSpace(callID)
+		reliableTS := tsMS > 0 && tsMS != defaultTS
 		if cid != "" {
 			if idx, exists := callIdxByID[cid]; exists {
 				pw := windows[idx]
 				if pw.win.cue == "" && cue != "" {
 					pw.win.cue = cue
-				}
-				if pw.win.delivered == "" && delivered != "" {
-					pw.win.delivered = delivered
-					pw.win.outputBytes = int64(len(delivered))
-				}
-				if tsMS > 0 && pw.win.timestampMS == defaultTS {
-					pw.win.timestampMS = tsMS
-				}
-				if isErr {
-					pw.win.isError = true
 				}
 				activeIdx = idx
 				return idx
@@ -687,14 +745,13 @@ func parseJSONLRecallWindows(path string) []jsonlRecallWindow {
 		}
 		pw := &pendingWindow{
 			win: jsonlRecallWindow{
-				harnessID:   harnessID,
-				sessionKey:  sessionKey,
-				callID:      cid,
-				timestampMS: tsMS,
-				cue:         cue,
-				delivered:   delivered,
-				outputBytes: int64(len(delivered)),
-				isError:     isErr,
+				harnessID:         harnessID,
+				sessionKey:        sessionKey,
+				sourcePath:        cleanPath,
+				callID:            cid,
+				timestampMS:       tsMS,
+				timestampReliable: reliableTS,
+				cue:               cue,
 			},
 		}
 		idx := len(windows)
@@ -702,6 +759,55 @@ func parseJSONLRecallWindows(path string) []jsonlRecallWindow {
 		callIdxByID[cid] = idx
 		activeIdx = idx
 		return idx
+	}
+
+	// confirmRecallWindow records the recall's tool receipt. Follow-up evidence is
+	// only consumed after this point and only when both the receipt and the
+	// evidence carry real (non-fallback) timestamps.
+	confirmRecallWindow := func(idx int, delivered string, tsMS int64, isErr bool) {
+		if idx < 0 || idx >= len(windows) {
+			return
+		}
+		pw := windows[idx]
+		if delivered != "" {
+			pw.win.delivered = delivered
+			pw.win.outputBytes = int64(len(delivered))
+		}
+		if isErr {
+			pw.win.isError = true
+		}
+		if tsMS > 0 && tsMS != defaultTS && (pw.win.confirmedAtMS == 0 || tsMS < pw.win.confirmedAtMS) {
+			pw.win.confirmedAtMS = tsMS
+		}
+	}
+	evidenceAfterReceipt := func(idx int, tsMS int64) bool {
+		if idx < 0 || idx >= len(windows) {
+			return false
+		}
+		pw := windows[idx]
+		if pw.win.confirmedAtMS <= 0 || pw.win.timestampMS <= 0 || !pw.win.timestampReliable {
+			return false
+		}
+		if tsMS <= 0 || tsMS == defaultTS || tsMS < pw.win.confirmedAtMS {
+			return false
+		}
+		return tsMS <= pw.win.timestampMS+int64(600*time.Second/time.Millisecond)
+	}
+	appendToolEvidence := func(idx int, argStr string, tsMS int64) {
+		argStr = strings.TrimSpace(argStr)
+		if argStr == "" || !evidenceAfterReceipt(idx, tsMS) {
+			return
+		}
+		windows[idx].toolBuf.WriteString(argStr)
+		windows[idx].toolBuf.WriteByte('\n')
+	}
+	appendReplyEvidence := func(idx int, txt string, tsMS int64) {
+		txt = strings.TrimSpace(txt)
+		if txt == "" || !evidenceAfterReceipt(idx, tsMS) {
+			return
+		}
+		windows[idx].replyBuf.WriteString(txt)
+		windows[idx].replyBuf.WriteByte('\n')
 	}
 
 	scanLinesResilient(f, 4*1024*1024, func(rawLine string) {
@@ -733,13 +839,10 @@ func parseJSONLRecallWindows(path string) []jsonlRecallWindow {
 							deliv = extractTextFromContentBlocks(res["content"])
 						}
 						status, _ := item["status"].(string)
-						ensureRecallCall(callID, cue, deliv, tsMS, status == "failed" || status == "error")
+						idx := ensureRecallCall(callID, cue, tsMS)
+						confirmRecallWindow(idx, deliv, tsMS, status == "failed" || status == "error")
 					} else if itemType == "McpToolCall" && activeIdx >= 0 {
-						argStr := stringifyToolArguments(item["arguments"])
-						if argStr != "" {
-							windows[activeIdx].toolBuf.WriteString(argStr)
-							windows[activeIdx].toolBuf.WriteByte('\n')
-						}
+						appendToolEvidence(activeIdx, stringifyToolArguments(item["arguments"]), tsMS)
 					}
 				}
 			}
@@ -761,36 +864,22 @@ func parseJSONLRecallWindows(path string) []jsonlRecallWindow {
 					}
 					if isRecallToolName(name, ns, "") {
 						cue := extractCueFromArguments(payload["arguments"])
-						ensureRecallCall(callID, cue, "", tsMS, false)
+						ensureRecallCall(callID, cue, tsMS)
 					} else if activeIdx >= 0 {
-						argStr := stringifyToolArguments(payload["arguments"])
-						if argStr != "" {
-							windows[activeIdx].toolBuf.WriteString(argStr)
-							windows[activeIdx].toolBuf.WriteByte('\n')
-						}
+						appendToolEvidence(activeIdx, stringifyToolArguments(payload["arguments"]), tsMS)
 					}
 					return
 				case "function_call_output":
 					callID, _ := payload["call_id"].(string)
 					outTxt := extractTextFromContentBlocks(payload["output"])
 					if idx, ok := callIdxByID[strings.TrimSpace(callID)]; ok {
-						if outTxt != "" {
-							windows[idx].win.delivered = outTxt
-							windows[idx].win.outputBytes = int64(len(outTxt))
-						}
-					} else if strings.Contains(outTxt, "<rolling-memory-recall") && activeIdx >= 0 && windows[activeIdx].win.delivered == "" {
-						windows[activeIdx].win.delivered = outTxt
-						windows[activeIdx].win.outputBytes = int64(len(outTxt))
+						confirmRecallWindow(idx, outTxt, tsMS, false)
 					}
 					return
 				case "message":
 					role, _ := payload["role"].(string)
 					if strings.EqualFold(role, "assistant") && activeIdx >= 0 {
-						txt := extractTextFromContentBlocks(payload["content"])
-						if txt != "" {
-							windows[activeIdx].replyBuf.WriteString(txt)
-							windows[activeIdx].replyBuf.WriteByte('\n')
-						}
+						appendReplyEvidence(activeIdx, extractAssistantBodyFromContentBlocks(payload["content"]), tsMS)
 					}
 					return
 				}
@@ -810,9 +899,8 @@ func parseJSONLRecallWindows(path string) []jsonlRecallWindow {
 
 		switch content := msg["content"].(type) {
 		case string:
-			if (role == "assistant" || role == "ai" || role == "agent") && activeIdx >= 0 && strings.TrimSpace(content) != "" {
-				windows[activeIdx].replyBuf.WriteString(strings.TrimSpace(content))
-				windows[activeIdx].replyBuf.WriteByte('\n')
+			if role == "assistant" || role == "ai" || role == "agent" {
+				appendReplyEvidence(activeIdx, content, tsMS)
 			}
 		case []any:
 			for _, rawBlock := range content {
@@ -839,13 +927,9 @@ func parseJSONLRecallWindows(path string) []jsonlRecallWindow {
 					}
 					if isRecallToolName(tName, "", "") || isRecallToolName(wrappedName, "", "") {
 						cue := extractCueFromArguments(wrappedInput)
-						ensureRecallCall(callID, cue, "", tsMS, false)
+						ensureRecallCall(callID, cue, tsMS)
 					} else if activeIdx >= 0 {
-						argStr := stringifyToolArguments(wrappedInput)
-						if argStr != "" {
-							windows[activeIdx].toolBuf.WriteString(argStr)
-							windows[activeIdx].toolBuf.WriteByte('\n')
-						}
+						appendToolEvidence(activeIdx, stringifyToolArguments(wrappedInput), tsMS)
 					}
 				case "tool_result":
 					tuID, _ := block["tool_use_id"].(string)
@@ -858,31 +942,11 @@ func parseJSONLRecallWindows(path string) []jsonlRecallWindow {
 					}
 					isErr, _ := block["is_error"].(bool)
 					if idx, ok := callIdxByID[strings.TrimSpace(tuID)]; ok {
-						if outTxt != "" {
-							windows[idx].win.delivered = outTxt
-							windows[idx].win.outputBytes = int64(len(outTxt))
-						}
-						if isErr {
-							windows[idx].win.isError = true
-						}
-					} else if strings.Contains(outTxt, "<rolling-memory-recall") {
-						if activeIdx >= 0 && windows[activeIdx].win.delivered == "" {
-							windows[activeIdx].win.delivered = outTxt
-							windows[activeIdx].win.outputBytes = int64(len(outTxt))
-						} else {
-							ensureRecallCall(tuID, "", outTxt, tsMS, isErr)
-						}
+						confirmRecallWindow(idx, outTxt, tsMS, isErr)
 					}
-				case "text", "output_text", "thinking", "reasoning":
-					if (role == "assistant" || role == "ai" || role == "agent") && activeIdx >= 0 {
-						txt, _ := block["text"].(string)
-						if txt == "" {
-							txt, _ = block["thinking"].(string)
-						}
-						if strings.TrimSpace(txt) != "" {
-							windows[activeIdx].replyBuf.WriteString(strings.TrimSpace(txt))
-							windows[activeIdx].replyBuf.WriteByte('\n')
-						}
+				case "text", "output_text":
+					if role == "assistant" || role == "ai" || role == "agent" {
+						appendReplyEvidence(activeIdx, extractAssistantBodyFromContentBlocks(block), tsMS)
 					}
 				}
 			}
@@ -1016,23 +1080,8 @@ func discoverMultiHarnessJSONLFiles(home string, minUnixSec int64, extraPaths []
 	return out
 }
 
-func extractJSONLPathFromPointer(raw string) string {
-	const prefix = "@ref:jsonl:"
-	trimmed := strings.TrimSpace(raw)
-	if !strings.HasPrefix(trimmed, prefix) {
-		return ""
-	}
-	rest := strings.TrimPrefix(trimmed, prefix)
-	if lastColon := strings.LastIndex(rest, ":"); lastColon > 0 {
-		return strings.TrimSpace(rest[:lastColon])
-	}
-	return ""
-}
-
-// loadMultiHarnessJSONLFollowupCorpora scans JSONL session transcripts across Claude Code,
-// Codex, WorkBuddy, CodeBuddy, DSH, Cursor/Windsurf/Cline, and any @ref:jsonl: pointers referenced
-// by the vault, matching each L3 Noetic event by exact cue or timestamp proximity.
-func loadMultiHarnessJSONLFollowupCorpora(home, memoryPath string, events []roiNoeticEvent, extraJSONLPaths []string) map[string]followupCorpusPair {
+// Pair only events in this batch, checking competing claims against the whole stream.
+func loadMultiHarnessJSONLFollowupCorpora(home, memoryPath string, events, stream []roiNoeticEvent) map[string]followupCorpusPair {
 	out := make(map[string]followupCorpusPair)
 	if len(events) == 0 {
 		return out
@@ -1051,7 +1100,7 @@ func loadMultiHarnessJSONLFollowupCorpora(home, memoryPath string, events []roiN
 			scanHome = home
 		}
 	}
-	files := discoverMultiHarnessJSONLFiles(scanHome, minSec, extraJSONLPaths)
+	files := discoverMultiHarnessJSONLFiles(scanHome, minSec, nil)
 	if len(files) == 0 {
 		return out
 	}
@@ -1066,52 +1115,93 @@ func loadMultiHarnessJSONLFollowupCorpora(home, memoryPath string, events []roiN
 	if len(allWins) == 0 {
 		return out
 	}
+	nowMS := time.Now().UnixMilli()
 
-	usedWin := make(map[int]bool, len(allWins))
+	windowsByCue := make(map[string][]int, len(events))
 	for _, ev := range events {
-		evCue := strings.ToLower(strings.TrimSpace(ev.QueryText))
-		evMS := ev.OccurredAt * 1000
-		bestIdx := -1
-		bestScore := -1
-
-		for idx, w := range allWins {
-			if usedWin[idx] {
-				continue
-			}
-			wCue := strings.ToLower(strings.TrimSpace(w.cue))
-			cueMatch := evCue != "" && wCue != "" && (wCue == evCue || strings.Contains(wCue, evCue) || strings.Contains(evCue, wCue))
-			diffMS := w.timestampMS - evMS
-			if diffMS < 0 {
-				diffMS = -diffMS
-			}
-			timeClose := evMS > 0 && w.timestampMS > 0 && diffMS <= 30000
-
-			score := -1
-			if cueMatch && timeClose {
-				score = 100000 - int(diffMS)
-			} else if cueMatch && (diffMS <= 600000 || w.timestampMS == 0) {
-				score = 50000
-			} else if timeClose && wCue == "" {
-				score = 20000 - int(diffMS)
-			}
-			if score > bestScore {
-				bestScore = score
-				bestIdx = idx
-			}
+		if cue := strings.TrimSpace(ev.QueryText); cue != "" {
+			windowsByCue[cue] = nil
 		}
-		if bestIdx >= 0 {
-			usedWin[bestIdx] = true
-			w := allWins[bestIdx]
-			out[ev.NoeticID] = followupCorpusPair{
-				harnessID:   w.harnessID,
-				toolCorpus:  w.toolCorpus,
-				replyCorpus: w.replyCorpus,
-				delivered:   w.delivered,
-				cue:         w.cue,
-			}
+	}
+	for idx, w := range allWins {
+		cue := strings.TrimSpace(w.cue)
+		if _, wanted := windowsByCue[cue]; wanted && !w.isError && w.timestampReliable && w.confirmedAtMS > 0 && strings.TrimSpace(w.delivered) != "" {
+			windowsByCue[cue] = append(windowsByCue[cue], idx)
+		}
+	}
+	for _, indices := range windowsByCue {
+		sort.Slice(indices, func(i, j int) bool { return allWins[indices[i]].timestampMS < allWins[indices[j]].timestampMS })
+	}
+	// Count competing events even when they are outside the batch or have
+	// several candidate windows of their own. Only a mutual singleton pairs.
+	const toleranceMS = int64(30 * time.Second / time.Millisecond)
+	claims := make(map[int]int)
+	singletons := make(map[string]int)
+	for _, ev := range stream {
+		indices := windowsByCue[strings.TrimSpace(ev.QueryText)]
+		if ev.OccurredAt <= 0 || len(indices) == 0 {
+			continue
+		}
+		at := ev.OccurredAt * 1000
+		lo := sort.Search(len(indices), func(i int) bool { return allWins[indices[i]].timestampMS >= at-toleranceMS })
+		hi := sort.Search(len(indices), func(i int) bool { return allWins[indices[i]].timestampMS > at+toleranceMS })
+		for _, idx := range indices[lo:hi] {
+			claims[idx]++
+		}
+		if hi-lo == 1 {
+			singletons[ev.NoeticID] = indices[lo]
+		}
+	}
+	for _, ev := range events {
+		idx, ok := singletons[ev.NoeticID]
+		if !ok || claims[idx] != 1 {
+			continue
+		}
+		w := allWins[idx]
+		out[ev.NoeticID] = followupCorpusPair{
+			harnessID:   w.harnessID,
+			toolCorpus:  w.toolCorpus,
+			replyCorpus: w.replyCorpus,
+			delivered:   w.delivered,
+			cue:         w.cue,
+			incomplete:  jsonlFollowupWindowStillOpen(allWins, idx, nowMS),
 		}
 	}
 	return out
+}
+
+// jsonlFollowupWindowStillOpen reports whether a recall window has neither a
+// later recall nor a ten-minute time boundary recorded yet. Such a window may
+// confirm adoption from evidence already observed, but it cannot prove the
+// delivered anchors were unused.
+func jsonlFollowupWindowStillOpen(windows []jsonlRecallWindow, idx int, nowMS int64) bool {
+	if idx < 0 || idx >= len(windows) {
+		return false
+	}
+	w := windows[idx]
+	if !w.timestampReliable || w.timestampMS <= 0 {
+		return false
+	}
+	windowEnd := w.timestampMS + int64(600*time.Second/time.Millisecond)
+	if nowMS >= windowEnd {
+		return false
+	}
+	for j, other := range windows {
+		if j == idx || other.timestampMS <= w.timestampMS {
+			continue
+		}
+		sameSession := other.sessionKey == w.sessionKey
+		if w.sourcePath != "" && other.sourcePath != "" {
+			sameSession = other.sourcePath == w.sourcePath
+		}
+		if !sameSession {
+			continue
+		}
+		if other.timestampMS <= windowEnd {
+			return false
+		}
+	}
+	return true
 }
 
 // syncMultiHarnessJSONLRecallLedger imports recall tool invocations from JSONL
@@ -1162,7 +1252,10 @@ func syncMultiHarnessJSONLRecallLedger(home, fp string, ldb *sql.DB) {
 	_ = tx.Commit()
 }
 
-// loadVaultFollowupDocs loads inline and verified episodic documents for adoption auditing.
+// loadVaultFollowupDocs loads inline and verified episodic documents for pointer
+// hydration verification. The adoption audit no longer consumes these rows as
+// follow-up evidence: only a paired transcript window may supply tool/reply
+// corpora, so arbitrary vault text is never promoted into an adoption verdict.
 // Pointer paths are not used to open additional transcripts.
 func loadVaultFollowupDocs(ctx context.Context, db *sql.DB, home, memoryPath string, minOccurredAt int64) ([]vaultDocFollowupRow, []string) {
 	if db == nil {
@@ -1376,6 +1469,27 @@ func savePersistedNoeticAdoption(memoryPath string, entries map[string]settledNo
 	_ = tx.Commit()
 }
 
+const adoptionAuditBatchLimit = 100
+
+// selectAdoptionAuditEvents prioritizes events whose ten-minute observation
+// window has already closed. A stream of fresh pending recalls otherwise fills
+// the whole batch and starves older settleable events behind it.
+func selectAdoptionAuditEvents(settleable, recent []roiNoeticEvent, limit int) []roiNoeticEvent {
+	if limit <= 0 {
+		return nil
+	}
+	out := make([]roiNoeticEvent, 0, limit)
+	for _, group := range [][]roiNoeticEvent{settleable, recent} {
+		for _, ev := range group {
+			if len(out) >= limit {
+				return out
+			}
+			out = append(out, ev)
+		}
+	}
+	return out
+}
+
 // auditNoeticStreamAdoption populates AdoptionOutcome, MatchedAnchors, and EchoExcludedCount
 // on each roiNoeticEvent in stream and returns the aggregated summary.
 func auditNoeticStreamAdoption(ctx context.Context, db *sql.DB, home, memoryPath string, stream []roiNoeticEvent) roiAdoptionAuditSummary {
@@ -1387,8 +1501,7 @@ func auditNoeticStreamAdoption(ctx context.Context, db *sql.DB, home, memoryPath
 	loadPersistedNoeticAdoption(memoryPath)
 	nowUnix := time.Now().Unix()
 	cleanMemPath := filepath.Clean(strings.TrimSpace(memoryPath))
-	var uncachedEvents []roiNoeticEvent
-	inBatch := make(map[string]bool, 100)
+	var settleableEvents, recentEvents []roiNoeticEvent
 	cachedByID := make(map[string]settledNoeticAdoptionEntry, len(stream))
 
 	settledNoeticAdoptionMu.Lock()
@@ -1396,25 +1509,23 @@ func auditNoeticStreamAdoption(ctx context.Context, db *sql.DB, home, memoryPath
 		key := cleanMemPath + "\x00" + stream[i].NoeticID
 		if entry, ok := settledNoeticAdoptionCache[key]; ok {
 			cachedByID[stream[i].NoeticID] = entry
-		} else if len(uncachedEvents) < 100 {
-			uncachedEvents = append(uncachedEvents, stream[i])
-			inBatch[stream[i].NoeticID] = true
+		} else if stream[i].OccurredAt > 0 && nowUnix-stream[i].OccurredAt > 600 {
+			settleableEvents = append(settleableEvents, stream[i])
+		} else {
+			recentEvents = append(recentEvents, stream[i])
 		}
 	}
 	settledNoeticAdoptionMu.Unlock()
 
-	var vaultDocs []vaultDocFollowupRow
+	uncachedEvents := selectAdoptionAuditEvents(settleableEvents, recentEvents, adoptionAuditBatchLimit)
+	inBatch := make(map[string]bool, len(uncachedEvents))
+	for _, ev := range uncachedEvents {
+		inBatch[ev.NoeticID] = true
+	}
+
 	var jsonlMap map[string]followupCorpusPair
 	if len(uncachedEvents) > 0 {
-		minOcc := uncachedEvents[len(uncachedEvents)-1].OccurredAt
-		for i := range uncachedEvents {
-			if uncachedEvents[i].OccurredAt > 0 && (minOcc == 0 || uncachedEvents[i].OccurredAt < minOcc) {
-				minOcc = uncachedEvents[i].OccurredAt
-			}
-		}
-		var extraJSONLPaths []string
-		vaultDocs, extraJSONLPaths = loadVaultFollowupDocs(ctx, db, home, memoryPath, minOcc)
-		jsonlMap = loadMultiHarnessJSONLFollowupCorpora(home, memoryPath, uncachedEvents, extraJSONLPaths)
+		jsonlMap = loadMultiHarnessJSONLFollowupCorpora(home, memoryPath, uncachedEvents, stream)
 	}
 
 	newSettled := make(map[string]settledNoeticAdoptionEntry, len(uncachedEvents))
@@ -1431,114 +1542,46 @@ func auditNoeticStreamAdoption(ctx context.Context, db *sql.DB, home, memoryPath
 			ev.AdoptionOutcome = "pending"
 			ev.MatchedAnchors = []string{}
 		} else {
-			citedSet := make(map[string]bool, len(ev.CitedUnitIDs))
-			for _, uid := range ev.CitedUnitIDs {
-				citedSet[strings.TrimSpace(uid)] = true
-			}
-
-			// Build full delivered text from AnswerText + CitedSentences + CitedUnits.
-			var delivBuf strings.Builder
-			if ev.AnswerText != "" {
-				delivBuf.WriteString(ev.AnswerText)
-				delivBuf.WriteByte('\n')
-			}
-			for _, s := range ev.CitedSentences {
-				delivBuf.WriteString(s)
-				delivBuf.WriteByte('\n')
-			}
-			for _, cu := range ev.CitedUnits {
-				if cu.FullText != "" && !strings.HasPrefix(cu.FullText, "@ref:") {
-					delivBuf.WriteString(cu.FullText)
-					delivBuf.WriteByte('\n')
-				} else if cu.StoredText != "" && !strings.HasPrefix(cu.StoredText, "@ref:") {
-					delivBuf.WriteString(cu.StoredText)
-					delivBuf.WriteByte('\n')
-				}
-			}
-
-			var toolBuf, replyBuf strings.Builder
-			queryCue := ev.QueryText
-			inferredHarness := ""
 			if jPair, hasJSONLSession := jsonlMap[ev.NoeticID]; hasJSONLSession {
-				inferredHarness = jPair.harnessID
-				if jPair.delivered != "" {
-					delivBuf.WriteString(jPair.delivered)
-					delivBuf.WriteByte('\n')
-				}
+				// A paired transcript window supplies both the real delivered output and
+				// the subsequent same-session tool parameters / assistant body. The
+				// confirmed delivery is authoritative; crystallized text is not spliced
+				// into it, so anchors that the recall never returned cannot be charged.
+				queryCue := ev.QueryText
 				if jPair.cue != "" && queryCue == "" {
 					queryCue = jPair.cue
 				}
-				if jPair.toolCorpus != "" {
-					toolBuf.WriteString(jPair.toolCorpus)
-					toolBuf.WriteByte('\n')
+				if strings.TrimSpace(jPair.delivered) == "" {
+					ev.AdoptionOutcome = "pending"
+					ev.MatchedAnchors = []string{}
+					ev.EchoExcludedCount = 0
+				} else {
+					outcome, matched, echoCnt := evaluateSingleRecallAdoption(
+						jPair.delivered,
+						queryCue,
+						ev.CitedUnitIDs,
+						jPair.toolCorpus,
+						jPair.replyCorpus,
+					)
+					// An open observation window can confirm adoption from evidence already
+					// present, but cannot prove that delivered anchors went unused.
+					if outcome == "unadopted" && jPair.incomplete {
+						outcome, matched = "pending", []string{}
+					}
+					ev.AdoptionOutcome = outcome
+					ev.MatchedAnchors = matched
+					ev.EchoExcludedCount = echoCnt
 				}
-				if jPair.replyCorpus != "" {
-					replyBuf.WriteString(jPair.replyCorpus)
-					replyBuf.WriteByte('\n')
+				if (ev.AssistantID == "" || ev.AssistantID == "default") && jPair.harnessID != "" {
+					ev.AssistantID = jPair.harnessID
 				}
 			} else {
-				for _, cu := range ev.CitedUnits {
-					if strings.HasPrefix(cu.StoredText, "@ref:zcode:") {
-						inferredHarness = "zcode"
-						break
-					}
-					if strings.HasPrefix(cu.StoredText, "@ref:opencode:") {
-						inferredHarness = "opencode"
-						break
-					}
-					if jp := extractJSONLPathFromPointer(cu.StoredText); jp != "" {
-						inferredHarness = inferHarnessIDFromJSONLPath(jp)
-						break
-					}
-				}
-				// Bound the vault doc window to [ev.OccurredAt, nextRecallOccurredAt] (up to +600s)
-				// for every harness and isolated unit-test databases.
-				nextOcc := ev.OccurredAt + 600
-				if i > 0 && stream[i-1].OccurredAt > ev.OccurredAt && stream[i-1].OccurredAt < nextOcc {
-					nextOcc = stream[i-1].OccurredAt
-				}
-				evLocus := ""
-				for _, cu := range ev.CitedUnits {
-					if strings.TrimSpace(cu.Locus) != "" {
-						evLocus = strings.TrimSpace(cu.Locus)
-						break
-					}
-				}
-				for _, vd := range vaultDocs {
-					if citedSet[vd.docID] {
-						continue
-					}
-					if vd.occurredAt < ev.OccurredAt {
-						continue
-					}
-					if ev.OccurredAt > 0 && vd.occurredAt > nextOcc {
-						break
-					}
-					if evLocus != "" && vd.locus != "" && !strings.EqualFold(evLocus, vd.locus) {
-						continue
-					}
-					if vd.isTool {
-						toolBuf.WriteString(vd.text)
-						toolBuf.WriteByte('\n')
-					} else {
-						replyBuf.WriteString(vd.text)
-						replyBuf.WriteByte('\n')
-					}
-				}
-			}
-
-			outcome, matched, echoCnt := evaluateSingleRecallAdoption(
-				delivBuf.String(),
-				queryCue,
-				ev.CitedUnitIDs,
-				toolBuf.String(),
-				replyBuf.String(),
-			)
-			ev.AdoptionOutcome = outcome
-			ev.MatchedAnchors = matched
-			ev.EchoExcludedCount = echoCnt
-			if (ev.AssistantID == "" || ev.AssistantID == "default") && inferredHarness != "" {
-				ev.AssistantID = inferredHarness
+				// No exact session/call window was observed. Do not promote vault fragments
+				// (arbitrary L2 rows in a guessed time range) or crystallized text into
+				// follow-up tool evidence: an unobserved recall stays unsettled.
+				ev.AdoptionOutcome = "pending"
+				ev.MatchedAnchors = []string{}
+				ev.EchoExcludedCount = 0
 			}
 			// The follow-up window closes after ten minutes for every harness, so an
 			// audit result (including "pending": no evidence found) can be cached then.

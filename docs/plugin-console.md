@@ -105,7 +105,7 @@ The panel extracts five signals from the local plaintext vault and recall ledger
 - **L3 Crystallization & Citation Yield**: Tracks how often agent-initiated `recall` queries hit underlying L1/L2 evidence and crystallize into L3 Noetic handles with explicit `cited_unit_ids` links.
 - **Memory Reuse Multiplier (Write Once, Cite N×)**: Measures average and peak cross-session citation reuse per hit unit, surfacing the **Top Cited Memory Units** leaderboard with full query provenance.
 - **`tokenz-r` Delivery Budget & Distillation Compression**: Uses the unified `tokenz-r` tokenizer to measure average delivered tokens per recall and dry-sentence distillation compression.
-- **Zero-Copy `@ref:` Vault Footprint & 14-Day Growth × Crystallization × Adoption**: Reports the zero-copy episodic pointer ratio, the deduplicated memory-address count, and a 14-day three-track trend of daily memory growth (L1 docs & code / L2 sessions), L3 crystallization, and evidence adoption rate.
+- **Zero-Copy `@ref:` Vault Footprint & 14-Day Growth × Crystallization × Evidence Reuse**: Reports the zero-copy episodic pointer ratio, the deduplicated memory-address count, and a 14-day three-track trend of daily memory growth (L1 docs & code / L2 sessions), L3 crystallization, and observed evidence reuse (delivered anchors matched in later tool inputs or replies).
 - **Per-Workspace (Locus) Heat Matrix & Evidence Drawer**: Diagnoses memory coverage and recall activity across workspaces (Active Recall hot zones vs. uncited cold zones) with one-click filtering and provenance drawers.
 
 ### 2.4 Online Version Check & In-Place Self-Update (`Version & Update` Dialog)

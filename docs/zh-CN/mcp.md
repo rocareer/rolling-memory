@@ -56,13 +56,12 @@ rolling-memory mcp        # 构建产物 bin/rolling-memory，或 install 生成
 | `scope` | string | 覆盖默认 scope |
 | `reader` | `owner` \| `deliverable` | 默认 `deliverable`；历史受众限制可能无法覆盖所有来源。分享结果前请先检查内容。 |
 | `mode` | `full` \| `probe` \| `recent` | `full` 返回完整召回带与证据链；`probe` 返回紧凑存在性回执（摘要截断至 160 字）；`recent` 按时间倒序返回最新记忆条目（纯时间序、无语义匹配，忽略 `cue`） |
-| `delivery_window` | `auto` \| `0-16` \| `0-32` \| `0-64` | **智能自适应交付窗口**（默认 `auto` 跟随后台设置，初始默认 `0-16`）：基于物理信息能量自然衰减包络 $E(u_k) \ge E(u_1)/e$ 零保底选材（无匹配时返回 `0` 条，单点精准命中自动返回 `1–5` 条，多事件/跨期问题自动沿能量平台展开至档位上限）。日常对话请省略或传 `auto`；仅在跨会话排查时传 `0-32`（标准扩展），或在全局架构溯源/多事件盘点时传 `0-64`（深度全景）。（基准评测中，ATM-Bench 默认采用 `0-64`，LoCoMo 默认采用 `0-96`。） |
-| `caps` | object | `{delivery_window, bands, nodes, chars, raw}` 交付预算覆写：交付带数、总节点数、字符预算与原文命中上限。 |
+| `delivery_window` | `auto` \| `0-16` \| `0-32` \| `0-64` | 可选，决定最多查看多少条结果，不决定一段原文多长。日常查询省略；需要对照多个历史事件时才扩大窗口。 |
 | `offset` | int | 召回带分页偏移 |
 
 ### 2.2 Full 回执与实时 `Noetic` 结晶
 
-文本内容返回预算受控的 `<rolling-memory-recall ...>...</rolling-memory-recall>` 块，直接供 Agent 消费。
+日常查询只需发线索，例如 `{"cue":"[日程] 轮值 周五 交接 决定"}`。`full` 返回 `<rolling-memory-recall ...>` 块，其中是来源原文片段。每次交付仍受本机设置的总上限约束。看到截断提示，表示片段不完整：如果结论依赖某个条件或例外，先核对所引来源，不要从省略处推断。`offset` 翻到其他结果，不续读同一条原文。
 
 关键字段：
 - `absent`：未命中相关记忆。**这不是错误**（`isError = false`），Agent 据实说明「记忆里没有」并继续执行当前任务。

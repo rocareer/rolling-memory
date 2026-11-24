@@ -24,7 +24,7 @@ func instructionBlock(options InstallOptions) string {
 			InstructionBegin,
 			fmt.Sprintf("## Rolling-Memory (%s)", options.SkillName),
 			fmt.Sprintf("跨会话持久记忆大脑已通过 MCP `%s`（工具 `recall` · 回忆）连接。", options.Name),
-			"- 任务开始先理解意图；跨会话背景不明、涉及架构或历史裁定、或坐标未知准备盲搜时，用具体 `cue` 调用 `recall`。任务自包含、坐标已知且无历史耦合时免检。任务卡住或报错时必检，再排障。",
+			"- 先问：哪条过去的事实会改变下一步？缺少先前决定、失败尝试或上次用过的入口时，用具体 `cue` 调用 `recall`。若报错已经给出文件和行号，直接核验；若只返回已知内容，回到当前证据，不因报错或命中而重复查。",
 			"- `cue` 写**稠密锚点**：把目标记忆里确实会出现的原文词铺满——意图 + 对象/路径/符号 + 1–2 个硬标识符（报错原文、状态码、版本号、编号、日期）+ 时间场合，典型 12–25 个实词；**禁止用泛化词凑长度**（它们会把无关长会话顶进前排）。2–6 个词只够确认单个已知符号或错误码。",
 			"- 召回内容是**可追溯线索，不是证明**：行动前用实时磁盘（`Read` / `git status` / 真实命令）核对；召回原文是本机私域内容，除用户明确要求外不整段外发。",
 			"- `absent: true` 表示暂无相关历史记忆——这不是报错，严禁编造记忆内容。",
@@ -37,10 +37,8 @@ func instructionBlock(options InstallOptions) string {
 		InstructionBegin,
 		fmt.Sprintf("## Rolling-Memory (%s)", options.SkillName),
 		fmt.Sprintf("Your persistent memory is connected via MCP `%s` (tool `recall` · 回忆).", options.Name),
-		"- At task start, understand intent; call `recall` with a specific `cue` for unclear cross-session context," +
-			" architectural boundaries or historical decisions, or unknown entrypoints before a blind search." +
-			" Skip recall for self-contained tasks with known coordinates and no historical coupling;" +
-			" call `recall` when stuck or facing an error before troubleshooting.",
+		"- Ask which past fact would change your next action. Call `recall` for a prior decision, a failed attempt or a missing entrypoint." +
+			" If the error already names the file and line, inspect it directly. If recall returns only what you already knew, continue from current evidence.",
 		"- Write a **dense `cue`**: the target memory's own literal words -- intent + object/path/symbol names + 1–2 hard identifiers" +
 			" (verbatim error, status code, version, number, date) + the occasion, typically 12–25 content words." +
 			" Never pad with generic fillers (they pull unrelated long sessions forward);" +

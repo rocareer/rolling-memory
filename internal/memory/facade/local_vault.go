@@ -977,15 +977,6 @@ func (m *Memory) localVaultRecall(req RecallRequest) (*recall.Result, error) {
 	if req.CapsChars != nil && *req.CapsChars > 0 {
 		deliveryChars = *req.CapsChars
 	}
-	competingBands := len(groupOrder) + len(standalone)
-	if competingBands > topK {
-		competingBands = topK
-	}
-	effectiveChars := deliveryChars
-	if competingBands > 1 && effectiveChars > competingBands*160 {
-		effectiveChars -= competingBands * 96
-	}
-	windowBudget := turnWindowBudget(effectiveChars, competingBands)
 	candidates := make([]deliveredCandidate, 0, len(groupOrder)+len(standalone))
 	nextOrder := 0
 	for _, ref := range groupOrder {
@@ -1038,9 +1029,6 @@ func (m *Memory) localVaultRecall(req RecallRequest) (*recall.Result, error) {
 		if cleaned := stripAssistantRoutingPreamble(text); cleaned != "" {
 			text = cleaned
 		}
-		original := text
-		text = focusEpisodicDeliveryText(text, query, windowBudget)
-		wasTruncated := text != original
 		if strings.TrimSpace(text) == "" || strings.HasPrefix(strings.TrimSpace(text), "@ref:") {
 			continue
 		}
@@ -1083,13 +1071,13 @@ func (m *Memory) localVaultRecall(req RecallRequest) (*recall.Result, error) {
 		candidates = append(candidates, deliveredCandidate{
 			band:       bandEntry,
 			rawHit:     rawEntry,
+			text:       text,
 			score:      group.score,
 			direct:     group.direct,
 			locusMatch: anchor != "" && strings.EqualFold(strings.TrimSpace(locus), anchor),
 			sessionKey: episodicTurnSessionKey(ref),
 			occurredAt: turnOccurredAt,
 			order:      nextOrder,
-			truncated:  wasTruncated,
 		})
 		nextOrder++
 	}
@@ -1113,18 +1101,6 @@ func (m *Memory) localVaultRecall(req RecallRequest) (*recall.Result, error) {
 			delivered = cleaned
 		}
 		delivered = stripAssistantRoutingPreamble(delivered)
-		maxNodeChars := windowBudget - 160
-		if maxNodeChars < 240 && windowBudget > 0 {
-			maxNodeChars = windowBudget
-		}
-		wasTruncated := false
-		if maxNodeChars > 0 {
-			original := delivered
-			delivered = focusEpisodicDeliveryText(delivered, query, maxNodeChars)
-			if delivered != original {
-				wasTruncated = true
-			}
-		}
 		spaceLabel := ""
 		if location, ok := backgroundLocations[h.UnitID]; ok {
 			if location.Anchor != "" {
@@ -1190,11 +1166,12 @@ func (m *Memory) localVaultRecall(req RecallRequest) (*recall.Result, error) {
 		candidates = append(candidates, deliveredCandidate{
 			band:       bandEntry,
 			rawHit:     rawEntry,
+			text:       delivered,
+			standalone: true,
 			score:      h.FinalWeight,
 			direct:     h.DirectWeight,
 			locusMatch: anchor != "" && strings.EqualFold(strings.TrimSpace(locus), anchor),
 			order:      nextOrder,
-			truncated:  wasTruncated,
 		})
 		nextOrder++
 	}
@@ -1240,16 +1217,17 @@ func (m *Memory) localVaultRecall(req RecallRequest) (*recall.Result, error) {
 		return candidates[i].order < candidates[j].order
 	})
 	candPeakScore, candPeakRef := peakDecayReference(candidates)
-	for _, cand := range candidates {
-		if len(bands) >= topK {
+	selectedCount := 0
+	for selectedCount < len(candidates) && selectedCount < topK {
+		cand := &candidates[selectedCount]
+		if adaptiveEnergyWindow && selectedCount > 0 && candPeakScore > 0 && !cand.locusMatch && cand.score < candPeakRef/math.E {
 			break
 		}
-		if adaptiveEnergyWindow && len(bands) > 0 && candPeakScore > 0 && !cand.locusMatch && cand.score < candPeakRef/math.E {
-			break
-		}
-		if cand.truncated {
-			contentTruncated = true
-		}
+		selectedCount++
+	}
+	selected := candidates[:selectedCount]
+	for i := range selected {
+		cand := &selected[i]
 		cand.rawHit["turn"] = int64(len(rawHits) + 1)
 		bands = append(bands, cand.band)
 		rawHits = append(rawHits, cand.rawHit)
@@ -1479,17 +1457,32 @@ func (m *Memory) localVaultRecall(req RecallRequest) (*recall.Result, error) {
 	if indexIncomplete > 0 {
 		gaps["index_incomplete"] = indexIncomplete
 	}
+	absent := len(bands) == 0 && len(hits) == 0 && !diag.Degraded && len(sourceUnavailable) == 0 && indexIncomplete == 0
+	if absent && m.SnapshotOnly() && tc.Vault != nil && !tc.Vault.PublishedSnapshotReady() {
+		gaps["snapshot_unavailable"] = 1
+		absent = false
+	}
 	result := &recall.Result{
 		Scope:   scope,
 		Bands:   bands,
 		RawHits: rawHits,
 		Gaps:    gaps,
-		Absent:  len(bands) == 0 && len(hits) == 0 && !diag.Degraded && len(sourceUnavailable) == 0 && indexIncomplete == 0,
+		Absent:  absent,
 		Meta:    meta,
 	}
 	// 交付面再次保证「带锚者排最前」（同图存管线口径，fail-open）。
 	recall.PromoteBandsByLocusAnchor(result, rawCue)
 	applyThinDeliveryCaps(result, req)
+	// The character budget is decided on the delivered page, after offset and
+	// caps.bands: a candidate left off the page must not shrink the window of a
+	// band that is shown, and the page's own set is kept whole when it fits.
+	delivered := deliveryCharBudgetCandidates(result.Bands, selected)
+	applyDeliveryCharBudget(delivered, query, deliveryChars)
+	for i := range delivered {
+		if delivered[i].truncated {
+			contentTruncated = true
+		}
+	}
 	// Recall is not a pure read: a recollection that actually took part in this
 	// delivery is reinforced, while a matched but unused one is not. The write
 	// happens after the caps so only delivered handles count, and it is skipped

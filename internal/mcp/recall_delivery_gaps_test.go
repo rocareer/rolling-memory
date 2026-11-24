@@ -75,7 +75,8 @@ func TestLocalRecallMCPTextReportsCharacterTruncation(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	responses := runSession(t, memory, toolCallMessage(1, "recall", map[string]any{"cue": "quartz evidence", "mode": "full", "caps": map[string]any{"chars": 200}}))
+	memory.Config.Recall.Chars = 200
+	responses := runSession(t, memory, toolCallMessage(1, "recall", map[string]any{"cue": "quartz evidence", "mode": "full"}))
 	if len(responses) != 1 || isError(t, responses[0]) {
 		t.Fatalf("unexpected response: %#v", responses)
 	}
@@ -85,7 +86,7 @@ func TestLocalRecallMCPTextReportsCharacterTruncation(t *testing.T) {
 	}
 }
 
-func TestLocalRecallMCPTextReportsDeliveryCaps(t *testing.T) {
+func TestLocalRecallMCPTextReportsPagedResults(t *testing.T) {
 	t.Setenv("ROLLING_MEMORY_BRAIN_URL", "")
 	memory := newVaultMemory(t)
 	client, err := memory.LocalVault()
@@ -97,12 +98,12 @@ func TestLocalRecallMCPTextReportsDeliveryCaps(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	responses := runSession(t, memory, toolCallMessage(1, "recall", map[string]any{"cue": "quartz evidence", "mode": "full", "caps": map[string]any{"bands": 1}}))
+	responses := runSession(t, memory, toolCallMessage(1, "recall", map[string]any{"cue": "quartz evidence", "offset": 1}))
 	if len(responses) != 1 || isError(t, responses[0]) {
 		t.Fatalf("unexpected response: %#v", responses)
 	}
 	rendered := textOf(t, responses[0])
-	if !strings.Contains(rendered, "预算裁剪") || !strings.Contains(rendered, "预算截止") {
-		t.Fatalf("missing delivery truncation notice: %s", rendered)
+	if !strings.Contains(rendered, "部分结果未显示") || !strings.Contains(rendered, "offset") || strings.Contains(rendered, "caps /") {
+		t.Fatalf("incorrect pagination notice: %s", rendered)
 	}
 }

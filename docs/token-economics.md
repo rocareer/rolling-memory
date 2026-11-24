@@ -115,7 +115,7 @@ That is why Rolling Memory neither exposes a manual "write memory" tool to the a
 
 ## 6. Our own 7-day (and 24-hour) real usage report
 
-Formulas are abstract, so here is the actual telemetry from our primary development machine over the past week (`2026-11-05` to `2026-11-12`) and the past 24 hours (`2026-11-11 ~18:25` to `2026-11-12 ~18:25`, UTC+8) — pulled straight from our local SQLite databases, the shared hook log, and the live local adoption audit, **including every miss, irrelevant hit, and error**.
+Formulas are abstract, so here is the actual telemetry from our primary development machine over the past week (`2026-11-05` to `2026-11-12`) and the past 24 hours (`2026-11-11 ~18:25` to `2026-11-12 ~18:25`, UTC+8) — pulled straight from our local SQLite databases, the shared hook log, and the live local evidence-reuse audit, **including every miss, irrelevant hit, and error**.
 
 ### 6.1 Real context size on our machine (why `200k` per turn is conservative)
 
@@ -136,7 +136,7 @@ Our workflow is now fully agent-driven: the agent calls MCP `recall` on demand w
 | ↳ **Silent no-hit (`absent = 1`)** | `383 runs` | `37 runs` | Exits silently when no high-specificity match is found (0 context tokens added) |
 | ↳ **Session deduplication (`dedup = 1`) / 4-turn cadence nudge (`cadence = 1`)** | `1 / 0 runs` | `0 / 0 runs` | Dedup skips bands already injected earlier in the same session; cadence emits a 1-line hint after consecutive misses |
 
-### 6.3 The strictest audit: 33 turn-review cards + a model-free adoption audit (last 24 hours)
+### 6.3 The strictest audit: 33 turn-review cards + a model-free evidence-reuse audit (last 24 hours)
 
 Self-reports need a standard, and ours is strict: whenever an agent uses `recall` during a reviewed turn, its wrap-up must include a three-part honesty card — ① how many calls it made, ② how many blind turns it estimates were saved, *with the exact file path or past pitfall as proof*, ③ whether the turn had positive value. The iron rule: **if the agent cannot name the concrete coordinates, it must report `0` saved turns.** (With the local-mode rewrite the card discipline is guided by the installed tool/skill instructions; the earlier Stop-hook reminder has been retired.)
 
@@ -154,7 +154,7 @@ A few verbatim examples from our database (both wins and misses):
 - **Real miss #1** (`11-12 12:06`): *"2 calls, saved turns: 0 — both early calls timed out under heavy background load; locating was done by direct source reads and live logs. No direct gain this time."*
 - **Served without a call** (`11-12 14:48`): *"0 calls, 0 saved — the session-loaded memory index already listed the two exact ledger filenames, so no lookup was needed (rated helpful)."*
 
-**Model-free cross-check — the deterministic post-hoc adoption audit.** Independently of self-reports, every recall's delivered novel anchors (file paths, symbols) are later intersected, at zero model cost, with what the agent actually did next — an anchor appearing in a subsequent tool call counts as `adopted_tool`, in the reply text as `adopted_context` — after stripping text that merely echoes the query. In the **last 24 hours, 46 recall outcomes were settled by the audit and 41 (89.1%) were adopted** (`38` direct file/symbol coordinates + `3` context facts); across the longer retained ledger the same audit reads **`269/440 = 61.1%`** — the most recent window is materially more helpful than the longer-run average. (Snapshot `2026-11-12 ~18:25`, UTC+8; the audit runs live in the local console and costs no model calls.)
+**Model-free cross-check — the deterministic post-hoc evidence-reuse audit.** Independently of self-reports, every recall's delivered novel anchors (file paths, symbols) are later intersected, at zero model cost, with the agent's subsequent tool inputs and reply text — an anchor appearing in a later tool input is recorded as `adopted_tool`, in the reply text as `adopted_context` — after stripping text that merely echoes the query. In the **last 24 hours, 46 recall outcomes were settled by the audit and 41 (89.1%) showed at least one delivered anchor in those follow-up corpora** (`38` tool-input matches + `3` reply matches); across the longer retained ledger the same audit reads **`269/440 = 61.1%`** — the most recent window shows a higher observed match share than the longer-run average. These are observable matches, not proof that a step was saved; a settled window with no match is not proof that the recall was useless. (Snapshot `2026-11-12 ~18:25`, UTC+8; the audit runs live in the local console and costs no model calls.)
 
 ### 6.4 Extrapolating a full 7-day week from the last 24 hours & dollar savings under latest official pricing (GPT-6 / Claude Fable / Gemini 4)
 
@@ -168,7 +168,7 @@ Because our review-card discipline covers the retained recent window most comple
 | **② Practical Net Saved** *(50% of zero-turn cards assumed to run in parallel)* | `113 turns` | **`791 turns`** | **`158.2M tokens`** | Deducts the ~half of the 6 zero-turn cards that plausibly ran alongside other read tools |
 | **③ Strictest Net Saved** *(100% of zero-turn cards deducted as full turns)* | `110 turns` | **`770 turns`** | **`154.0M tokens`** | Worst-case floor assuming every zero-turn card cost one full standalone `200k` turn |
 
-*(Note: per-turn saved counts are the agents' own honesty-standardized estimates; the deterministic adoption audit in §6.3 above provides the model-free cross-check.)*
+*(Note: per-turn saved counts are the agents' own honesty-standardized estimates; the deterministic evidence-reuse audit in §6.3 above provides the model-free cross-check.)*
 
 2. **Projected 7-day dollar savings under official flagship pricing (`GPT-6` / `Claude Fable` / `Gemini 4`)**:
 

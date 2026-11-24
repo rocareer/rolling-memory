@@ -151,11 +151,11 @@
         <!-- ==================== 第一屏：4 大工程师核心 ROI 指标卡 ==================== -->
         <div class="kpi-grid4">
             <!-- 卡片 1：认知结晶与跨层实名引证转化 (Recall -> L3 Noetic Yield) -->
-            <!-- 卡片 1：认知结晶与跨层实名引证转化 (Recall -> L3 Noetic Yield & Intersection Adoption) -->
+            <!-- 卡片 1：认知结晶与跨层实名引证转化 (Recall -> L3 Noetic Yield & Observable Evidence Reuse) -->
             <div class="roi-card is-accent">
                 <div class="rc-head">
                     <span class="rc-title">
-                        {{ isEn ? 'L3 Crystallization & Adoption Audit' : '认知结晶与事后采纳交集审计' }}
+                        {{ isEn ? 'L3 Crystallization & Evidence Reuse Audit' : '认知结晶与事后证据复用审计' }}
                         <el-popover trigger="click" placement="top" :width="440" popper-class="rm-help-popper">
                             <template #reference>
                                 <button type="button" class="tip-q">?</button>
@@ -164,12 +164,13 @@
                                 <p v-if="isEn">
                                     Every time an agent `recall` hits underlying L1/L2 evidence, it crystallizes an L3 entry with explicit source unit
                                     citations, then audits whether novel file paths, symbols, or high-information tokens (excluding query echoes) appear in
-                                    subsequent tool inputs (`Read`/`Edit`/`Bash`) or replies.
+                                    subsequent tool inputs (`Read`/`Edit`/`Bash`) or replies. A match is observable evidence reuse only: it does not prove
+                                    the recall saved a step.
                                 </p>
                                 <p v-else>
                                     当 Agent 主动发起 `recall` 并命中底层 L1/L2 证据时，自动提纯沉淀为带实名引证链的 L3
                                     条目；同时通过纯数学反回声交集审计（0 模型开销），检验召回净增的文件路径、符号或高信息量特征是否出现在 Agent
-                                    随后的工具调用（`Read`/`Edit`/`Bash`）或回复中。
+                                    随后的工具输入（`Read`/`Edit`/`Bash`）或回复中。匹配只是可观察的证据复用，不证明这次召回省下一步。
                                 </p>
                             </div>
                         </el-popover>
@@ -181,15 +182,15 @@
                     <span class="rc-unit">{{ isEn ? 'crystallized' : '次认知结晶' }}</span>
                     <span class="rc-pill is-success">{{ activeWindow.citation_links }} {{ isEn ? 'citations' : '条引证链' }}</span>
                     <span v-if="windowAuditedRecalls > 0" class="rc-pill is-warn">
-                        {{ isEn ? 'Adopted' : '实质采纳' }} {{ windowAdoptionRatePct }}%
+                        {{ isEn ? 'Reused' : '证据复用' }} {{ windowAdoptionRatePct }}%
                     </span>
                 </div>
                 <div class="rc-sub font-mono">
                     <span v-if="windowAuditedRecalls > 0">
-                        {{ isEn ? 'Adopted:' : '采纳审计：' }}
+                        {{ isEn ? 'Reused:' : '复用审计：' }}
                         <strong class="text-success">{{ windowAdoptedRecalls }}/{{ windowAuditedRecalls }}</strong>
-                        （{{ isEn ? 'Tool' : '工具直达' }} <strong>{{ windowAdoptedTools }}</strong> ·
-                        {{ isEn ? 'Context' : '事实采纳' }} <strong>{{ windowAdoptedContexts }}</strong>）
+                        （{{ isEn ? 'Tool input' : '工具输入' }} <strong>{{ windowAdoptedTools }}</strong> ·
+                        {{ isEn ? 'Reply' : '回复' }} <strong>{{ windowAdoptedContexts }}</strong>）
                     </span>
                     <span v-else>
                         {{ isEn ? 'All-time:' : '全量累计：' }}
@@ -326,20 +327,20 @@
             </div>
         </div>
 
-        <!-- ==================== 第二屏：近 14 天记忆沉淀 × 认知结晶 × 证据采纳三轨趋势 + 多工作区覆盖与冷热诊断矩阵 ==================== -->
+        <!-- ==================== 第二屏：近 14 天记忆沉淀 × 认知结晶 × 证据复用三轨趋势 + 多工作区覆盖与冷热诊断矩阵 ==================== -->
         <div class="roi-mid-grid">
-            <!-- 左：近 14 天每日记忆沉淀、认知结晶与证据采纳率三轨趋势 -->
+            <!-- 左：近 14 天每日记忆沉淀、认知结晶与证据复用率三轨趋势 -->
             <div class="roi-panel">
                 <div class="panel-head">
                     <div>
                         <span class="panel-title">
-                            {{ isEn ? '14-Day Memory Growth, Crystallization & Adoption' : '近 14 天记忆沉淀 × 认知结晶 × 证据采纳趋势' }}
+                            {{ isEn ? '14-Day Memory Growth, Crystallization & Evidence Reuse' : '近 14 天记忆沉淀 × 认知结晶 × 证据复用趋势' }}
                         </span>
                         <span class="panel-sub">
                             {{
                                 isEn
-                                    ? 'Per natural day: new memory (docs & code / sessions) → recall crystallizations → share of evidence actually used afterwards'
-                                    : '按自然日：新增记忆（文档与代码 / 会话记录）→ Agent 召回结晶 → 证据采纳率（被后续工作真正用上的比例）'
+                                    ? 'Per natural day: new memory (docs & code / sessions) → recall crystallizations → share of settled recalls whose delivered evidence is later matched in tool inputs or replies'
+                                    : '按自然日：新增记忆（文档与代码 / 会话记录）→ Agent 召回结晶 → 已结算召回中，交付证据后来在工具输入或回复里被匹配到的比例'
                             }}
                         </span>
                     </div>
@@ -364,20 +365,21 @@
                                     <strong>认知结晶：</strong>Agent 用 recall 召回证据后沉淀下来的问答结论，每条都带着引用的证据（引证链）；之后被清理的结晶不再计入。
                                 </p>
                                 <p v-if="isEn">
-                                    <strong>Evidence Adoption:</strong> of the settled crystallizations, the share whose evidence really got used afterwards — in a
-                                    later tool call (tool hit) or in the reply body (context hit). Audited automatically with zero model calls; ones still waiting
-                                    for later corpora show as pending and stay out of the rate.
+                                    <strong>Evidence Reuse:</strong> of the settled crystallizations, the share whose delivered evidence was later matched in a
+                                    tool input (tool-input match) or the reply body (reply match). Audited automatically with zero model calls; ones still waiting
+                                    for later corpora show as pending and stay out of the rate. A match is observational: it does not prove a step was saved, and
+                                    no match does not prove the recall was useless.
                                 </p>
                                 <p v-else>
-                                    <strong>证据采纳率：</strong>已结算的结晶里，证据在后续工具调用（工具直达）或回复正文（事实采纳）中真正被用上的比例 —— 全自动事后审计、
-                                    零模型参与；还在等待后续语料的记为「待结算」，不计入分母。
+                                    <strong>证据复用率：</strong>已结算的结晶里，交付证据后来在工具输入（工具输入匹配）或回复正文（回复匹配）中被找到的比例 —— 全自动事后审计、
+                                    零模型参与；还在等待后续语料的记为「待结算」，不计入分母。匹配只是可观察证据，不证明省下一步；未观测到匹配也不等于没有用。
                                 </p>
                                 <p v-if="isEn">
-                                    A hit (a recall that returned evidence) is not the same as being useful — settling needs later corpora, so today's rate is
-                                    usually lower or incomplete until the day closes. Hover any day for the exact split.
+                                    A match only means delivered evidence reappeared in later tool inputs or replies — it does not prove a step was saved; settling
+                                    needs later corpora, so today's rate is usually lower or incomplete until the day closes. Hover any day for the exact split.
                                 </p>
                                 <p v-else>
-                                    「命中」（召回成功）不等于「有用」：结算需要等待后续语料，因此今天（进行中）的采纳率通常偏低或不完整，属正常现象。悬停任意一天可看当日完整拆分。
+                                    「匹配」只代表交付证据后来在工具输入或回复中再次出现，不证明省下一步；结算需要等待后续语料，因此今天（进行中）的复用率通常偏低或不完整，属正常现象。悬停任意一天可看当日完整拆分。
                                 </p>
                             </div>
                         </el-popover>
@@ -399,7 +401,7 @@
                         <span class="stat-sub font-mono">{{ isEn ? 'citations' : '引证' }} {{ formatTok(trendTotals.citations) }}</span>
                     </div>
                     <div class="stat-chip">
-                        <span class="stat-label">{{ isEn ? 'Evidence Adoption' : '证据采纳率' }}</span>
+                        <span class="stat-label">{{ isEn ? 'Evidence Reuse' : '证据复用率' }}</span>
                         <span class="stat-value font-mono">{{ trendTotals.audited > 0 ? trendTotals.ratePct + '%' : '—' }}</span>
                         <span class="stat-sub font-mono">
                             {{ isEn ? 'settled' : '已结算' }} {{ formatTok(trendTotals.audited) }} · {{ isEn ? 'pending' : '待结算' }}
@@ -414,7 +416,7 @@
                         {{
                             isEn
                                 ? 'No memory activity in the last 14 days yet. Start a conversation or mount a directory and this panel fills in day by day.'
-                                : '近 14 天还没有记忆沉淀数据 —— 开始对话或挂载目录后，这里会逐日显示沉淀、结晶与采纳趋势。'
+                                : '近 14 天还没有记忆沉淀数据 —— 开始对话或挂载目录后，这里会逐日显示沉淀、结晶与复用趋势。'
                         }}
                     </span>
                 </div>
@@ -475,9 +477,9 @@
                     </div>
 
                     <div class="track-head is-adopt">
-                        <span class="th-name">{{ isEn ? 'Evidence Adoption' : '证据采纳率' }}</span>
+                        <span class="th-name">{{ isEn ? 'Evidence Reuse' : '证据复用率' }}</span>
                         <span class="th-hint">
-                            {{ isEn ? 'of settled crystallizations, evidence actually used afterwards' : '已结算的结晶中，证据之后真被用上的比例' }}
+                            {{ isEn ? 'of settled crystallizations, delivered evidence matched in later tool inputs or replies' : '已结算的结晶中，交付证据后来在工具输入或回复里被匹配到的比例' }}
                         </span>
                     </div>
                     <div class="y-gutter is-adopt font-mono">
@@ -546,10 +548,10 @@
                                         </span>
                                     </div>
                                     <div class="rdt-row">
-                                        <span class="rdt-k">{{ isEn ? 'Adoption' : '证据采纳' }}</span>
+                                        <span class="rdt-k">{{ isEn ? 'Reuse' : '证据复用' }}</span>
                                         <span v-if="(day.adopted_count ?? 0) + (day.unadopted_count ?? 0) > 0" class="rdt-v">
                                             {{ day.adopted_count ?? 0 }}/{{ (day.adopted_count ?? 0) + (day.unadopted_count ?? 0) }} = {{ day.adoption_rate_pct ?? 0 }}%
-                                            <em class="rdt-dim">({{ isEn ? 'tool' : '工具直达' }} {{ day.adopted_tool_count ?? 0 }} · {{ isEn ? 'ctx' : '事实采纳' }} {{ day.adopted_context_count ?? 0 }})</em>
+                                            <em class="rdt-dim">({{ isEn ? 'tool input' : '工具输入' }} {{ day.adopted_tool_count ?? 0 }} · {{ isEn ? 'reply' : '回复' }} {{ day.adopted_context_count ?? 0 }})</em>
                                         </span>
                                         <span v-else class="rdt-v rdt-dim">{{ isEn ? 'not settled yet' : '尚无已结算' }}</span>
                                     </div>
@@ -640,7 +642,7 @@
                             <strong class="font-mono" :class="row.citation_hits > 0 ? 'text-primary' : ''"> {{ row.citation_hits }}× </strong>
                         </template>
                     </el-table-column>
-                    <el-table-column :label="isEn ? 'Adopted Hits' : '实质采纳'" width="90" align="right">
+                    <el-table-column :label="isEn ? 'Reuse Hits' : '复用命中'" width="90" align="right">
                         <template #default="{ row }">
                             <strong class="font-mono" :class="row.adopted_hits > 0 ? 'text-success' : ''"> {{ row.adopted_hits }}× </strong>
                         </template>
@@ -656,7 +658,7 @@
                 <div class="panel-head">
                     <div>
                         <span class="panel-title">
-                            {{ isEn ? 'Top Cited Memory Units (High-ROI Assets)' : '金牌高复用记忆排行榜（真正在干活的记忆单元）' }}
+                            {{ isEn ? 'Top Cited Memory Units (Reused Across Sessions)' : '金牌高复用记忆排行榜（跨会话被反复引证）' }}
                         </span>
                         <span class="panel-sub">
                             {{
@@ -689,7 +691,7 @@
                                     {{ row.citation_count }}×
                                 </span>
                                 <span v-if="(row.adopted_count ?? 0) > 0" class="font-mono text-success" style="font-size: 11px">
-                                    ✓{{ row.adopted_count }} {{ isEn ? 'hit' : '采纳' }}
+                                    ✓{{ row.adopted_count }} {{ isEn ? 'match' : '匹配' }}
                                 </span>
                             </div>
                         </template>
@@ -789,7 +791,7 @@
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column :label="isEn ? 'Adoption Audit' : '事后采纳审计'" width="155" align="left">
+                    <el-table-column :label="isEn ? 'Reuse Audit' : '事后复用审计'" width="155" align="left">
                         <template #default="{ row }">
                             <div class="adopt-cell">
                                 <el-tag
@@ -891,11 +893,11 @@
                     <span class="db-v font-mono"> {{ selectedUnit.layer.toUpperCase() }} · {{ selectedUnit.locus || '(global / unscoped)' }} </span>
                 </div>
                 <div class="db-kv">
-                    <span class="db-k">{{ isEn ? 'Reuse & Adoption Count' : '累计被引证与实质采纳' }}</span>
+                    <span class="db-k">{{ isEn ? 'Reuse & Evidence Match Count' : '累计被引证与证据复用' }}</span>
                     <span class="db-v font-mono text-success">
                         <strong>{{ selectedUnit.citation_count }}×</strong>
                         <span v-if="(selectedUnit.adopted_count ?? 0) > 0">
-                            · {{ isEn ? `Adopted ${selectedUnit.adopted_count}×` : `促成实质采纳 ${selectedUnit.adopted_count}×` }}
+                            · {{ isEn ? `Matched ${selectedUnit.adopted_count}×` : `证据复用 ${selectedUnit.adopted_count}×` }}
                         </span>
                         （{{ isEn ? 'Last cited:' : '最近引证：' }}{{ formatTime(selectedUnit.last_cited_at) }}）
                     </span>
@@ -976,7 +978,7 @@
                     <span class="db-v font-mono text-primary">{{ selectedNoetic.delivered_tokens }} Tokens</span>
                 </div>
                 <div class="db-kv">
-                    <span class="db-k">{{ isEn ? 'Post-Recall Adoption Audit' : '事后交集采纳审计（反回声）' }}</span>
+                    <span class="db-k">{{ isEn ? 'Post-Recall Evidence Reuse Audit' : '事后交集证据复用审计（反回声）' }}</span>
                     <span class="db-v font-mono">
                         <el-tag
                             size="small"
@@ -1362,8 +1364,8 @@ const activeWindow = computed<RoiFactWindow>(
     () => displayWindows.value.find((item) => item.key === monitorWindow.value) || displayWindows.value[displayWindows.value.length - 1]
 )
 
-// 采纳审计口径严格跟随所选时间窗：窗口内没有已审计召回时如实为 0（模板会回落到
-// 「全量累计」展示），绝不把全历史读数放进当前窗口的采纳率位置（曾把 9/10、90%
+// 证据复用审计口径严格跟随所选时间窗：窗口内没有已审计召回时如实为 0（模板会回落到
+// 「全量累计」展示），绝不把全历史读数放进当前窗口的复用率位置（曾把 9/10、90%
 // 显示成「近 1 小时」的读数）。
 const windowAuditedRecalls = computed(() => activeWindow.value?.audited_recalls ?? 0)
 const windowAdoptedRecalls = computed(() => activeWindow.value?.adopted_recalls ?? 0)
@@ -1371,7 +1373,7 @@ const windowAdoptedTools = computed(() => activeWindow.value?.adopted_tool_count
 const windowAdoptedContexts = computed(() => activeWindow.value?.adopted_context_count ?? 0)
 const windowAdoptionRatePct = computed(() => activeWindow.value?.adoption_rate_pct ?? 0)
 
-// 三轨趋势（近 14 天）：沉淀柱与结晶线各用独立刻度；采纳率只画已结算日，今天按「进行中」标注。
+// 三轨趋势（近 14 天）：沉淀柱与结晶线各用独立刻度；复用率只画已结算日，今天按「进行中」标注。
 const hoverIdx = ref(-1)
 
 const trendToday = computed(() => localYmd(new Date((lastLoadedAt.value || Math.floor(Date.now() / 1000)) * 1000)))
@@ -1579,13 +1581,13 @@ function openNoeticDrawer(row: RoiNoeticEvent) {
 function adoptionLabel(outcome?: string): string {
     switch (outcome) {
         case 'adopted_tool':
-            return isEn.value ? '🎯 Tool Hit' : '🎯 工具直达'
+            return isEn.value ? '🎯 Tool-input Match' : '🎯 工具输入匹配'
         case 'adopted_context':
-            return isEn.value ? '✅ Context Hit' : '✅ 事实采纳'
+            return isEn.value ? '✅ Reply Match' : '✅ 回复匹配'
         case 'unadopted':
-            return isEn.value ? 'Unadopted' : '未采纳'
+            return isEn.value ? 'No Match' : '未匹配'
         default:
-            return isEn.value ? 'Pending' : '待后续动作'
+            return isEn.value ? 'Pending' : '待结算'
     }
 }
 

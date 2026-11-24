@@ -86,7 +86,7 @@ When investigating an issue that spans multiple concepts (for example, `timeout`
 
 You do not need to take any claim on faith. You can verify or falsify the value directly on your own machine in three ways:
 
-### Proof 1: The Break-Even Formula & Built-in Zero-Model Post-Hoc Adoption Audit
+### Proof 1: The Break-Even Formula & Built-in Zero-Model Post-Hoc Evidence-Reuse Audit
 
 In [`token-economics.md`](token-economics.md), we write out the exact break-even inequality for calling `recall`:
 
@@ -94,15 +94,15 @@ $$p \cdot k > 1 + \frac{m \cdot R}{C}$$
 
 (where $C$ is your active context length such as `200k` tokens, $R$ is the returned passage size, $p$ is the effective hit rate, and $k$ is the number of blind search turns saved on a hit).
 
-To verify that $p$ (effective hit rate) is real rather than wishful thinking, Rolling Memory runs a **100% deterministic, zero-LLM post-hoc anti-echo adoption audit**:
-- **How it works**: Whenever `recall` returns file paths or symbol anchors, the local auditor inspects the agent's **actual subsequent actions** in that session:
-  - If the agent immediately uses a returned file path or symbol in a subsequent `Read` / `Edit` tool call (skipping `glob` / `grep` trial-and-error), it is recorded as **`adopted_tool` (direct tool adoption)**;
-  - If unique facts from the recalled passage (after stripping query echo tokens) appear in the agent's final response, it is recorded as **`adopted_context` (context adoption)**;
-  - If the agent calls `recall`, finds nothing useful, and still runs a series of `grep` searches, **it is honestly recorded as unadopted (a net loss of 1 turn)**.
-- **Audited numbers from our primary development machine**:
-  - Under real coding workloads averaging `272.0k–320.1k` input tokens per call, our longer retained ledger (`440` settled recall outcomes) shows an actual adoption rate of **`61.1%` (`269/440`)**, and the most recent 24-hour window reached **`89.1%` (`41/46`)**;
+To cross-check the effective hit rate $p$ independently of self-reports, Rolling Memory runs a **100% deterministic, zero-LLM post-hoc anti-echo evidence-reuse audit**:
+- **How it works**: Whenever `recall` returns file paths or symbol anchors, the local auditor inspects the session's **subsequent tool inputs and reply text** (after stripping text that merely echoes the query):
+  - If a returned file path or symbol appears in a later `Read` / `Edit` tool input, it is recorded as **`adopted_tool` (tool-input match)**;
+  - If unique facts from the recalled passage appear in a later reply, it is recorded as **`adopted_context` (reply match)**;
+  - If the settled follow-up window contains no delivered anchor, it is recorded as **`unadopted` (no observed match)**. This is an observational result only: no match does not prove the recall was useless, and a match does not prove a step was saved.
+- **Observed numbers from our primary development machine**:
+  - Under real coding workloads averaging `272.0k–320.1k` input tokens per call, our longer retained ledger (`440` settled recall outcomes) shows an observed evidence-reuse share of **`61.1%` (`269/440`)** — the share of settled recalls whose delivered anchors appeared in later tool inputs or replies — and the most recent 24-hour window reached **`89.1%` (`41/46`)**;
   - Across `33` deduplicated per-turn review cards in the last 24 hours, **`6` (18.2%) honestly reported `0` saved turns**, while **`27` (81.8%) pinpointed exact file coordinates or past fixes and saved `116` blind search turns (`≈4.3` turns saved per hit)** — projecting to **`791` net saved long-context turns per week (`~158.2M` input tokens)** on a single heavy developer machine (full breakdown and pricing tables in [`token-economics.md` §6](token-economics.md)).
-- **Check it on your own machine**: Run `rolling-memory panel` to open the local Web Console ([http://localhost:8008/#/admin](http://localhost:8008/#/admin) $\rightarrow$ ROI Monitor) and inspect every single `recall` call in your own sessions to see whether it was adopted or wasted a turn.
+- **Check it on your own machine**: Run `rolling-memory panel` to open the local Web Console ([http://localhost:8008/#/admin](http://localhost:8008/#/admin) $\rightarrow$ ROI Monitor) and inspect every single `recall` call in your own sessions to see whether its delivered anchors reappeared in later tool inputs/replies (a match), or whether the observation window is still pending. Neither result alone proves a step was saved.
 
 ### Proof 2: Offline One-Command Reproduction on Public Academic Benchmarks
 

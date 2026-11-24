@@ -227,8 +227,10 @@ func TestRecallHookNeverInjectsAndCadenceReminds(t *testing.T) {
 		t.Fatalf("hookEventName = %#v", hook["hookEventName"])
 	}
 	context, _ := hook["additionalContext"].(string)
-	if !strings.Contains(context, "[Rolling-Memory 4轮节律锚点]") {
-		t.Fatalf("cadence reminder missing:\n%s", context)
+	for _, marker := range []string{"[Rolling-Memory 4轮节律锚点]", "已知文件或报错行就直接核验", "过去的决定、试过的办法"} {
+		if !strings.Contains(context, marker) {
+			t.Fatalf("cadence reminder missing %q:\n%s", marker, context)
+		}
 	}
 	if strings.Contains(context, "小白") || strings.Contains(context, "<rolling-memory-recall") {
 		t.Fatalf("hook must never inject recalled material:\n%s", context)

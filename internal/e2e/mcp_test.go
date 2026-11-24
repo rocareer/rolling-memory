@@ -4,11 +4,72 @@
 package e2e_test
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/rocareer/rolling-memory/internal/version"
 )
+
+func TestMCPRecallReturnsDecisionAndItsException(t *testing.T) {
+	sb := newSandbox(t)
+	const decision = "Amber quay handover: keep the Friday slot."
+	const exception = "Exception: when the ferry is cancelled, keep the parcel overnight."
+	// The exception falls beyond a small caller-chosen budget but fits in the local one.
+	body := decision + strings.Repeat(" The quay ledger records the handover. ", 80) + exception
+	path := filepath.Join(sb.base, "handover.jsonl")
+	writeFile(t, path, `{"type":"user","sessionId":"handover","timestamp":"2026-10-20T10:00:00","message":{"role":"user","content":[{"type":"text","text":"`+body+`"}]}}`+"\n"+
+		`{"type":"assistant","sessionId":"handover","timestamp":"2026-10-20T10:00:10","message":{"role":"assistant","stop_reason":"end_turn","content":[{"type":"text","text":"Noted."}]}}`+"\n")
+	assertExit(t, sb.run("init", "--json"), 0, "init")
+	imported := sb.run("import", path, "--json")
+	assertExit(t, imported, 0, "import handover")
+	if numberField(t, jsonObject(t, imported.stdout), "inserted") < 1 {
+		t.Fatalf("handover not imported: %s", imported.stdout)
+	}
+	call := `{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"recall","arguments":{"cue":"amber quay handover Friday slot"}}}`
+	cold := sb.runInput(call+"\n", "mcp")
+	assertExit(t, cold, 0, "mcp before publication")
+	coldResult := objectAt(t, jsonObject(t, cold.stdout), "result")
+	coldItems := arrayField(t, coldResult, "content")
+	if len(coldItems) != 1 {
+		t.Fatalf("unexpected cold recall: %v", coldResult)
+	}
+	coldBlock := stringField(t, objectAt(t, coldItems[0]), "text")
+	if !strings.Contains(coldBlock, `absent="false"`) || !strings.Contains(coldBlock, "检索快照尚未就绪") {
+		t.Fatalf("unpublished evidence reported as absent: %s", coldBlock)
+	}
+	built := sb.run("build", "--json")
+	assertExit(t, built, 0, "build snapshot")
+	if jsonObject(t, built.stdout)["published"] != true {
+		t.Fatalf("handover not published: %s", built.stdout)
+	}
+	server := sb.runInput(call+"\n", "mcp")
+	assertExit(t, server, 0, "mcp recall")
+	result := objectAt(t, jsonObject(t, server.stdout), "result")
+	items := arrayField(t, result, "content")
+	if result["isError"] != false || len(items) != 1 {
+		t.Fatalf("unexpected recall response: %v", result)
+	}
+	block := stringField(t, objectAt(t, items[0]), "text")
+	if !strings.Contains(block, decision) || !strings.Contains(block, exception) {
+		t.Fatalf("decision or exception missing from delivered evidence:\n%s", block)
+	}
+}
+
+func TestMCPRejectsCallerBudgetBeforeOpeningVault(t *testing.T) {
+	sb := newSandbox(t)
+	call := `{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"recall","arguments":{"cue":"handover","caps":{"chars":2800,"bands":2,"nodes":3}}}}`
+	server := sb.runInput(call+"\n", "mcp")
+	assertExit(t, server, 0, "mcp invalid budget")
+	response := jsonObject(t, server.stdout)
+	result, _ := response["result"].(map[string]any)
+	if response["error"] == nil && result["isError"] != true {
+		t.Fatalf("caller budget was accepted: %s", server.stdout)
+	}
+	if !strings.Contains(server.stdout, "caps") || fileExists(sb.db) {
+		t.Fatalf("expected an actionable error without opening the vault: %s", server.stdout)
+	}
+}
 
 // TestMCPStdioHandshake drives the real stdio MCP server: initialize and
 // tools/list must answer with exactly the single tool `recall`（回忆即记忆）, and one

@@ -526,13 +526,13 @@ const tableHints = computed(() =>
               weight: 'The entry’s own weight (0–100%), derived from evidence strength at write time; used for ranking in retrieval.',
               hookStream: 'One row per MCP recall tool call, showing whether verified evidence was matched and delivered.',
               outcome:
-                  'Effective hit = verified evidence was returned to the agent (actual usefulness is tracked by the post-hoc adoption audit); No hits = no matching evidence above threshold.',
+                  'Effective hit = verified evidence was returned to the agent (observable evidence reuse is tracked by the post-hoc audit: follow-up tool inputs/replies matched delivered anchors; a match does not prove a step was saved); No hits = no matching evidence above threshold.',
               detail: 'Delivered character count and end-to-end recall latency (ms).',
           }
         : {
               weight: '该条记忆自身的置信权重（0–100%）。当前版本写入的金库条目默认记为 100%。',
               hookStream: 'MCP recall 检索调用流水：每次 Agent 调取 recall 记一行（结果见「结果」列）。',
-              outcome: '结果含义：有效命中＝命中证据并交付给 Agent（是否真的被用上见事后采纳审计）；无命中＝库里暂无匹配证据。',
+              outcome: '结果含义：有效命中＝命中证据并交付给 Agent（可观察的证据复用见事后审计：后续工具输入/回复与交付锚点匹配；匹配不证明省下一步）；无命中＝库里暂无匹配证据。',
               detail: '本次检索命中状态、交付字符数与端到端检索耗时（ms）。',
           }
 )

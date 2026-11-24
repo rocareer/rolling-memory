@@ -463,7 +463,7 @@ func assertRecallSchema(t *testing.T, schema map[string]any) {
 	t.Helper()
 	properties := asMap(t, schema["properties"])
 	assertKeys(t, "recall properties", properties, []string{
-		"cue", "scope", "reader", "mode", "caps", "delivery_window", "offset",
+		"cue", "scope", "reader", "mode", "delivery_window", "offset",
 	})
 	if keys := stringList(t, asMap(t, properties["mode"])["enum"]); strings.Join(keys, ",") != "full,probe,recent" {
 		t.Fatalf("mode enum: %v", keys)
@@ -471,7 +471,6 @@ func assertRecallSchema(t *testing.T, schema map[string]any) {
 	if keys := stringList(t, asMap(t, properties["reader"])["enum"]); strings.Join(keys, ",") != "owner,deliverable" {
 		t.Fatalf("reader enum: %v", keys)
 	}
-	assertKeys(t, "caps properties", asMap(t, asMap(t, properties["caps"])["properties"]), []string{"delivery_window", "bands", "nodes", "chars", "raw"})
 }
 
 func assertKeys(t *testing.T, label string, values map[string]any, want []string) {
@@ -531,7 +530,7 @@ func TestUnknownToolAndParamErrors(t *testing.T) {
 	}
 }
 
-func TestRecallCapsQuirk(t *testing.T) {
+func TestRecallRejectsRetiredCaps(t *testing.T) {
 	memory := newMemory(t)
 	responses := runSession(t, memory,
 		toolCallMessage(1, "recall", map[string]any{"cue": "x", "caps": 5}),
@@ -546,41 +545,25 @@ func TestRecallCapsQuirk(t *testing.T) {
 	if len(responses) != 8 {
 		t.Fatalf("responses: %d", len(responses))
 	}
-	if !isError(t, responses[0]) {
-		t.Fatalf("caps=5 must fail: %q", textOf(t, responses[0]))
-	}
-	if text := textOf(t, responses[0]); text != "rolling-memory error: 'int' object has no attribute 'get'" {
-		t.Fatalf("caps=5 text: %q", text)
-	}
-	if text := textOf(t, responses[1]); text != "rolling-memory error: 'str' object has no attribute 'get'" {
-		t.Fatalf("caps=str text: %q", text)
-	}
-	for _, index := range []int{2, 3, 5} {
-		if isError(t, responses[index]) {
-			t.Fatalf("response %d must succeed: %q", index, textOf(t, responses[index]))
+	for i, response := range responses {
+		if !isError(t, response) {
+			t.Fatalf("response %d accepted invalid arguments: %q", i, textOf(t, response))
 		}
-	}
-	if text := textOf(t, responses[4]); !strings.Contains(text, "invalid literal for int() with base 10: 'bad'") {
-		t.Fatalf("caps.chars text: %q", text)
-	}
-	if text := textOf(t, responses[6]); !strings.Contains(text, "invalid literal for int() with base 10: 'abc'") {
-		t.Fatalf("offset text: %q", text)
-	}
-	// Probe mode renders JSON and never reads caps.chars.
-	if isError(t, responses[7]) {
-		t.Fatalf("probe with caps=5 must succeed: %q", textOf(t, responses[7]))
+		want := capsRetiredMessage
+		if i == 6 {
+			want = "invalid literal for int() with base 10: 'abc'"
+		}
+		if text := textOf(t, response); !strings.Contains(text, want) {
+			t.Fatalf("response %d: got %q; want %q", i, text, want)
+		}
 	}
 }
 
-// TestRecallRetiredDeliverySwitchesIgnored pins the local surface: result_unit /
-// rank / caps.chains / caps.rows are no longer part of the MCP contract, and a
-// caller that still sends them must not change the request.
 func TestRecallRetiredDeliverySwitchesIgnored(t *testing.T) {
 	request, err := recallRequest(map[string]any{
 		"cue":         "x",
 		"result_unit": "ITEM",
 		"rank":        false,
-		"caps":        map[string]any{"chains": 48, "rows": 24},
 	})
 	if err != nil {
 		t.Fatalf("recallRequest: %v", err)
@@ -751,7 +734,7 @@ func TestDebugSwitch(t *testing.T) {
 	if err := server.Run(); err != nil {
 		t.Fatalf("run: %v", err)
 	}
-	if !strings.Contains(noisy.String(), "has no attribute 'get'") {
+	if !strings.Contains(noisy.String(), capsRetiredMessage) {
 		t.Fatalf("stderr with debug: %q", noisy.String())
 	}
 	if !strings.Contains(noisy.String(), "goroutine ") {

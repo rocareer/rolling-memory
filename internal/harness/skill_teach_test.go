@@ -23,7 +23,10 @@ func TestShippedSkillTeachesCurrentContract(t *testing.T) {
 		"任务开始 · 先理解意图，再按缺口检索",
 		"跨会话背景或意图不明、触及架构边界或历史裁定，或坐标未知准备盲搜",
 		"任务自包含、坐标已知且无历史耦合时免检",
-		"任务卡住 · 必执行 `recall` 检索",
+		"哪条过去的事实会改变下一步",
+		"报错已经给出文件和行号",
+		"只有主题相似、没有新增线索",
+		"不能指出实际省去的步骤就记 0",
 		"保真 ≠ 正确",
 		"absent: true",
 		"## 5. 收口如实评价（本轮调过 `recall` 时必写 · 可选区块）",
@@ -52,7 +55,10 @@ func TestShippedSkillTeachesCurrentContract(t *testing.T) {
 		"Task start — understand intent, then retrieve for information gaps",
 		"cross-session context or intent is unclear, an architectural boundary or historical decision matters, or an entrypoint is unknown before a blind search",
 		"Skip recall when the task is self-contained, coordinates are known, and history is irrelevant",
-		"Task Stuck — Mandatory Obstacle Recall",
+		"which past fact would change your next action",
+		"error already names the file and line",
+		"nothing beyond a topic match",
+		"report zero saved steps",
 		"Fidelity ≠ Correctness",
 		"absent: true",
 		"## 5. Wrap-up Review (Required When `recall` Was Called This Turn · Optional Section)",
@@ -96,9 +102,8 @@ func TestInstallLangSelectsSkillEditionAndSetsAdminDefaultLang(t *testing.T) {
 	}
 	enInstructions := readFile(t, filepath.Join(fx.home, ".claude", "CLAUDE.md"))
 	for _, want := range []string{
-		"unclear cross-session context", "architectural boundaries or historical decisions",
-		"unknown entrypoints before a blind search", "Skip recall for self-contained tasks with known coordinates and no historical coupling",
-		"call `recall` when stuck or facing an error",
+		"which past fact would change your next action", "prior decision, a failed attempt or a missing entrypoint",
+		"error already names the file and line", "continue from current evidence",
 	} {
 		if !strings.Contains(enInstructions, want) {
 			t.Fatalf("en instruction block missing %q:\n%s", want, enInstructions)
@@ -125,8 +130,8 @@ func TestInstallLangSelectsSkillEditionAndSetsAdminDefaultLang(t *testing.T) {
 	}
 	claudeMD := readFile(t, filepath.Join(fx.home, ".claude", "CLAUDE.md"))
 	for _, want := range []string{
-		"跨会话背景不明", "涉及架构或历史裁定", "坐标未知准备盲搜",
-		"任务自包含、坐标已知且无历史耦合时免检", "任务卡住或报错时必检",
+		"哪条过去的事实会改变下一步", "先前决定、失败尝试或上次用过的入口",
+		"报错已经给出文件和行号", "回到当前证据",
 	} {
 		if !strings.Contains(claudeMD, want) {
 			t.Fatalf("zh instruction block missing %q:\n%s", want, claudeMD)
