@@ -13,29 +13,10 @@ import (
 
 // 诊断专用（临时器材）：把引擎的索引与簇状态逐表摘要成 hex 指纹，供跨引擎
 // 逐位对拍定位非确定分歧层。发布链分歧根因隔离完成后本文件整体删除。
-
-// DebugParentRootDiff 统计 canonical 族根与 legacy min-hash 族根的分歧面
-// （临时诊断，key-invariance 收口后随本文件删除）。
-func DebugParentRootDiff(e *Engine) (diff, same, missing int) {
-	if e == nil || e.Index == nil || e.clusterState == nil {
-		return 0, 0, 0
-	}
-	st := e.clusterState
-	for h := range e.Index.DF {
-		cp, okCP := st.canonicalParent[h]
-		pg, okPG := st.parentGroup[h]
-		if !okCP || !okPG {
-			missing++
-			continue
-		}
-		if cp != pg {
-			diff++
-		} else {
-			same++
-		}
-	}
-	return diff, same, missing
-}
+//
+// DebugParentRootDiff（canonical 族根 vs legacy min-hash 族根的分歧面）已随
+// min-hash 回退一并删除：族根现在只有 canonicalParent 一个来源，无第二个可比的
+// 实现。
 
 // DebugEpisodeSplitKnifeEdge 返回情节切分阈值在退化输入（σ=0 等间隔）下的
 // 刀刃位置：tau = Expm1(mu+sig) 与首个桶间隔 gap 之差，正数表示每个间隔都
@@ -598,7 +579,13 @@ func DebugLastQueryStructure(e *Engine) []string {
 		return posKeys[i].Slot < posKeys[j].Slot
 	})
 	for _, p := range posKeys {
-		fmt.Fprintf(&sb, "|%d.%d=%s", p.Sentence, p.Slot, rootSig(sc.slotPrim[p]))
+		// 并列属主按逻辑名排序后串联，使摘要与哈希序无关。
+		sigs := make([]string, 0, len(sc.slotPrim[p]))
+		for _, owner := range sc.slotPrim[p] {
+			sigs = append(sigs, rootSig(owner))
+		}
+		sort.Strings(sigs)
+		fmt.Fprintf(&sb, "|%d.%d=%s", p.Sentence, p.Slot, strings.Join(sigs, ","))
 	}
 	out = append(out, "slotprim "+sb.String())
 	var gb strings.Builder

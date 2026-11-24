@@ -153,6 +153,12 @@ type Engine struct {
 	EnableStage3Plugin bool
 	Stage3Plugin       Stage3Plugin
 
+	// UnitType 按单元下标给出一个**不透明标签 id**（-1 表示无标签）；TypeMass 为每个
+	// 标签提供一张词项质量表。两者只由评测器材安装，生产恒为 nil（nil 时定价路径逐位
+	// 不变、零分配）；内核不解释标签含义，也不得据此设任何系数。
+	UnitType []int32
+	TypeMass []map[uint64]float64
+
 	clusterState *rmClusterState
 	// prevClusterState 承载一次增量重建前的簇状态：ensureClusterState 校验通过后
 	// 走增量扩展（复用族统计量与短语倒排、按 prevDrops 扣减），否则回退全量重建。

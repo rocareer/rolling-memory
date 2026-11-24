@@ -666,6 +666,9 @@ func (idx *Index) finalizeMasses() {
 			slotPrimary := make(map[TermPosition]uint64, len(posMap))
 			slotPrimBits := make(map[TermPosition]uint16, len(posMap))
 			slotPrimComp := make(map[TermPosition]bool, len(posMap))
+			// slotPrimTied 标记「伴随性与 bits 双双平手」的位置：此时没有物理上更
+			// 优的宿主，任何择一都只能靠哈希值，故一律不指派（见下方消费者）。
+			slotPrimTied := make(map[TermPosition]bool, 0)
 			for _, h := range atoms {
 				fl := idx.TermFlags[h]
 				if uFlags != nil {
@@ -679,8 +682,7 @@ func (idx *Index) finalizeMasses() {
 				}
 				isComp := fl&flagCompanion != 0
 				for _, pos := range posMap[h] {
-					prevH, exists := slotPrimary[pos]
-					if !exists {
+					if _, exists := slotPrimary[pos]; !exists {
 						slotPrimary[pos] = h
 						slotPrimBits[pos] = bits
 						slotPrimComp[pos] = isComp
@@ -688,10 +690,19 @@ func (idx *Index) finalizeMasses() {
 					}
 					prevComp := slotPrimComp[pos]
 					prevBits := slotPrimBits[pos]
-					if (prevComp && !isComp) || (prevComp == isComp && (bits > prevBits || (bits == prevBits && h < prevH))) {
+					switch {
+					case prevComp && !isComp:
 						slotPrimary[pos] = h
 						slotPrimBits[pos] = bits
 						slotPrimComp[pos] = isComp
+						slotPrimTied[pos] = false
+					case prevComp == isComp && bits > prevBits:
+						slotPrimary[pos] = h
+						slotPrimBits[pos] = bits
+						slotPrimComp[pos] = isComp
+						slotPrimTied[pos] = false
+					case prevComp == isComp && bits == prevBits:
+						slotPrimTied[pos] = true
 					}
 				}
 			}
@@ -710,7 +721,9 @@ func (idx *Index) finalizeMasses() {
 								minPos = p
 							}
 						}
-						if prim, ok := slotPrimary[minPos]; ok && prim != 0 {
+						// 并列（伴随性与 bits 全等）时没有物理上更优的宿主，
+						// 任一选择都只能由哈希值决定；此处不指派，保留自身为族。
+						if prim, ok := slotPrimary[minPos]; ok && prim != 0 && !slotPrimTied[minPos] {
 							grp = prim
 						}
 					}

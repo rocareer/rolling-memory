@@ -1220,7 +1220,7 @@ func (e *Engine) applyIntraEventExplanatoryEndorsement(idx *Index, st *rmCluster
 		c := &candidates[u]
 		base, _, _ := c.stage2Bounds(unitStructGate, u, groups, total)
 		if !c.structureSet {
-			c.structure = gateAt(unitStructGate, u) * st.computeStructuredIncrement(idx, sc, c, groups, total)
+			c.structure = st.computeStructuredIncrement(idx, sc, c, groups, total, gateAt(unitStructGate, u))
 			c.structureSet = true
 		}
 		return base + c.structure

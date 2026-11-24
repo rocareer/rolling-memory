@@ -86,8 +86,9 @@ func (st *rmClusterState) closestFamilySlotExact(entries []rmDocEntry, a, b rmFe
 // proxPairProbe and structureCallProbe are installed only by measurement
 // tests; the nil checks keep production cost at one branch per call.
 var (
-	proxPairProbe      func(pairs int)
-	structureCallProbe func(entries int)
+	proxPairProbe        func(pairs int)
+	structureCallProbe   func(entries int)
+	sentenceSupportProbe func(SentenceSupportSnapshot)
 )
 
 // SetProxPairProbe installs the pair-count hook; nil removes it.
@@ -95,6 +96,32 @@ func SetProxPairProbe(fn func(pairs int)) { proxPairProbe = fn }
 
 // SetStructureCallProbe installs the structure-call hook; nil removes it.
 func SetStructureCallProbe(fn func(entries int)) { structureCallProbe = fn }
+
+// SentenceSupportPoint is one non-zero sentence-purity coordinate computed by
+// the production structure channel. Purity is dimensionless and Sentence is
+// the persisted sentence-frame coordinate.
+type SentenceSupportPoint struct {
+	Sentence int
+	Purity   float64
+}
+
+// SentenceSupportSnapshot is a read-only measurement of the exact production
+// structure calculation for one candidate. The sentence slice is allocated
+// only while the probe is installed.
+type SentenceSupportSnapshot struct {
+	UnitID           string
+	QueryMass        float64
+	QueryTotal       float64
+	QueryCoverage    float64
+	DocPurity        float64
+	Purity           float64
+	Gate             float64
+	Structure        float64
+	SentencePurities []SentenceSupportPoint
+}
+
+// SetSentenceSupportProbe installs the structure-coordinate hook; nil removes it.
+func SetSentenceSupportProbe(fn func(SentenceSupportSnapshot)) { sentenceSupportProbe = fn }
 
 // ChannelBreakdown is a read-only snapshot of the seven scoring channels for
 // one selected hit. It is populated only while SetChannelBreakdownProbe is
@@ -204,12 +231,27 @@ func (st *rmClusterState) rmProximityAndSynergy(c *rmCandidate, groups map[uint6
 	return prox, syn
 }
 
-func (st *rmClusterState) computeStructuredIncrement(idx *Index, sc *rmQueryScratch, c *rmCandidate, groups map[uint64]float64, total float64) float64 {
+// emitEmptySentenceSupport reports a candidate whose structure increment is
+// zero before any sentence pass; no-op while no probe is installed.
+func (st *rmClusterState) emitEmptySentenceSupport(idx *Index, c *rmCandidate, total, gate float64) {
+	if sentenceSupportProbe == nil {
+		return
+	}
+	sentenceSupportProbe(SentenceSupportSnapshot{
+		UnitID:     string([]byte(idx.UnitIDs[c.unit])),
+		QueryTotal: total,
+		Gate:       gate,
+	})
+}
+
+func (st *rmClusterState) computeStructuredIncrement(idx *Index, sc *rmQueryScratch, c *rmCandidate, groups map[uint64]float64, total, gate float64) float64 {
 	if total <= 0 || len(c.matches) == 0 {
+		st.emitEmptySentenceSupport(idx, c, total, gate)
 		return 0
 	}
 	fd := &st.fastDocs[c.unit]
 	if fd.docTotal <= 0 {
+		st.emitEmptySentenceSupport(idx, c, total, gate)
 		return 0
 	}
 	entries := st.docEntriesOf(c.unit)
@@ -391,16 +433,36 @@ func (st *rmClusterState) computeStructuredIncrement(idx *Index, sc *rmQueryScra
 
 	queryCoverage := math.Min(1.0, queryMass/total)
 	prior := st.sentenceEnergyMean
-	purity := math.Min(1.0, docOverlap/(fd.docTotal+prior))
+	docPurity := math.Min(1.0, docOverlap/(fd.docTotal+prior))
+	purity := docPurity
+	var supportPoints []SentenceSupportPoint
 	for s, stot := range sentTotals {
 		if stot > 0 && sentOverlaps[s] > 0 {
-			if p := math.Min(1.0, sentOverlaps[s]/(stot+prior)); p > purity {
+			p := math.Min(1.0, sentOverlaps[s]/(stot+prior))
+			if p > purity {
 				purity = p
+			}
+			if sentenceSupportProbe != nil {
+				supportPoints = append(supportPoints, SentenceSupportPoint{Sentence: s, Purity: p})
 			}
 		}
 	}
 	maximum := math.Max(queryCoverage, purity)
-	return queryMass * (math.Sqrt(queryCoverage*purity) + maximum*maximum/eulerNumber)
+	structure := queryMass * (math.Sqrt(queryCoverage*purity) + maximum*maximum/eulerNumber)
+	if sentenceSupportProbe != nil {
+		sentenceSupportProbe(SentenceSupportSnapshot{
+			UnitID:           string([]byte(idx.UnitIDs[c.unit])),
+			QueryMass:        queryMass,
+			QueryTotal:       total,
+			QueryCoverage:    queryCoverage,
+			DocPurity:        docPurity,
+			Purity:           purity,
+			Gate:             gate,
+			Structure:        gate * structure,
+			SentencePurities: supportPoints,
+		})
+	}
+	return gate * structure
 }
 
 type rmScoredCandidate struct {
@@ -716,7 +778,7 @@ func (st *rmClusterState) selectClusterHits(idx *Index, sc *rmQueryScratch, cand
 		if !best.structureSet || best.epoch != len(out) {
 			if !best.structureSet {
 				if !c.structureSet {
-					c.structure = gateAt(unitStructGate, best.unit) * st.computeStructuredIncrement(idx, sc, c, groups, total)
+					c.structure = st.computeStructuredIncrement(idx, sc, c, groups, total, gateAt(unitStructGate, best.unit))
 					c.structureSet = true
 				}
 				best.structureSet = true
@@ -830,7 +892,7 @@ func (st *rmClusterState) selectClusterHits(idx *Index, sc *rmQueryScratch, cand
 					// couple the damping dose to the UnitID sort order, so
 					// materialize it with the exact refresh formula first.
 					if !nbC.structureSet {
-						nbC.structure = gateAt(unitStructGate, nb) * st.computeStructuredIncrement(idx, sc, nbC, groups, total)
+						nbC.structure = st.computeStructuredIncrement(idx, sc, nbC, groups, total, gateAt(unitStructGate, nb))
 						nbC.structureSet = true
 					}
 					nbHop := nbC.stSpread + nbC.stCorrob

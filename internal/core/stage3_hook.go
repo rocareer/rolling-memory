@@ -126,7 +126,7 @@ func (e *Engine) applyStage3ClusterHook(idx *Index, st *rmClusterState, sc *rmQu
 		}
 		gate := gateAt(unitStructGate, u)
 		if !c.structureSet {
-			c.structure = gate * st.computeStructuredIncrement(idx, sc, c, groups, total)
+			c.structure = st.computeStructuredIncrement(idx, sc, c, groups, total, gate)
 			c.structureSet = true
 		}
 		e2 := c.lex + c.phrase + c.entity + c.structure + c.stSpread + c.stCorrob

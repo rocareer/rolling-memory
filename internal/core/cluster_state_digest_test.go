@@ -260,15 +260,21 @@ func clusterStateCanonicalDigest(st *rmClusterState) string {
 		d.f64(st.properRatio[k])
 	}
 	d.tag("parentGroup")
+	// 族根只有 canonicalParent 一个来源；按索引词表遍历并经 parentGroupOf 取值，
+	// 使内存态与磁盘态（该映射可能来自 termParentGroup 列）摘要一致。
 	keys = keys[:0]
-	for k := range st.parentGroup {
-		keys = append(keys, k)
+	for k := range st.termKeys {
+		keys = append(keys, st.termKeys[k])
 	}
 	sortUint64Asc(keys)
 	d.u64(uint64(len(keys)))
 	for _, k := range keys {
 		d.u64(k)
-		d.u64(st.parentGroup[k])
+		if g, ok := st.parentGroupOf(k); ok {
+			d.u64(g)
+		} else {
+			d.u64(0)
+		}
 	}
 	d.tag("isPrimaryWord")
 	keys = keys[:0]
@@ -483,7 +489,14 @@ func TestNeighborVisitorSeamGoldenParity(t *testing.T) {
 	// the estimator even though the episode partition (1 component, 64 units)
 	// and the query hit digest below are unchanged; Welford also removes the
 	// ULP-decided episode split observed on constant-interval corpora.
-	const wantClusterState = "0a9b29e41693b974a199cdc0069555c65271e1b9891d42d66960856f5ff87f3e"
+	//
+	// Re-pin 2026-11-24: the digest's family-root column now hashes the single
+	// canonical family root instead of the deleted min-hash map. The min-hash
+	// label was never used for scoring (canonicalParent already won in
+	// parentGroupOf), so the ranking surface is unchanged; the full-corpus paired
+	// baseline and the multi-key floor are the guards for that, and this constant
+	// only tracks the digest composition change.
+	const wantClusterState = "e9d77cfbb97b543e633b32d30e403894f368e518a94098e8be1c23818ce90586"
 	if got := clusterStateCanonicalDigest(eng.ensureClusterState()); got != wantClusterState {
 		t.Fatalf("cluster state digest = %s, want %s", got, wantClusterState)
 	}

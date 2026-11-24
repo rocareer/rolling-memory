@@ -680,7 +680,7 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 	if len(qPositions) > 0 {
 		slotPrim := sc.slotPrim
 		if slotPrim == nil {
-			slotPrim = make(map[TermPosition]uint64, len(queryHashes)*2)
+			slotPrim = make(map[TermPosition][]uint64, len(queryHashes)*2)
 			sc.slotPrim = slotPrim
 		} else {
 			clear(slotPrim)
@@ -695,14 +695,32 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 		for _, h := range queryHashes {
 			if g := hashGroup[h]; g == h && !detachedFrag[g] {
 				isPure := qTerms[h].Flags&rmFlagCompanion == 0
+				df := idx.TermDF(g)
 				for _, pos := range qPositions[h] {
-					// 属主决胜与 corpus 侧 canonicalHostPreferred 同哲学：纯词优先，
-					// 同纯度取语料验证更强者（df 大），df 平手才落到 hash 序
-					// （key-invariance：旧的纯 `g < prev` 让两个不同词竞争同一槽位
-					// 时属主随 key 翻转，altG 并组结构性分叉）。
-					if prev, exists := slotPrim[pos]; !exists || (isPure && !slotPure[pos]) || (isPure == slotPure[pos] && (idx.TermDF(g) > idx.TermDF(prev) || (idx.TermDF(g) == idx.TermDF(prev) && g < prev))) {
-						slotPrim[pos] = g
+					// 属主裁决只用品类与语料统计：纯词优先，同纯度取 df 更大者；
+					// 纯度与 df 双双平手时**并列共存**（不择一）。历史上这里以
+					// `g < prev` 收尾，等价于让 atomizer key 决定槽主，已删除。
+					owners, exists := slotPrim[pos]
+					switch {
+					case !exists:
+						slotPrim[pos] = append(owners[:0], g)
 						slotPure[pos] = isPure
+					case isPure && !slotPure[pos]:
+						slotPrim[pos] = append(owners[:0], g)
+						slotPure[pos] = isPure
+					case isPure == slotPure[pos]:
+						prevDF := 0
+						if len(owners) > 0 {
+							prevDF = idx.TermDF(owners[0])
+						}
+						switch {
+						case df > prevDF:
+							slotPrim[pos] = append(owners[:0], g)
+						case df == prevDF:
+							if len(owners) == 0 || g < owners[0] {
+								slotPrim[pos] = append(owners[:0], g)
+							}
+						}
 					}
 				}
 			}
@@ -717,25 +735,26 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 				continue
 			}
 			for _, pos := range posList {
-				altG := slotPrim[pos]
-				if altG == 0 || altG == g || detachedFrag[altG] {
-					continue
-				}
-				if origA, okA := qTerms[altG]; okA && qTerms[h].IsSlot2Companion(origA) {
-					continue
-				}
-				if extraGroups == nil {
-					extraGroups = make(map[uint64][]uint64, 4)
-				}
-				dup := false
-				for _, prev := range extraGroups[h] {
-					if prev == altG {
-						dup = true
-						break
+				for _, altG := range slotPrim[pos] {
+					if altG == 0 || altG == g || detachedFrag[altG] {
+						continue
 					}
-				}
-				if !dup {
-					extraGroups[h] = append(extraGroups[h], altG)
+					if origA, okA := qTerms[altG]; okA && qTerms[h].IsSlot2Companion(origA) {
+						continue
+					}
+					if extraGroups == nil {
+						extraGroups = make(map[uint64][]uint64, 4)
+					}
+					dup := false
+					for _, prev := range extraGroups[h] {
+						if prev == altG {
+							dup = true
+							break
+						}
+					}
+					if !dup {
+						extraGroups[h] = append(extraGroups[h], altG)
+					}
 				}
 			}
 		}
@@ -983,7 +1002,20 @@ func (e *Engine) searchClustersWithPositions(qTerms map[uint64]Term, qPositions 
 					ordBystanderDamp = true
 				}
 			}
-			matchedMass := weight * (1.0 + repeats)
+			// 声明式按单元标签定价：UnitType/TypeMass 只由测量器材安装（生产恒 nil），
+			// 标签是不透明整数 id，内核不解释其含义。缺项时逐位回退池化质量。
+			unitWeight := weight
+			if e.UnitType != nil {
+				if label := e.UnitType[p.unit]; label >= 0 && int(label) < len(e.TypeMass) {
+					if typed, ok := e.TypeMass[label][h]; ok && typed > 0 {
+						unitWeight = typed
+						if meanBits > 0 && bits > 0 {
+							unitWeight *= bitsGainSqrt(float64(bits) / meanBits)
+						}
+					}
+				}
+			}
+			matchedMass := unitWeight * (1.0 + repeats)
 			if ordBystanderDamp {
 				matchedMass *= transmissionPerHop
 			}

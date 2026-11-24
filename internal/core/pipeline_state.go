@@ -630,27 +630,29 @@ type rmQueryScratch struct {
 	// concurrent shallow engines independent maps, so shared CSR stays read-only.
 	dayCos map[uint64]float64
 	// Per-query arena for query terms and TermPositions to avoid map/slice allocations.
-	qTerms                 map[uint64]Term
-	posMap                 map[uint64][]TermPosition
-	posPool                []TermPosition
-	queryHashes            []uint64
-	hashGroup              map[uint64]uint64
-	detachedFrag           map[uint64]bool
-	detachedSlot2          map[uint64]bool
-	famMinDF               map[uint64]int
-	properSlots            map[TermPosition]int
-	primaryAtPos           map[TermPosition]uint64
-	groupRigid             map[uint64]bool
-	groupProper            map[uint64]bool
-	hasBroadComp           map[uint64]bool
-	kappaOcc               map[uint64]float64
-	anchorKappa            map[uint64]float64
-	isAnchorGroup          map[uint64]bool
-	anchorTimes            []int64
-	anchorUnitList         []int32
-	shellScale             map[uint64]float64
-	groups                 map[uint64]float64
-	slotPrim               map[TermPosition]uint64
+	qTerms         map[uint64]Term
+	posMap         map[uint64][]TermPosition
+	posPool        []TermPosition
+	queryHashes    []uint64
+	hashGroup      map[uint64]uint64
+	detachedFrag   map[uint64]bool
+	detachedSlot2  map[uint64]bool
+	famMinDF       map[uint64]int
+	properSlots    map[TermPosition]int
+	primaryAtPos   map[TermPosition]uint64
+	groupRigid     map[uint64]bool
+	groupProper    map[uint64]bool
+	hasBroadComp   map[uint64]bool
+	kappaOcc       map[uint64]float64
+	anchorKappa    map[uint64]float64
+	isAnchorGroup  map[uint64]bool
+	anchorTimes    []int64
+	anchorUnitList []int32
+	shellScale     map[uint64]float64
+	groups         map[uint64]float64
+	// slotPrim 保存每个槽位上**全部未被支配的**候选属主（纯度更高、或纯度同而 df
+	// 最大者）。并列者共存而非择一，因此不存在任何以哈希值收尾的决胜。
+	slotPrim               map[TermPosition][]uint64
 	slotPure               map[TermPosition]bool
 	groupKeys              []uint64
 	activeEpisodes         []int32
@@ -817,11 +819,9 @@ type rmClusterState struct {
 	phraseDelta []dyadPosting
 	effWeight   map[uint64]float64
 	properRatio map[uint64]float64
-	parentGroup map[uint64]uint64
-	// canonicalParent is the key-invariant family root (most frequent host by
-	// df, then widest carrier). parentGroupOf serves every scoring/partner/
-	// snapshot consumer from it; parentGroup keeps the legacy min-hash label
-	// only as a fallback for states materialized before canonicalParent.
+	// canonicalParent 是唯一的族根映射：键无关（df 大 → bits 宽 → 无第三级）。
+	// 历史 min-hash 回退已删除——它在 df/bits 并列时取最小哈希，等价于让 atomizer
+	// key 参与族根裁决。
 	canonicalParent map[uint64]uint64
 	isPrimaryWord   map[uint64]bool
 	clusters        []int32
@@ -1246,18 +1246,12 @@ func (st *rmClusterState) properRatioOf(h uint64) float64 {
 
 // parentGroupOf returns the family root used by scoring and partner paths.
 // Key-invariance contract: the root is the canonical host (most frequent host
-// by df, then widest carrier), so the value does not change when the atomizer
-// key relabels hashes. The legacy min-hash map remains only as a fallback for
-// states materialized before canonicalParent existed.
+// by df, then widest carrier); there is no hash-order fallback.
 func (st *rmClusterState) parentGroupOf(h uint64) (uint64, bool) {
 	if st.canonicalParent != nil {
 		if g, ok := st.canonicalParent[h]; ok && g != 0 {
 			return g, true
 		}
-	}
-	if st.parentGroup != nil {
-		pg, ok := st.parentGroup[h]
-		return pg, ok
 	}
 	if col, ok := st.lookupTermCol(h); ok && col < len(st.termParentGroup) {
 		pg := st.termParentGroup[col]
@@ -1267,16 +1261,15 @@ func (st *rmClusterState) parentGroupOf(h uint64) (uint64, bool) {
 }
 
 // canonicalParentOf returns the key-invariant family root for weight/partner
-// purposes. parentGroupOf keeps the legacy min-hash contract for the segment
-// block and query layers.
+// purposes; it is the same mapping parentGroupOf serves.
 func (st *rmClusterState) canonicalParentOf(h uint64) uint64 {
 	if st.canonicalParent != nil {
 		if g, ok := st.canonicalParent[h]; ok && g != 0 {
 			return g
 		}
 	}
-	if st.parentGroup != nil {
-		if g, ok := st.parentGroup[h]; ok && g != 0 {
+	if col, ok := st.lookupTermCol(h); ok && col < len(st.termParentGroup) {
+		if g := st.termParentGroup[col]; g != 0 {
 			return g
 		}
 	}
@@ -1569,7 +1562,6 @@ func (e *Engine) ensureClusterState() *rmClusterState {
 		termRowPtr:      make([]uint32, len(idx.DF)+1),
 		postingPool:     make([]rmPostingEntry, totalDocEntries),
 		effWeight:       make(map[uint64]float64, len(idx.DF)),
-		parentGroup:     make(map[uint64]uint64, len(idx.DF)),
 		canonicalParent: make(map[uint64]uint64, len(idx.DF)),
 		isPrimaryWord:   make(map[uint64]bool, len(idx.DF)),
 		clusters:        make([]int32, idx.N),
@@ -1688,9 +1680,6 @@ func (e *Engine) ensureClusterState() *rmClusterState {
 						if en.flags&rmFlagCompanion == 0 {
 							st.isPrimaryWord[en.id] = true
 						}
-						if prevGrp, ok := st.parentGroup[en.id]; !ok || en.group < prevGrp {
-							st.parentGroup[en.id] = en.group
-						}
 						if prevGrp, ok := st.canonicalParent[en.id]; !ok || canonicalHostPreferred(idx, en.group, prevGrp) {
 							st.canonicalParent[en.id] = en.group
 						}
@@ -1779,9 +1768,6 @@ func (e *Engine) ensureClusterState() *rmClusterState {
 			}
 			if fl&rmFlagCompanion == 0 {
 				st.isPrimaryWord[h] = true
-			}
-			if prev, ok := st.parentGroup[h]; !ok || group < prev {
-				st.parentGroup[h] = group
 			}
 			if prev, ok := st.canonicalParent[h]; !ok || canonicalHostPreferred(idx, group, prev) {
 				st.canonicalParent[h] = group
@@ -1975,7 +1961,6 @@ func (e *Engine) ensureClusterState() *rmClusterState {
 		}
 	}
 	st.effWeight = nil
-	st.parentGroup = nil
 	st.isPrimaryWord = nil
 
 	st.sentenceEnergyMean = st.calcMeanSentenceEnergy(idx)
@@ -2705,9 +2690,6 @@ func rmQueryDyadsWithPositionsInto(sc *rmQueryScratch, qTerms map[uint64]Term, q
 func (st *rmClusterState) buildEffectiveWeightsFromDyads(idx *Index, docDyadRowPtr []uint32, docDyadsFlat []rmDyad) {
 	root := func(id uint64) uint64 {
 		if g, ok := st.canonicalParent[id]; ok && g != 0 {
-			return g
-		}
-		if g, ok := st.parentGroup[id]; ok && g != 0 {
 			return g
 		}
 		return id
