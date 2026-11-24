@@ -50,7 +50,7 @@ The server opens SQLite lazily on the first `tools/call` so `initialize` and `to
 
 | Parameter | Type | Description |
 |---|---|---|
-| `cue` | string | Literal search clue (required for `mode=full`/`probe`): prefix with `[<workspace>]` (e.g. `[Rolling-Memory]`) to prioritize current-repository memories, then give a dense literal cue — intent, object/file/symbol names verbatim, 1–2 hard identifiers (error text, status code, route, version, number, date), and the occasion; typically 12–25 content words, space-separated. Every word should really occur in the target memory; avoid generic fillers (they push unrelated long sessions forward). Use 2–6 tokens only to confirm a single known symbol or error code; if noisy, drop the broad words and keep the exact ones |
+| `cue` | string | Required for `full` and `probe`. Use literal anchors that distinguish the event, such as a known path, symbol, error, version, or date. Do not pad. A `[workspace]` prefix prioritizes that workspace without excluding others. |
 | `scope` | string | Override default memory scope |
 | `reader` | `owner` \| `deliverable` | Defaults to `deliverable`; historical audience restrictions may not be enforced across all sources. Review results before sharing. |
 | `mode` | `full` \| `probe` \| `recent` | `full` returns subject bands with ranked evidence; `probe` returns a compact existence receipt (summaries truncated to 160 chars); `recent` lists the newest entries in pure time order (no semantic matching; `cue` is ignored) |
@@ -60,6 +60,8 @@ The server opens SQLite lazily on the first `tools/call` so `initialize` and `to
 ### 2.2 Full Receipt & Real-Time `Noetic` Crystallization
 
 For a normal lookup, send just the cue, for example `{"cue":"[calendar] shared rota Friday handover decision"}`. Full mode returns source excerpts in a `<rolling-memory-recall ...>` block. The local delivery limit still applies. A truncation notice means the excerpt is incomplete: verify the cited source before relying on a missing condition or exception. The offset selects other results, not the next characters of the same excerpt.
+
+A conversation excerpt can contain several matched segments. Its source-unit IDs identify the verified matches, not the entire conversation. If a result says its text was shortened, check the cited source before using it to make a decision. On macOS and Linux, with the local memory service running, you can read a listed unit by ID using `rolling-memory engine documents --json` with `{"items":[{"unit_id":"ep_…"}]}` on stdin. If the source is no longer available, the read reports an error rather than returning stale text.
 
 Key fields:
 - `absent`: no matching memory found. **This is not an error** (`isError = false`); state "no record" and continue.

@@ -128,6 +128,7 @@ func TestInstructionGeneratedBlocksUpgradeAndUninstall(t *testing.T) {
 		{"current-en", instructionBlock(english)},
 		{"current-zh", instructionBlock(options)},
 		{"historical-en", historicalInstructionBlock(options)},
+		{"old-self-digest", withInstructionDigest(priorTemplateBlock(options))},
 	} {
 		for _, eol := range []string{"\n", "\r\n"} {
 			for _, operation := range []string{"install", "uninstall", "check"} {
@@ -157,6 +158,9 @@ func TestInstructionGeneratedBlocksUpgradeAndUninstall(t *testing.T) {
 						report = &Report{}
 						checkInstructions(registry[0], options, report)
 						status, want = StatusOK, original
+						if tc.name == "historical-en" || tc.name == "old-self-digest" {
+							status = StatusOutdated
+						}
 					}
 					if action := firstAction(t, report, "zcode", "instructions"); action.Status != status {
 						t.Errorf("status = %q, want %q", action.Status, status)

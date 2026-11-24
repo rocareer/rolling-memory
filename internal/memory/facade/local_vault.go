@@ -992,6 +992,7 @@ func (m *Memory) localVaultRecall(req RecallRequest) (*recall.Result, error) {
 			return group.hits[i]["pointer"].(string) < group.hits[j]["pointer"].(string)
 		})
 		var verified []string
+		sourceIDs := make([]string, 0, len(group.hits))
 		low, high := 0, 0
 		var turnOccurredAt int64
 		for _, hit := range group.hits {
@@ -1006,6 +1007,7 @@ func (m *Memory) localVaultRecall(req RecallRequest) (*recall.Result, error) {
 			}
 			high = index
 			verified = append(verified, resolved)
+			sourceIDs = append(sourceIDs, unit)
 		}
 		// The turn's opening user message is its provenance head; fetch it from the turn's
 		// own verified index when retrieval matched only later segments, so the delivered
@@ -1047,6 +1049,7 @@ func (m *Memory) localVaultRecall(req RecallRequest) (*recall.Result, error) {
 			"score":             group.score,
 			"segment_window":    []int{low, high},
 			"turn_segments":     len(verified),
+			"source_unit_ids":   sourceIDs,
 		}
 		bandEntry := map[string]any{
 			"id":         group.unitID,

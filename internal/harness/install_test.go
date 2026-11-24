@@ -684,7 +684,7 @@ func TestInstallAndUninstallClaudeEntries(t *testing.T) {
 	}
 	target := filepath.Join(fx.home, ".claude", "skills", "rm-test", "SKILL.md")
 	text := readFile(t, target)
-	if !strings.Contains(text, "name: rm-test") || !strings.Contains(text, "Rolling-Memory") {
+	if !strings.Contains(text, "name: rm-test") || !strings.Contains(text, "# Rolling Memory 协作") {
 		t.Fatalf("installed skill is not the shipped SKILL.md renamed:\n%s", text)
 	}
 

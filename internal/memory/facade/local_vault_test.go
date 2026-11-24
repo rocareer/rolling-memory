@@ -287,6 +287,13 @@ func TestThinBrainRecallAssemblesSegmentHitsPerTurn(t *testing.T) {
 		if text != strings.Join(expected.texts, "\n") {
 			t.Fatalf("turn-%d assembled content = %q, want %q", expected.turn, text, strings.Join(expected.texts, "\n"))
 		}
+		sourceIDs, _ := nodes[0]["source_unit_ids"].([]string)
+		for i, source := range expected.texts {
+			want := episodicunit.DocID(memory.Config.Scope, source)
+			if len(sourceIDs) != len(expected.texts) || sourceIDs[i] != want {
+				t.Fatalf("turn-%d source units = %v, want source %d to be %s", expected.turn, sourceIDs, i, want)
+			}
+		}
 		window, _ := nodes[0]["segment_window"].([]int)
 		if len(window) != 2 || window[0] != expected.window[0] || window[1] != expected.window[1] {
 			t.Fatalf("turn-%d window = %v, want %v", expected.turn, window, expected.window)

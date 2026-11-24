@@ -1,6 +1,6 @@
 {
   "name": "@rocareer/dsh-rolling-memory",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "type": "module",
   "description": "Rolling Memory recall and skill for DeepSeek Harness (dsh).",
   "license": "PolyForm-Noncommercial-1.0.0",

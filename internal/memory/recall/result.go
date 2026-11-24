@@ -331,6 +331,9 @@ func bandItemLines(band map[string]any) []string {
 		if source != "" {
 			prefix += "[" + source + "] "
 		}
+		if shortened, _ := node["content_truncated"].(bool); shortened {
+			prefix += "（正文已缩短 · 单元 ID: " + plainLine(node["id"]) + "） "
+		}
 		if len(contentLines) <= 1 {
 			singleNode := node
 			if len(contentLines) == 1 && contentLines[0] != rawContent {
@@ -416,11 +419,18 @@ func episodicTurnBandLines(band map[string]any) []string {
 	} else if segments > 0 {
 		parts = append(parts, strconv.Itoa(segments)+" 段")
 	}
+	shortened, _ := node["content_truncated"].(bool)
+	if shortened {
+		parts = append(parts, "正文已缩短")
+	}
 	header := title
 	if len(parts) > 0 {
 		header += "（" + strings.Join(parts, " · ") + "）"
 	}
 	lines := []string{header}
+	if sourceIDs, ok := node["source_unit_ids"].([]string); ok && (len(sourceIDs) > 1 || shortened) {
+		lines = append(lines, "  已核验命中片段: "+plainLine(strings.Join(sourceIDs, ", ")))
+	}
 	rawLines := strings.Split(rendered, "\n")
 	multiLineTurn := len(rawLines) > 1
 	for idx, line := range rawLines {

@@ -25,8 +25,8 @@ stage="${1:-all}"
 
 run_fmt() {
     local unformatted
-    unformatted="$(gofmt -l cmd internal sdk)" || {
-        echo "gofmt could not read cmd/ internal/ sdk/" >&2
+    unformatted="$(gofmt -l cmd internal sdk diagnostics)" || {
+        echo "gofmt could not read cmd/ internal/ sdk/ diagnostics/" >&2
         return 1
     }
     if [ -n "$unformatted" ]; then

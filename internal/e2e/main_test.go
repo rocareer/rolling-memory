@@ -143,12 +143,13 @@ type result struct {
 // config and log. Children get exactly this environment and never inherit the
 // host one, so nothing can reach the live memory core or the host configs.
 type sandbox struct {
-	t      *testing.T
-	base   string
-	home   string
-	db     string
-	config string
-	log    string
+	t            *testing.T
+	base         string
+	home         string
+	db           string
+	config       string
+	log          string
+	engineSocket string
 }
 
 func newSandbox(t *testing.T) *sandbox {
@@ -173,7 +174,7 @@ func newSandbox(t *testing.T) *sandbox {
 // env is the complete child environment: the sandbox variables plus PATH (the
 // launcher lookup) and TZ, never the host environment.
 func (s *sandbox) env() []string {
-	return []string{
+	env := []string{
 		"HOME=" + s.home,
 		"PATH=" + os.Getenv("PATH"),
 		"TMPDIR=" + filepath.Join(s.base, "tmp"),
@@ -188,6 +189,10 @@ func (s *sandbox) env() []string {
 		"ROLLING_MEMORY_SCOPE=mem:e2e",
 		"ROLLING_MEMORY_MODE=local",
 	}
+	if s.engineSocket != "" {
+		env = append(env, "ROLLING_MEMORY_DAEMON_SOCKET="+s.engineSocket)
+	}
+	return env
 }
 
 // skillFile is the shipped SKILL.md that the install smoke registers.

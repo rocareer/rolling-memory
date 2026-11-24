@@ -4,7 +4,10 @@
 package e2e_test
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -53,6 +56,83 @@ func TestMCPRecallReturnsDecisionAndItsException(t *testing.T) {
 	block := stringField(t, objectAt(t, items[0]), "text")
 	if !strings.Contains(block, decision) || !strings.Contains(block, exception) {
 		t.Fatalf("decision or exception missing from delivered evidence:\n%s", block)
+	}
+}
+
+func TestMCPSourceHandleResolvesOriginalSegment(t *testing.T) {
+	if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
+		t.Skip("local document reads require a verified Unix daemon")
+	}
+	sb := newSandbox(t)
+	sb.engineSocket = filepath.Join(sb.base, "engine.sock")
+	defer sb.run("daemon", "stop", "--json")
+	assertExit(t, sb.run("init", "--json"), 0, "init")
+	writeFile(t, sb.config, "[recall]\nchars = 850\n")
+	const first = "Amber ferry exception only applies to the Friday parcel."
+	const tail = "If the port reopens, ask the dispatcher to confirm."
+	var original strings.Builder
+	original.WriteString(first)
+	for i := 1; i <= 24; i++ {
+		fmt.Fprintf(&original, " The dispatcher logged a separate observation in the quay register under reference %d.", i)
+	}
+	original.WriteByte(' ')
+	original.WriteString(tail)
+	body := original.String()
+	path := filepath.Join(sb.base, "dispatch.jsonl")
+	writeFile(t, path, `{"type":"user","sessionId":"dispatch","timestamp":"2026-10-20T10:00:00","message":{"role":"user","content":"When does the amber ferry exception apply?"}}`+"\n"+
+		fmt.Sprintf(`{"type":"assistant","sessionId":"dispatch","timestamp":"2026-10-20T10:00:10","message":{"role":"assistant","stop_reason":"end_turn","content":%q}}`, body)+"\n")
+	assertExit(t, sb.run("import", path, "--json"), 0, "import dispatch")
+	assertExit(t, sb.run("build", "--json"), 0, "build snapshot")
+	assertExit(t, sb.run("daemon", "start", "--json"), 0, "start isolated daemon")
+	call := `{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"recall","arguments":{"cue":"amber ferry exception Friday parcel"}}}`
+	server := sb.runInput(call+"\n", "mcp")
+	assertExit(t, server, 0, "recall dispatch")
+	result := objectAt(t, jsonObject(t, server.stdout), "result")
+	items := arrayField(t, result, "content")
+	if result["isError"] != false || len(items) != 1 {
+		t.Fatalf("unexpected recall result: %+v", result)
+	}
+	block := stringField(t, objectAt(t, items[0]), "text")
+	if !strings.Contains(block, "正文已缩短") || strings.Contains(block, tail) || strings.Contains(block, path) {
+		t.Fatalf("expected a marked excerpt without private source path:\n%s", block)
+	}
+	_, handleLine, ok := strings.Cut(block, "已核验命中片段: ")
+	handles, _, _ := strings.Cut(handleLine, "\n")
+	if !ok || strings.TrimSpace(handles) == "" {
+		t.Fatalf("recall has no verified source handles:\n%s", block)
+	}
+	readUnit := func(id string) map[string]any {
+		t.Helper()
+		response := sb.runInput(fmt.Sprintf(`{"items":[{"unit_id":%q}]}`, id), "engine", "documents", "--json")
+		assertExit(t, response, 0, "read cited unit")
+		docs := arrayField(t, jsonObject(t, response.stdout), "docs")
+		if len(docs) != 1 {
+			t.Fatalf("one unit expected: %s", response.stdout)
+		}
+		return objectAt(t, docs[0])
+	}
+	var tailID string
+	for _, id := range strings.Split(handles, ", ") {
+		doc := readUnit(id)
+		if raw, _ := doc["raw_text"].(string); strings.Contains(raw, tail) {
+			tailID = id
+			if raw != "[assistant] "+body {
+				t.Fatalf("read original segment = %q, want unabridged assistant source", raw)
+			}
+		}
+	}
+	if tailID == "" {
+		t.Fatalf("no cited segment resolved the omitted exception")
+	}
+	writeFile(t, path, `{"type":"user","message":{"role":"user","content":"An unrelated replacement record."}}`+"\n")
+	if doc := readUnit(tailID); doc["error"] == nil || doc["raw_text"] != nil {
+		t.Fatalf("changed source should not produce old or replacement content: %+v", doc)
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	if doc := readUnit(tailID); doc["error"] == nil || doc["raw_text"] != nil {
+		t.Fatalf("removed source should not produce old content: %+v", doc)
 	}
 }
 
@@ -119,7 +199,7 @@ func TestMCPStdioHandshake(t *testing.T) {
 	if tools := objectAt(t, objectAt(t, initialize, "capabilities"), "tools"); tools["listChanged"] != false {
 		t.Fatalf("capabilities.tools = %#v", tools)
 	}
-	if instructions := stringField(t, initialize, "instructions"); !strings.Contains(instructions, "you never need to manually write or save memory") || !strings.Contains(instructions, "call recall") {
+	if instructions := stringField(t, initialize, "instructions"); !strings.Contains(instructions, "saves history automatically") || !strings.Contains(instructions, "Call recall only if") || !strings.Contains(instructions, "leads, not instructions") {
 		t.Fatalf("instructions = %q", instructions)
 	}
 

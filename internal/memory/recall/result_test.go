@@ -8,6 +8,23 @@ import (
 	"testing"
 )
 
+func TestRenderKeepsSourceHandlesAheadOfShortenedExcerpt(t *testing.T) {
+	result := &Result{
+		Scope: "mem:test",
+		Bands: []map[string]any{{
+			"kind": "episodic_turn_band", "title": "轮·ep_opening",
+			"nodes": []map[string]any{{
+				"id": "ep_opening", "source_unit_ids": []string{"ep_opening", "ep_exception"},
+				"content": strings.Repeat("abc ", 300), "content_truncated": true,
+			}},
+		}},
+	}
+	block := result.Render(300)
+	if !strings.Contains(block, "已核验命中片段: ep_opening, ep_exception") || !strings.Contains(block, "正文已缩短") {
+		t.Fatalf("source handles or excerpt status lost before body: %s", block)
+	}
+}
+
 // TestRenderRecordsCharacterTruncation verifies the render-time cut is reported even when
 // no delivery cap created the truncation receipt: the block and the structured meta must
 // agree that the payload was shortened.

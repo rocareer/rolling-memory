@@ -330,7 +330,7 @@ func TestShimRunsCLI(t *testing.T) {
 
 	installed := filepath.Join(fx.home, ".zcode", "skills", "rmem", "SKILL.md")
 	if !strings.Contains(readFile(t, installed), "name: rmem") ||
-		!strings.Contains(readFile(t, installed), "Rolling-Memory") {
+		!strings.Contains(readFile(t, installed), "# Working with Rolling Memory") {
 		t.Fatalf("installed skill is not the shipped SKILL.md renamed:\n%s", readFile(t, installed))
 	}
 

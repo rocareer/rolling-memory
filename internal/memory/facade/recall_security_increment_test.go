@@ -233,7 +233,7 @@ func TestSecurityLineageDoesNotAuthorizeAdjacentHit(t *testing.T) {
 	if strings.Contains(string(payload), "confidential sibling") || strings.Contains(string(payload), path) || strings.Contains(string(payload), "@ref:") {
 		t.Fatalf("unselected sibling or source pointer delivered: %s", payload)
 	}
-	if !strings.Contains(string(payload), "quartz nebula evidence") {
-		t.Fatalf("selected evidence missing: %s", payload)
+	if !strings.Contains(string(payload), "quartz nebula evidence") || strings.Contains(string(payload), "ep_secret") {
+		t.Fatalf("selected evidence missing or unrelated sibling became addressable: %s", payload)
 	}
 }

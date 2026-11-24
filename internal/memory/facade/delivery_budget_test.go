@@ -224,6 +224,10 @@ func TestLocalRecallKeepsHardCharCapForOverBudgetDelivery(t *testing.T) {
 	if truncated == nil || truncated["chars"] != true {
 		t.Fatalf("over-budget delivery left no chars truncation receipt: %#v", result.Meta["truncated"])
 	}
+	nodes := result.Bands[0]["nodes"].([]map[string]any)
+	if nodes[0]["content_truncated"] != true || result.RawHits[0]["content_truncated"] != true {
+		t.Fatalf("shortened evidence lacks an item-level receipt: %v / %v", nodes[0]["content_truncated"], result.RawHits[0]["content_truncated"])
+	}
 }
 
 // A page is the delivered set: a long result that offset left on the previous

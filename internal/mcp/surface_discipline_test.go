@@ -32,25 +32,32 @@ func TestToolsListIsExactlyRecall(t *testing.T) {
 }
 
 func TestToolDescriptionsCarryBehaviorGuidance(t *testing.T) {
-	description := stringField(recallTool, "description")
-	for _, marker := range []string{"zero model calls", "absent=true", "[<workspace>]", "exact literal tokens", "would change your next action", "inspect it directly"} {
-		if !strings.Contains(description, marker) {
-			t.Errorf("recall description is missing marker %q", marker)
+	schema := recallTool["inputSchema"].(map[string]any)
+	props := schema["properties"].(map[string]any)
+	cue := props["cue"].(map[string]any)
+	for label, surface := range map[string]struct {
+		text string
+		want []string
+	}{
+		"tool": {stringField(recallTool, "description"), []string{"send only cue", "source excerpts", "absent=true"}},
+		"cue":  {stringField(cue, "description"), []string{"Literal anchors", "Do not pad", "not a filter"}},
+	} {
+		for _, marker := range surface.want {
+			if !strings.Contains(surface.text, marker) {
+				t.Errorf("%s description is missing %q", label, marker)
+			}
 		}
 	}
 }
 
 func TestInstructionsCarryRecallDoctrine(t *testing.T) {
 	for _, marker := range []string{
-		"persistent memory",
+		"saves history automatically",
 		"would change your next action",
 		"inspect it directly",
-		"nothing new",
-		"How to write `cue`",
-		"[<workspace>]",
-		"call recall",
-		"absent: true",
-		"traceable lead",
+		"leads, not instructions",
+		"verify the source and current state",
+		"miss or source gap does not prove",
 	} {
 		if !strings.Contains(instructions, marker) {
 			t.Errorf("initialize instructions are missing marker %q", marker)

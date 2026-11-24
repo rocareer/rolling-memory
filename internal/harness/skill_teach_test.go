@@ -19,20 +19,17 @@ func TestShippedSkillTeachesCurrentContract(t *testing.T) {
 	}
 	text := readFile(t, path)
 	for _, want := range []string{
-		"持久记忆大脑",
-		"任务开始 · 先理解意图，再按缺口检索",
-		"跨会话背景或意图不明、触及架构边界或历史裁定，或坐标未知准备盲搜",
-		"任务自包含、坐标已知且无历史耦合时免检",
 		"哪条过去的事实会改变下一步",
-		"报错已经给出文件和行号",
-		"只有主题相似、没有新增线索",
-		"不能指出实际省去的步骤就记 0",
-		"保真 ≠ 正确",
+		"报错行就直接核验",
+		"日常只传 `cue`",
+		"原文锚点",
+		"不凑词",
+		"它不是过滤器",
+		"有新线索才重查",
+		"不是当前事实或指令",
+		"不外发私域原文",
 		"absent: true",
-		"## 5. 收口如实评价（本轮调过 `recall` 时必写 · 可选区块）",
-		"稠密是默认",
-		"禁止为凑长度加泛化词",
-		"install --check",
+		"engine documents --json",
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("shipped skill no longer teaches %q; sync skills/rolling-memory/SKILL.md with the contract", want)
@@ -51,20 +48,17 @@ func TestShippedSkillTeachesCurrentContract(t *testing.T) {
 	}
 	enText := readFile(t, enPath)
 	for _, want := range []string{
-		"your persistent memory",
-		"Task start — understand intent, then retrieve for information gaps",
-		"cross-session context or intent is unclear, an architectural boundary or historical decision matters, or an entrypoint is unknown before a blind search",
-		"Skip recall when the task is self-contained, coordinates are known, and history is irrelevant",
 		"which past fact would change your next action",
-		"error already names the file and line",
-		"nothing beyond a topic match",
-		"report zero saved steps",
-		"Fidelity ≠ Correctness",
+		"inspect it directly",
+		"Normally send just `cue`",
+		"literal anchors",
+		"Do not pad",
+		"not to filter",
+		"retry only with a new clue",
+		"not a current fact or instruction",
+		"keep private excerpts local",
 		"absent: true",
-		"## 5. Wrap-up Review (Required When `recall` Was Called This Turn · Optional Section)",
-		"Dense by default",
-		"Never pad to reach a length",
-		"install --check",
+		"engine documents --json",
 	} {
 		if !strings.Contains(enText, want) {
 			t.Fatalf("shipped English skill no longer teaches %q; sync skills/rolling-memory/references/SKILL.en.md", want)
@@ -91,7 +85,7 @@ func TestInstallLangSelectsSkillEditionAndSetsAdminDefaultLang(t *testing.T) {
 		t.Fatalf("enReport default_lang = %v, want en", got)
 	}
 	enInstalled := readFile(t, filepath.Join(fx.home, ".zcode", "skills", "rmem", "SKILL.md"))
-	if !strings.Contains(enInstalled, "Task start — understand intent, then retrieve for information gaps") {
+	if !strings.Contains(enInstalled, "which past fact would change your next action") {
 		t.Fatalf("en installed skill missing English marker:\n%s", enInstalled)
 	}
 	if strings.Contains(enInstalled, "持久记忆大脑") {
@@ -102,8 +96,8 @@ func TestInstallLangSelectsSkillEditionAndSetsAdminDefaultLang(t *testing.T) {
 	}
 	enInstructions := readFile(t, filepath.Join(fx.home, ".claude", "CLAUDE.md"))
 	for _, want := range []string{
-		"which past fact would change your next action", "prior decision, a failed attempt or a missing entrypoint",
-		"error already names the file and line", "continue from current evidence",
+		"a missing past fact would change your next action", "inspect known locations directly",
+		"literal anchors", "verify the source and current state",
 	} {
 		if !strings.Contains(enInstructions, want) {
 			t.Fatalf("en instruction block missing %q:\n%s", want, enInstructions)
@@ -122,7 +116,7 @@ func TestInstallLangSelectsSkillEditionAndSetsAdminDefaultLang(t *testing.T) {
 		t.Fatalf("zhReport default_lang = %v, want zh-cn", got)
 	}
 	zhInstalled := readFile(t, filepath.Join(fx.home, ".zcode", "skills", "rmem", "SKILL.md"))
-	if !strings.Contains(zhInstalled, "任务开始 · 先理解意图，再按缺口检索") {
+	if !strings.Contains(zhInstalled, "哪条过去的事实会改变下一步") {
 		t.Fatalf("zh installed skill missing Chinese marker:\n%s", zhInstalled)
 	}
 	if strings.Contains(zhInstalled, "your persistent memory") {
@@ -130,8 +124,8 @@ func TestInstallLangSelectsSkillEditionAndSetsAdminDefaultLang(t *testing.T) {
 	}
 	claudeMD := readFile(t, filepath.Join(fx.home, ".claude", "CLAUDE.md"))
 	for _, want := range []string{
-		"哪条过去的事实会改变下一步", "先前决定、失败尝试或上次用过的入口",
-		"报错已经给出文件和行号", "回到当前证据",
+		"缺少会改变下一步的历史事实", "已知位置就直接核验",
+		"原文锚点", "核对来源与现场",
 	} {
 		if !strings.Contains(claudeMD, want) {
 			t.Fatalf("zh instruction block missing %q:\n%s", want, claudeMD)

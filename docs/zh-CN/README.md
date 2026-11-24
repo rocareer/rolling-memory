@@ -23,6 +23,7 @@
 | **[install-upgrade.md](install-upgrade.md)** | 安装与升级指南：发布版默认 `stable`、源码安装默认 `dev`、stable/beta/dev 三通道、`update.auto` 后台策略、CLI / 控制台 / 定时任务 / 安装脚本升级路径，以及破坏性变更、兼容性、备份与回滚 | [docs/install-upgrade.md](../install-upgrade.md) |
 | **[configuration.md](configuration.md)** | 配置参考：配置文件位置与优先级、常用 `[core]` / `[recall]` / `[daemon]` 配置（含引擎内存上限 `auto` / `off` / 明确尺寸）、常用环境变量，以及控制台「系统管理 → 记忆服务」的等价操作 | [docs/configuration.md](../configuration.md) |
 | **[benchmarks.md](benchmarks.md)** | 基准复现与独立核验指南：自备语料与 `SHA-256` pin、LoCoMo 与剑桥大学 ATM-Bench 本地复现命令、评测协议校验与原始 JSONL 复算 | [docs/benchmarks.md](../benchmarks.md) |
+| **[协作诊断](../../diagnostics/collaboration/README.zh-CN.md)** | 用合成题在本机检查助手何时查记忆、何时读现场、何时停止 | [English](../../diagnostics/collaboration/README.md) |
 | **[architecture-and-performance.md](architecture-and-performance.md)** | 架构与性能：三层记忆、不可变的已发布代、异步可见性，以及不同入库积压下实测的本地召回时延 | [docs/architecture-and-performance.md](../architecture-and-performance.md) |
 | **[privacy.md](privacy.md)** | **隐私与本地数据说明**：哪些数据永不离开本机、本地金库纵深防御、一键自证命令，以及云端能力的申请制预览 | [docs/privacy.md](../privacy.md) |
 | **[essays/memory-retrieval-is-not-similarity-search.md](essays/memory-retrieval-is-not-similarity-search.md)** | 理念随笔：为什么相似度不该做记忆检索的主键——对称的相似度与不对称的问答、复读对相似度的膨胀、记忆问题的事件结构，以及把模型版本嵌进记忆格式的长期代价 | [docs/essays/memory-retrieval-is-not-similarity-search.md](../essays/memory-retrieval-is-not-similarity-search.md) |

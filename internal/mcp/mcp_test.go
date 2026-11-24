@@ -388,12 +388,8 @@ func TestProtocolAndSingleTool(t *testing.T) {
 	if changed, _ := capabilities["listChanged"].(bool); changed {
 		t.Fatalf("capabilities.tools.listChanged = %v", capabilities["listChanged"])
 	}
-	toolInstructions := asString(t, init["instructions"])
-	if !strings.HasPrefix(toolInstructions, "You have your own persistent memory across sessions (Rolling-Memory).") {
-		t.Fatalf("instructions prefix: %q", toolInstructions)
-	}
-	if !strings.Contains(toolInstructions, "- `absent: true` means the memory does not hold it; it is not an error, and not a refutation.\n") {
-		t.Fatalf("instructions body: %q", toolInstructions)
+	if got := asString(t, init["instructions"]); got != instructions {
+		t.Fatalf("initialize instructions = %q, want current instructions", got)
 	}
 
 	list := resultOf(t, asMap(t, responses[1]))

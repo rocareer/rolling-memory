@@ -55,7 +55,7 @@ func TestInstallResumesSavedLanguage(t *testing.T) {
 		t.Fatalf("unexpected failures: %#v", failures)
 	}
 	text := installedSkillText(t, home)
-	if !strings.Contains(text, "你的记忆大脑") || strings.Contains(text, "Your Memory Brain") {
+	if !strings.Contains(text, "# Rolling Memory 协作") || strings.Contains(text, "# Working with Rolling Memory") {
 		t.Fatalf("installed skill is not the zh-CN variant:\n%s", text[:120])
 	}
 	if got := report.Extra["default_lang"]; got != "zh-cn" {
@@ -73,7 +73,7 @@ func TestInstallDefaultsToEnglishOnFreshMachine(t *testing.T) {
 		t.Fatalf("unexpected failures: %#v", failures)
 	}
 	text := installedSkillText(t, home)
-	if !strings.Contains(text, "Your Memory Brain") {
+	if !strings.Contains(text, "# Working with Rolling Memory") {
 		t.Fatalf("fresh install is not the English variant:\n%s", text[:120])
 	}
 }
@@ -97,7 +97,7 @@ func TestInstallExplicitLangOverridesSavedPreference(t *testing.T) {
 		t.Fatalf("unexpected failures: %#v", failures)
 	}
 	text := installedSkillText(t, home)
-	if !strings.Contains(text, "Your Memory Brain") {
+	if !strings.Contains(text, "# Working with Rolling Memory") {
 		t.Fatalf("explicit --lang en did not win over the saved preference:\n%s", text[:120])
 	}
 }

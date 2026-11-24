@@ -196,8 +196,10 @@ func applyDeliveryCharBudget(candidates []deliveredCandidate, query string, tota
 		candidate.truncated = true
 		if nodes, ok := candidate.band["nodes"].([]map[string]any); ok && len(nodes) > 0 {
 			nodes[0]["content"] = focused
+			nodes[0]["content_truncated"] = true
 		}
 		candidate.rawHit["text"] = focused
+		candidate.rawHit["content_truncated"] = true
 	}
 }
 
