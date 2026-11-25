@@ -5,10 +5,11 @@ All notable user-facing changes to **Rolling Memory** are documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.21] - 2026-11-25
 
 ### Added
 
+- The admin dashboard and the floating status badge now surface the current update status and the live memory-core version, with a one-click path into the version-and-update dialog.
 - Read an unabridged conversation source unit through the same MCP `recall` tool by passing only its cited `unit_id`. An unavailable or changed source reports an error rather than returning substitute text.
 - Collaboration diagnostics now distinguish choosing the correct source ID from successfully reading its exact original text.
 

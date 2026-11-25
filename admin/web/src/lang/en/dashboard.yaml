@@ -15,6 +15,10 @@ liveConsole: LIVE Console
 engineOnline: Engine Online
 engineOffline: Engine Offline
 refreshNow: Refresh
+updateAvailable: Update
+updateSourceOnly: Source-only
+updateBaseline: Baseline needed
+upToDate: Up to date
 dbSize: DB Size
 conflicts: Stale Noetic
 modeLabel: Mode

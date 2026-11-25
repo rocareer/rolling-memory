@@ -22,8 +22,28 @@
                             <span class="live-dot"></span>
                             <span>
                                 {{ rmData.engine_online ? $t('dashboard.engineOnline') : $t('dashboard.engineOffline') }}
-                                · v{{ rmData.version || '0.0.20' }} · Core v1.0.1
+                                · v{{ rmData.version || '0.0.21' }} · Core v{{ rmData.core_version || '1.0.1' }}
                             </span>
+                            <el-tooltip
+                                v-if="updateChip"
+                                :content="updateChipTooltip"
+                                placement="top"
+                                :enterable="false"
+                                :hide-after="0"
+                                :show-after="300"
+                            >
+                                <span
+                                    class="meta-update-chip"
+                                    :class="updateChip.cls"
+                                    role="button"
+                                    tabindex="0"
+                                    data-testid="dashboard-update-chip"
+                                    @click="openUpdateDialog"
+                                    @keydown.enter="openUpdateDialog"
+                                >
+                                    {{ updateChip.text }}
+                                </span>
+                            </el-tooltip>
                         </div>
                         <div class="meta-item meta-mode-switch" data-testid="dashboard-mode-switch">
                             <span class="mode-switch-label">{{ $t('dashboard.modeLabel') }}</span>
@@ -905,6 +925,7 @@ import { MonitorSocket } from '@/utils/monitorSocket'
 import { MEMORY_LAYER_COLORS, normalizeMemoryLayer } from '@/utils/memoryLayers'
 import request from '@/utils/request'
 import { Local } from '@/utils/storage'
+import { useUpdateStatus } from '@/views/admin/plugin/rolling-memory/useUpdateStatus'
 import { useEventListener } from '@vueuse/core'
 import type { ECharts, EChartsOption } from 'echarts'
 import * as echarts from 'echarts'
@@ -917,6 +938,47 @@ const adminInfo = useAdminInfo()
 const terminal = useTerminal()
 const { t } = useI18n()
 const workTimerKey = 'ai-go-dashboard-work-timer'
+
+// 更新状态由全局单例（useUpdateStatus）承载：顶部导航已订阅 rm/update 房间并定时兜底，
+// 仪表盘只读共享状态并在版本旁展示轻量徽标，点击打开导航里的规范更新弹窗。
+const { state: updateState, open: openUpdateDialog } = useUpdateStatus()
+
+const updateLatestLabel = computed(() => {
+    const s = updateState.value
+    if (!s) return ''
+    if (s.channel === 'dev' && s.latest_commit_short) return `main@${s.latest_commit_short}`
+    return s.latest_tag ? `v${s.latest_tag}` : ''
+})
+
+const updateChip = computed(() => {
+    const s = updateState.value
+    if (!s) return null
+    if (s.needs_source_baseline) {
+        return { text: t('dashboard.updateBaseline'), cls: 'is-info' }
+    }
+    if (s.update_available) {
+        const sourceOnly = s.assets_checked === true && s.installable === false
+        const text = sourceOnly ? t('dashboard.updateSourceOnly') : t('dashboard.updateAvailable')
+        const label = updateLatestLabel.value
+        return {
+            text: label ? `${text} ${label}` : text,
+            cls: sourceOnly ? 'is-warning' : 'is-danger',
+        }
+    }
+    if (s.latest_tag || s.latest_commit_short) {
+        return { text: t('dashboard.upToDate'), cls: 'is-ok' }
+    }
+    return null
+})
+
+const updateChipTooltip = computed(() => {
+    const s = updateState.value
+    if (!s) return ''
+    const latest = updateLatestLabel.value
+    if (!latest) return t('plugin.rolling-memory.systemUpdate.openBtn')
+    const cur = s.current_version ? `v${s.current_version}` : rmData.version ? `v${rmData.version}` : '—'
+    return `${cur} → ${latest}`
+})
 
 const modeLabel = computed(() => t('dashboard.localPlain'))
 
@@ -1285,6 +1347,7 @@ interface EfficacyReportPayload {
 interface DashboardPayload {
     engine_online: boolean
     version: string
+    core_version?: string
     mode: string
     scope: string
     db_size_mb: number
@@ -1352,6 +1415,7 @@ const dynamicScopes = computed<string[]>(() => {
 const rmData = reactive<DashboardPayload>({
     engine_online: false,
     version: '',
+    core_version: '',
     mode: '',
     scope: 'default',
     db_size_mb: 0,
@@ -2920,6 +2984,41 @@ watch(
             background: var(--el-color-info);
             box-shadow: none;
         }
+    }
+}
+.meta-update-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.6;
+    border-radius: 999px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition: transform 0.2s ease;
+
+    &.is-danger {
+        color: #fff;
+        background: var(--el-color-danger);
+    }
+    &.is-warning {
+        color: #fff;
+        background: var(--el-color-warning);
+    }
+    &.is-ok {
+        color: var(--el-color-success);
+        background: var(--el-color-success-light-9);
+        border: 1px solid var(--el-color-success-light-5);
+    }
+    &.is-info {
+        color: var(--el-color-info);
+        background: var(--el-color-info-light-9);
+        border: 1px solid var(--el-color-info-light-5);
+    }
+    &:hover {
+        transform: translateY(-1px);
     }
 }
 

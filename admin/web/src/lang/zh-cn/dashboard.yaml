@@ -15,6 +15,10 @@ liveConsole: 实时控制台
 engineOnline: 引擎在线
 engineOffline: 引擎离线
 refreshNow: 立即刷新
+updateAvailable: 可更新
+updateSourceOnly: 仅源码更新
+updateBaseline: 待建源码基线
+upToDate: 已是最新
 dbSize: 库体积
 conflicts: 陈旧结晶
 modeLabel: 运行模式

@@ -2138,6 +2138,7 @@ type DashboardTrendSeries struct {
 type DashboardResponse struct {
 	EngineOnline             bool                 `json:"engine_online"`
 	Version                  string               `json:"version"`
+	CoreVersion              string               `json:"core_version"`
 	Mode                     string               `json:"mode"`
 	Scope                    string               `json:"scope"`
 	DBPath                   string               `json:"db_path"`
@@ -2382,6 +2383,7 @@ func computeDashboardData(home, reqScope string) DashboardResponse {
 	resp := DashboardResponse{
 		EngineOnline:      false,
 		Version:           liveSoftwareVersion(),
+		CoreVersion:       CoreVersion,
 		Mode:              switches.Mode,
 		Scope:             scope,
 		DBPath:            dbPath,

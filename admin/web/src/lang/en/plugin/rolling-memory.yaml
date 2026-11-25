@@ -14,6 +14,9 @@ widget:
     ledger: Recall Ledger
     scope: Scope
     bgTask: Task
+    upToDateLine: Up to date
+    updateAvailableLine: Update to {latest}
+    sourceOnlyLine: Source-only update to {latest}
     clickTerminal: ⌘ Click to open Live CLI Terminal
 background:
     selectAndMount: Select Folder & Mount

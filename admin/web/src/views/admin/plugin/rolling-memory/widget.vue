@@ -18,12 +18,27 @@
         <template #content>
             <div class="rm-widget-tip">
                 <div class="rm-widget-tip-title">
-                    <span>Rolling Memory v{{ info.version }}</span>
+                    <span
+                        >Rolling Memory v{{ info.version }}<template v-if="info.core_version"> · Core v{{ info.core_version }}</template></span
+                    >
                     <span class="mode-indicator">LOCAL</span>
                     <span class="ecg-bpm-tag" :class="{ offline: !info.upstream_online }">
                         ♥ 1Hz LOCAL VAULT ·
                         {{ info.upstream_online ? `${info.upstream_rtt_ms}ms RTT` : 'OFFLINE' }}
                     </span>
+                </div>
+                <!-- 版本更新状态：有更新时以警示色呈现，点击打开规范更新弹窗。 -->
+                <div
+                    v-if="updateState"
+                    class="rm-widget-tip-meta rm-widget-update-line"
+                    :class="{ 'is-update': updateAvailable }"
+                    role="button"
+                    tabindex="0"
+                    data-testid="rm-widget-update-line"
+                    @click="openUpdateDialog"
+                    @keydown.enter="openUpdateDialog"
+                >
+                    {{ updateLineText }}
                 </div>
                 <!-- 浮窗内联 264×54 采样滚动心电监护屏 (24 秒环形缓冲区)：每秒真实采样本机 SQLite 明文金库往返 -->
                 <div class="rm-widget-ecg-screen" :class="{ offline: !info.upstream_online }">
@@ -100,6 +115,16 @@
             <span class="rm-widget-label">
                 RM {{ info.active_assertions }}<template v-if="info.bg_task"> · {{ info.bg_task }}</template>
             </span>
+            <span
+                v-if="updateAvailable"
+                class="rm-widget-update-dot"
+                role="button"
+                tabindex="0"
+                data-testid="rm-widget-update-dot"
+                :title="updateLineText"
+                @click.stop="openUpdateDialog"
+                @keydown.enter.stop="openUpdateDialog"
+            />
         </span>
     </el-tooltip>
 </template>
@@ -110,6 +135,7 @@ import { MonitorSocket } from '@/utils/monitorSocket'
 import request from '@/utils/request'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useUpdateStatus } from './useUpdateStatus'
 
 const { t } = useI18n()
 const terminalModules: Record<string, any> = import.meta.glob('@/stores/terminal.ts', { eager: true })
@@ -131,6 +157,7 @@ interface WidgetInfo {
     upstream_engine?: string
     active_harness?: string
     version: string
+    core_version?: string
     mode: string
     scope: string
     active_assertions: number
@@ -161,6 +188,33 @@ const MINI_SECONDS = 8
 const adminInfo = useAdminInfo()
 const info = ref<WidgetInfo | null>(null)
 const telemetryHistory = ref<SecondUpstreamTick[]>([])
+
+// 更新状态读取自全局单例（顶部导航已订阅 rm/update 房间并定时兜底），浮标只显示
+// 红点与提示行，点击红点打开导航里的规范更新弹窗。
+const { state: updateState, open: openUpdateDialog } = useUpdateStatus()
+
+const updateAvailable = computed(() => updateState.value?.update_available === true)
+
+const updateLatestLabel = computed(() => {
+    const s = updateState.value
+    if (!s) return ''
+    if (s.channel === 'dev' && s.latest_commit_short) return `main@${s.latest_commit_short}`
+    return s.latest_tag ? `v${s.latest_tag}` : ''
+})
+
+const updateLineText = computed(() => {
+    const s = updateState.value
+    if (!s) return ''
+    if (s.needs_source_baseline) return t('plugin.rolling-memory.systemUpdate.baselineTag')
+    if (s.update_available) {
+        const latest = updateLatestLabel.value
+        if (s.assets_checked === true && s.installable === false) {
+            return latest ? t('plugin.rolling-memory.widget.sourceOnlyLine', { latest }) : t('plugin.rolling-memory.systemUpdate.sourceOnlyTitle')
+        }
+        return latest ? t('plugin.rolling-memory.widget.updateAvailableLine', { latest }) : t('plugin.rolling-memory.systemUpdate.updateAvailTag')
+    }
+    return t('plugin.rolling-memory.widget.upToDateLine')
+})
 const lastTickFired = ref(false)
 const lastTickLabel = ref('PROBING')
 
@@ -531,6 +585,27 @@ onBeforeUnmount(() => {
     opacity: 0.78;
 }
 
+.rm-widget-popper .rm-widget-update-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--el-color-success);
+    background: var(--el-color-success-light-9);
+    border: 1px solid var(--el-color-success-light-5);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.rm-widget-popper .rm-widget-update-line.is-update {
+    color: var(--el-color-danger);
+    background: var(--el-color-danger-light-9);
+    border-color: var(--el-color-danger-light-5);
+}
+
 .rm-widget-popper .rm-widget-tip-action {
     margin-top: 4px;
     font-size: 11px;
@@ -587,6 +662,27 @@ onBeforeUnmount(() => {
 
 .rm-widget-dot.beating {
     transform: scale(1.35);
+}
+
+.rm-widget-update-dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--el-color-danger);
+    box-shadow: 0 0 0 2px rgba(245, 108, 108, 0.22);
+    cursor: pointer;
+    animation: rm-update-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes rm-update-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 2px rgba(245, 108, 108, 0.22);
+    }
+    50% {
+        box-shadow: 0 0 0 5px rgba(245, 108, 108, 0.1);
+    }
 }
 
 .rm-mini-ecg-box {
