@@ -20,6 +20,8 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/rocareer/rolling-memory/internal/episodicunit"
 )
 
 const (
@@ -50,15 +52,16 @@ type call struct {
 }
 
 type observation struct {
-	Arm         string `json:"arm"`
-	ID          string `json:"id"`
-	Seed        int    `json:"seed"`
-	Calls       []call `json:"tool_calls"`
-	Content     string `json:"content"`
-	Finish      string `json:"finish"`
-	RequestHash string `json:"request_sha256"`
-	RecallText  string `json:"recall_text,omitempty"`
-	RecallError bool   `json:"recall_error,omitempty"`
+	Arm           string `json:"arm"`
+	ID            string `json:"id"`
+	Seed          int    `json:"seed"`
+	Calls         []call `json:"tool_calls"`
+	Content       string `json:"content"`
+	Finish        string `json:"finish"`
+	RequestHash   string `json:"request_sha256"`
+	RecallText    string `json:"recall_text,omitempty"`
+	RecallError   bool   `json:"recall_error,omitempty"`
+	SourceExcerpt string `json:"source_excerpt,omitempty"`
 }
 
 type counts struct {
@@ -74,6 +77,7 @@ type counts struct {
 	RequestedSource int `json:"source_trials"`
 	MatchedSource   int `json:"correct_source"`
 	SummaryOnly     int `json:"summary_only"`
+	SourceReads     int `json:"verified_source_reads,omitempty"`
 }
 
 type subject struct {
@@ -145,7 +149,11 @@ func readSuite(path string) ([]scenario, string, error) {
 		if isFact(c) && (c.Want != "recall" || c.Control == "" || c.Answer == "" || !strings.Contains(c.Source, c.Answer) || strings.Contains(c.Task+c.Control, c.Answer)) {
 			return nil, "", fmt.Errorf("missing or exposed evidence marker in %s", c.ID)
 		}
-		if c.Want == "read_source" && c.Unit == "" {
+		if isRecovery(c) {
+			if c.Want != "read_source" || strings.Count(c.Task, "{{excerpt}}") != 1 || c.Unit != "" || c.Control == "" || c.Source == "" || c.Answer == "" || strings.Contains(c.Task+c.Control+c.Source, c.Answer) {
+				return nil, "", fmt.Errorf("invalid source recovery fixture in %s", c.ID)
+			}
+		} else if c.Want == "read_source" && c.Unit == "" {
 			return nil, "", fmt.Errorf("missing source ID in %s", c.ID)
 		}
 		if c.Want == "inspect" && len(casePaths(c)) == 0 {
@@ -191,11 +199,11 @@ func classify(c scenario, row observation) counts {
 	action := "respond"
 	var args map[string]any
 	if len(row.Calls) > 0 {
-		action = row.Calls[0].Function.Name
+		action = chosenAction(row.Calls[0])
 		_ = json.Unmarshal([]byte(row.Calls[0].Function.Arguments), &args)
 	}
 	for _, call := range row.Calls {
-		if call.Function.Name == "recall" && c.Want != "recall" {
+		if chosenAction(call) == "recall" && c.Want != "recall" {
 			m.Unnecessary = 1
 		}
 	}
@@ -229,15 +237,67 @@ func classify(c scenario, row observation) counts {
 			ok = ok || pathPart(p) == path
 		}
 	case "read_source":
-		ok = args["unit_id"] == c.Unit
-		if ok {
-			m.MatchedSource = 1
+		if isRecovery(c) {
+			id := recoveryID(c)
+			if len(args) == 1 && args["unit_id"] == id {
+				m.MatchedSource = 1
+				if row.Calls[0].Function.Name == "recall" && !row.RecallError && hasRecoveryExcerpt(c, row.SourceExcerpt) && recoveredOriginal(c, row.RecallText) {
+					m.SourceReads = 1
+					ok = true
+				}
+			}
+		} else {
+			ok = args["unit_id"] == c.Unit
+			if ok {
+				m.MatchedSource = 1
+			}
 		}
 	}
 	if ok {
 		m.Strict = 1
 	}
 	return m
+}
+
+func chosenAction(c call) string {
+	if c.Function.Name == "recall" {
+		var args map[string]json.RawMessage
+		if json.Unmarshal([]byte(c.Function.Arguments), &args) == nil && args["unit_id"] != nil {
+			return "read_source"
+		}
+	}
+	return c.Function.Name
+}
+
+func isRecovery(c scenario) bool { return c.Group == "source_recovery" }
+
+func recoverySource(c scenario) string {
+	var body strings.Builder
+	body.WriteString(c.Source)
+	for i := range 28 {
+		fmt.Fprintf(&body, " This line records a routine review under reference %d.", i+1)
+	}
+	body.WriteByte(' ')
+	body.WriteString(c.Answer)
+	return body.String()
+}
+
+func recoveryBody(c scenario) string { return "[assistant] " + recoverySource(c) }
+
+func recoveryID(c scenario) string { return episodicunit.DocID(scope, recoveryBody(c)) }
+
+func hasRecoveryExcerpt(c scenario, text string) bool {
+	for _, line := range strings.Split(text, "\n") {
+		if _, handles, ok := strings.Cut(line, "已核验命中片段: "); ok && slices.Contains(strings.Split(handles, ", "), recoveryID(c)) {
+			return strings.Contains(text, "正文已缩短") && !strings.Contains(text, c.Answer)
+		}
+	}
+	return false
+}
+
+func recoveredOriginal(c scenario, text string) bool {
+	header, body, ok := strings.Cut(text, "\n\n")
+	return ok && strings.Contains(header, recoveryID(c)) && body == recoveryBody(c)
 }
 
 func isFact(c scenario) bool {
@@ -248,7 +308,7 @@ func add(a, b counts) counts {
 	return counts{a.Attempts + b.Attempts, a.CorrectAction + b.CorrectAction, a.Strict + b.Strict, a.NeedsRecall + b.NeedsRecall,
 		a.ChoseRecall + b.ChoseRecall, a.NoRecallNeeded + b.NoRecallNeeded, a.Unnecessary + b.Unnecessary,
 		a.EvidenceTrials + b.EvidenceTrials, a.EvidenceHits + b.EvidenceHits, a.RequestedSource + b.RequestedSource, a.MatchedSource + b.MatchedSource,
-		a.SummaryOnly + b.SummaryOnly}
+		a.SummaryOnly + b.SummaryOnly, a.SourceReads + b.SourceReads}
 }
 
 func aggregate(cases []scenario, rows []byte, r *receipt) error {
@@ -384,7 +444,7 @@ func entry() error {
 	skills := flag.String("skills", "skills/rolling-memory", "directory of the tested skill editions")
 	baseline := flag.String("baseline", "", "optional baseline executable")
 	baseSkills := flag.String("baseline-skills", "", "directory of the baseline skill editions")
-	suite := flag.String("suite", "diagnostics/collaboration/cases-v4.json", "synthetic scenario file")
+	suite := flag.String("suite", "diagnostics/collaboration/cases-v5.json", "synthetic scenario file")
 	endpoint := flag.String("endpoint", "http://127.0.0.1:32190", "local model server base URL")
 	model := flag.String("model", "local", "model name supplied to the server")
 	weights := flag.String("weights", "", "local model weights file for the receipt hash")

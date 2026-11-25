@@ -647,6 +647,13 @@ func (s *Server) tryProxyToolCall(raw any) (any, bool) {
 		return nil, false
 	}
 	arguments, _ := params["arguments"].(map[string]any)
+	unitID, err := sourceUnitArgument(arguments)
+	if err != nil {
+		return nil, false
+	}
+	if unitID != "" {
+		return ForwardToolCallToUnixDaemon(object["id"], arguments, nil)
+	}
 	if _, err := recallRequest(arguments); err != nil {
 		return nil, false
 	}
@@ -781,9 +788,16 @@ func toolCall(requestID any, rawParams any, memory *facade.Memory, lazy *LazyMem
 	if name != "recall" {
 		return errorResponse(requestID, codeInvalidParams, "unknown tool: "+pyStr(params["name"]))
 	}
-	request, err := recallRequest(arguments)
+	unitID, err := sourceUnitArgument(arguments)
 	if err != nil {
 		return toolError(requestID, err, debugOut)
+	}
+	var request facade.RecallRequest
+	if unitID == "" {
+		request, err = recallRequest(arguments)
+		if err != nil {
+			return toolError(requestID, err, debugOut)
+		}
 	}
 	active := memory
 	if active == nil {
@@ -795,6 +809,9 @@ func toolCall(requestID any, rawParams any, memory *facade.Memory, lazy *LazyMem
 			return toolError(requestID, err, debugOut)
 		}
 		active = opened
+	}
+	if unitID != "" {
+		return sourceUnitResponse(requestID, active, unitID, debugOut)
 	}
 	presence := resolveMCPPresence(active, arguments, clientProcess)
 	recallStarted := time.Now()

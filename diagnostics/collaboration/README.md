@@ -21,7 +21,7 @@ go run ./diagnostics/collaboration \
   -out /tmp/rm-collaboration-run
 ```
 
-Add `-baseline /path/to/older/rolling-memory -baseline-skills /path/to/older/skills/rolling-memory` for a paired run. Use the skill copies that actually accompanied each executable. The runner reads each executable's MCP handshake and tool descriptions; for a paired run, both arms' generated queries are replayed through the **current** executable against the same synthetic vault. This isolates the assistant-facing prompts rather than comparing search engines.
+Add `-baseline /path/to/older/rolling-memory -baseline-skills /path/to/older/skills/rolling-memory` for a paired run. Use the skill copies that accompanied each executable. The runner reads each executable's MCP handshake and tool descriptions. Both arms' fact searches are replayed through the current executable in the same synthetic vault; source recovery calls are replayed through each arm's own executable to check whether that version can perform the read.
 
 Recompute the readout without a model or a running memory service:
 
@@ -31,17 +31,18 @@ go run ./diagnostics/collaboration -review /tmp/rm-collaboration-run/receipt.jso
 
 ## Read the result
 
-[Public cases v4](cases-v4.json) contains 52 scenarios in English and Chinese. It extends v3 with an `excerpt` group: fact questions whose decisive marker sits deep in the source, past the point a compact receipt (probe) would truncate. Each arm runs three fixed seeds. Seeds repeat the same cases; they are not independent new cases.
+[Public cases v5](cases-v5.json) contains 50 scenarios in English and Chinese. It replaces six simulated source-choice cases from [v4](cases-v4.json) with four real recovery scenarios. In the recovery controls, the runner sets a small local delivery limit, takes a real shortened excerpt with a cited ID and no decisive clause, then passes that excerpt to the model. Each arm runs three fixed seeds. Seeds repeat the same cases; they are not independent new cases. To review a v4 receipt, add `-suite diagnostics/collaboration/cases-v4.json`.
 
 - **Correct action**: the assistant selects the expected next action: search history, inspect a current location, request a cited unit, or respond without a tool.
 - **Necessary and unnecessary recall**: how often the assistant searches when it should or should not.
 - **Evidence hit**: a fact question counts a hit only when the full source excerpt was delivered (mode omitted or `full`) and the returned text contains the scenario's unique marker. A search with an unnecessary default parameter can still hit the evidence.
 - **Summary standing in for excerpt**: a fact question answered with a `probe` or `recent` compact receipt is counted separately, even when its summary happens to retain the marker. That is the adversarial dimension v4 adds.
-- **Correct source**: the model requests the expected unit by ID. The action is scored; `read_source` and `inspect` are test tools, not additional MCP tools or executed file reads.
+- **Correct source** (`correct_source`): the model requests the cited conversation unit by ID. A correct ID alone is not a completed read.
+- **Verified source read** (`verified_source_reads`): the actual MCP call returns the cited unit's entire original body, compared byte for byte. Selecting a path with `inspect` is still simulated; that tool does not read files.
 - **Strict**: the action and relevant arguments pass (a normal recall sends just `cue`); a historical search must also hit the evidence. A direct response is checked for nonempty, completed output, **not graded for semantic correctness**. Review its raw text for unsupported certainty or claims that a check was performed.
 - **All seeds passed**: distinct cases that pass the strict check in every run. This shows repeated behavior, not statistical significance.
 
-`receipt.json` records executable, prompt, model, suite, and result digests plus counts by case family and language. `observations.jsonl` holds each tool selection, argument, direct response, and replayed historical result. Keep both together. A model transport error or incomplete run does not produce a complete receipt; failed individual cases stay in the denominators. Compare versions on the same suite, model weights and settings; changes to these inputs start a separate series. This suite measures first actions on synthetic scenarios, not production adoption or final-answer quality. See [the benchmark guide](../../docs/benchmarks.md) for other evaluations.
+`receipt.json` records executable, prompt, model, suite, and result digests plus counts by case family and language. `observations.jsonl` holds each tool selection, argument, direct response, replayed result, and the shortened excerpt supplied in recovery cases. Keep both together. A model transport error or incomplete run does not produce a complete receipt; failed individual cases stay in the denominators. Compare versions on the same suite, model weights and settings; changes to these inputs start a separate series. This suite measures first actions on synthetic scenarios, not production adoption or final-answer quality. See [the benchmark guide](../../docs/benchmarks.md) for other evaluations.
 
 ## Add cases
 

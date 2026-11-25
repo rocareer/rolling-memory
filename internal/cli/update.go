@@ -507,8 +507,8 @@ func attachUpdateHint(result map[string]any) map[string]any {
 }
 
 // acquireUpdateLock serializes artifact replacement across a manual click and
-// the scheduled policy. A lock older than thirty minutes is treated as
-// abandoned (the previous process was killed mid-update).
+// the scheduled policy. A lock whose owner is gone is reclaimed so a crash or
+// an interrupted console restart does not block updates for thirty minutes.
 func acquireUpdateLock() (func(), error) {
 	path := filepath.Join(filepath.Dir(updatecheck.StatePath()), "update.lock")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -516,7 +516,7 @@ func acquireUpdateLock() (func(), error) {
 	}
 	handle, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
-		if info, statErr := os.Stat(path); statErr == nil && time.Since(info.ModTime()) > 30*time.Minute {
+		if updateLockAbandoned(path) {
 			_ = os.Remove(path)
 			handle, err = os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 		}
@@ -527,6 +527,32 @@ func acquireUpdateLock() (func(), error) {
 	_, _ = fmt.Fprintf(handle, "%d\n", os.Getpid())
 	_ = handle.Close()
 	return func() { _ = os.Remove(path) }, nil
+}
+
+// updateLockAbandoned reports whether an existing update.lock no longer has a
+// live owner and can be reclaimed. A lock older than thirty minutes is always
+// reclaimable. A younger lock is reclaimable only when it records a positive
+// PID that no longer refers to a running process; an unreadable or empty lock
+// is treated as live so we never race a writer that has not yet recorded its
+// PID.
+func updateLockAbandoned(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		// The lock vanished between the failed exclusive create and this check.
+		return true
+	}
+	if time.Since(info.ModTime()) > 30*time.Minute {
+		return true
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(raw)))
+	if err != nil || pid <= 0 {
+		return false
+	}
+	return !processAlive(pid)
 }
 
 // resolveAutoMode reads the saved background policy. An unreadable or invalid

@@ -4,6 +4,7 @@
 package updatecheck
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -77,5 +78,34 @@ func TestNotifyRecordDeduplicatesByTag(t *testing.T) {
 	}
 	if alreadyNotified("0.0.7") {
 		t.Fatal("a different tag must still notify")
+	}
+}
+
+func TestFileContentEquals(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "plist")
+	content := []byte("a\nb\n")
+	if fileContentEquals(path, content) {
+		t.Fatal("missing file must not equal")
+	}
+	if err := os.WriteFile(path, content, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if !fileContentEquals(path, content) {
+		t.Fatal("identical content must equal")
+	}
+	if fileContentEquals(path, []byte("a\nb\nc\n")) {
+		t.Fatal("different content must not equal")
+	}
+}
+
+func TestLaunchdPlistDeterministic(t *testing.T) {
+	binary := "/tmp/rolling-memory"
+	plain := launchdPlist(binary, "")
+	if !bytes.Equal(plain, launchdPlist(binary, "")) {
+		t.Fatal("launchdPlist must be deterministic for identical inputs")
+	}
+	withBase := launchdPlist(binary, "https://mirror.example.com/rolling-memory/releases/latest/download")
+	if bytes.Equal(plain, withBase) {
+		t.Fatal("a release base must change the plist")
 	}
 }

@@ -428,8 +428,14 @@ func episodicTurnBandLines(band map[string]any) []string {
 		header += "（" + strings.Join(parts, " · ") + "）"
 	}
 	lines := []string{header}
-	if sourceIDs, ok := node["source_unit_ids"].([]string); ok && (len(sourceIDs) > 1 || shortened) {
+	if sourceIDs, ok := node["source_unit_ids"].([]string); ok && len(sourceIDs) > 0 && (len(sourceIDs) > 1 || shortened) {
 		lines = append(lines, "  已核验命中片段: "+plainLine(strings.Join(sourceIDs, ", ")))
+		if shortened {
+			// The omitted tail lives in the turn's last verified segment; name that
+			// one unit so the assistant reads the right source instead of choosing
+			// among every cited ID in the band.
+			lines = append(lines, fmt.Sprintf(`  Read omitted text if needed: recall({"unit_id":"%s"})`, sourceIDs[len(sourceIDs)-1]))
+		}
 	}
 	rawLines := strings.Split(rendered, "\n")
 	multiLineTurn := len(rawLines) > 1

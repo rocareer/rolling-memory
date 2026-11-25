@@ -28,6 +28,10 @@ var recallTool = map[string]any{
 				"type":        "string",
 				"description": "Literal anchors that distinguish the event: known paths, symbols, errors, versions, or dates. Do not pad. Optional [workspace] prefix gives that workspace priority, not a filter. Required for full/probe.",
 			},
+			"unit_id": map[string]any{
+				"type":        "string",
+				"description": "Read one cited conversation source unit verbatim. Send only unit_id, without cue or mode; do not guess IDs.",
+			},
 			"scope":  map[string]any{"type": "string", "description": "Optional memory scope override (defaults to active scope)."},
 			"reader": map[string]any{"enum": []any{"owner", "deliverable"}, "description": "Reader hint, not an access-control filter. Verify before sharing."},
 			"mode": map[string]any{

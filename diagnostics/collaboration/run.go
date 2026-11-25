@@ -100,10 +100,14 @@ func corpus(cases []scenario) []byte {
 	enc := json.NewEncoder(&b)
 	n := 0
 	for _, c := range cases {
-		if !isFact(c) {
+		if !isFact(c) && !isRecovery(c) {
 			continue
 		}
-		for j, texts := range [][2]string{{c.Control, c.Source}, {c.Control + " status ping", strings.Fields(c.Control)[0] + " status check only; this record did not decide the question."}} {
+		source := c.Source
+		if isRecovery(c) {
+			source = recoverySource(c)
+		}
+		for j, texts := range [][2]string{{c.Control, source}, {c.Control + " status ping", strings.Fields(c.Control)[0] + " status check only; this record did not decide the question."}} {
 			for i, role := range []string{"user", "assistant"} {
 				ts := time.Date(2026, 10, 20, 10, n, j*30+i, 0, time.UTC).Format(time.RFC3339)
 				_ = enc.Encode(map[string]any{"type": role, "sessionId": c.ID, "timestamp": ts, "message": map[string]any{"role": role, "stop_reason": "end_turn", "content": texts[i]}})
@@ -137,6 +141,13 @@ func (s sandbox) prepare(bin string, cases []scenario) error {
 		}
 	}
 	for _, c := range cases {
+		if isRecovery(c) {
+			text, bad, err := s.recall(bin, map[string]any{"unit_id": recoveryID(c)})
+			if err != nil || bad || !recoveredOriginal(c, text) {
+				return fmt.Errorf("source recovery control %s failed: %v (tool error: %t)", c.ID, err, bad)
+			}
+			continue
+		}
 		if !isFact(c) {
 			continue
 		}
@@ -156,6 +167,28 @@ func (s sandbox) prepare(bin string, cases []scenario) error {
 		return errors.New("negative fixture control failed")
 	}
 	return nil
+}
+
+func (s sandbox) recoveryExcerpts(bin string, cases []scenario) (map[string]string, error) {
+	excerpts := make(map[string]string)
+	for _, c := range cases {
+		if !isRecovery(c) {
+			continue
+		}
+		if len(excerpts) == 0 {
+			path := filepath.Join(s.dir, "excerpt.toml")
+			if err := os.WriteFile(path, []byte("[recall]\nchars = 850\n"), 0600); err != nil {
+				return nil, err
+			}
+			s.env = append(append([]string(nil), s.env...), "ROLLING_MEMORY_CONFIG="+path)
+		}
+		text, bad, err := s.recall(bin, map[string]any{"cue": c.Control})
+		if err != nil || bad || !hasRecoveryExcerpt(c, text) {
+			return nil, fmt.Errorf("shortened excerpt control %s failed: %v (tool error: %t)\n%s", c.ID, err, bad, text)
+		}
+		excerpts[c.ID] = text
+	}
+	return excerpts, nil
 }
 
 type function struct {
@@ -183,7 +216,7 @@ func auxiliaryTool(name, description, arg string) tool {
 	return tool{"function", function{name, description, schema}}
 }
 
-func (s sandbox) snapshot(bin, skills string) (subjectRun, subject, error) {
+func (s sandbox) snapshot(bin, skills string, sourceRecovery bool) (subjectRun, subject, error) {
 	var v subject
 	v.SkillSHA = map[string]string{}
 	v.PromptTokens = map[string]int{}
@@ -233,7 +266,7 @@ func (s sandbox) snapshot(bin, skills string) (subjectRun, subject, error) {
 		return subjectRun{}, v, errors.New("expected the recall tool and MCP instructions")
 	}
 	t := list.Tools[0]
-	p := prompt{System: map[string]string{}, Tools: []tool{{"function", function{t.Name, t.Description, t.Schema}}, auxiliaryTool("inspect", "Inspect a known path in the current workspace.", "path"), auxiliaryTool("read_source", "Read a cited local memory unit by its ID.", "unit_id")}}
+	p := prompt{System: map[string]string{}, Tools: []tool{{"function", function{t.Name, t.Description, t.Schema}}, auxiliaryTool("inspect", "Inspect a known path in the current workspace.", "path")}}
 	for lang, path := range skillFiles(skills) {
 		data, err := os.ReadFile(path)
 		if err != nil {
@@ -249,9 +282,14 @@ func (s sandbox) snapshot(bin, skills string) (subjectRun, subject, error) {
 	if err := json.Unmarshal(t.Schema, &schema); err != nil {
 		return subjectRun{}, v, err
 	}
+	if !sourceRecovery {
+		p.Tools = append(p.Tools, auxiliaryTool("read_source", "Read a cited local memory unit by its ID.", "unit_id"))
+	}
 	descriptions := []string{init.Instructions, t.Description}
-	for _, key := range []string{"cue", "delivery_window", "mode", "offset", "reader", "scope"} {
-		descriptions = append(descriptions, schema.Properties[key].Description)
+	for _, key := range []string{"cue", "delivery_window", "mode", "offset", "reader", "scope", "unit_id"} {
+		if property, ok := schema.Properties[key]; ok {
+			descriptions = append(descriptions, property.Description)
+		}
 	}
 	v.PromptTokens["mcp"] = tokenzr.Count(strings.Join(descriptions, "\n"))
 	raw, _ := json.Marshal(p)
@@ -313,6 +351,11 @@ func safeRecallArgs(row observation) (map[string]any, bool) {
 	if json.Unmarshal([]byte(row.Calls[0].Function.Arguments), &args) != nil {
 		return nil, false
 	}
+	if _, present := args["unit_id"]; present {
+		id, _ := args["unit_id"].(string)
+		hash, ok := strings.CutPrefix(id, "ep_")
+		return args, len(args) == 1 && ok && validDigest(hash, 12)
+	}
 	cue, _ := args["cue"].(string)
 	if strings.TrimSpace(cue) == "" {
 		return nil, false
@@ -361,12 +404,16 @@ func run(bin, skills, baseline, baseSkills, suite, baseURL, model, weights, serv
 		arms = []string{"baseline", "current"}
 		r.Mode = "paired"
 	}
+	sourceRecovery := false
+	for _, c := range cases {
+		sourceRecovery = sourceRecovery || isRecovery(c)
+	}
 	for _, arm := range arms {
 		executable, skillDir := bin, skills
 		if arm == "baseline" {
 			executable, skillDir = baseline, baseSkills
 		}
-		state, subject, err := s.snapshot(executable, skillDir)
+		state, subject, err := s.snapshot(executable, skillDir, sourceRecovery)
 		if err != nil {
 			return err
 		}
@@ -374,6 +421,13 @@ func run(bin, skills, baseline, baseSkills, suite, baseURL, model, weights, serv
 	}
 	if err = s.prepare(runs["current"].bin, cases); err != nil {
 		return err
+	}
+	excerpts := make(map[string]map[string]string, len(arms))
+	for _, arm := range arms {
+		excerpts[arm], err = s.recoveryExcerpts(runs[arm].bin, cases)
+		if err != nil {
+			return fmt.Errorf("%s: %w", arm, err)
+		}
 	}
 	rowsPath := filepath.Join(out, "observations.jsonl")
 	f, err := os.OpenFile(rowsPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
@@ -398,6 +452,9 @@ func run(bin, skills, baseline, baseSkills, suite, baseURL, model, weights, serv
 					ch := make(chan completed, 1)
 					jobs = append(jobs, ch)
 					go func() {
+						if excerpt, ok := excerpts[arm][c.ID]; ok {
+							c.Task = strings.Replace(c.Task, "{{excerpt}}", excerpt, 1)
+						}
 						row, err := complete(url, r.Model, runs[arm].prompt, c, seed)
 						row.Arm = arm
 						ch <- completed{row, err}
@@ -409,12 +466,16 @@ func run(bin, skills, baseline, baseSkills, suite, baseURL, model, weights, serv
 						return fmt.Errorf("%s seed %d: %w", batch[j].ID, seed, result.err)
 					}
 					row := result.row
-					if c := batch[j]; isFact(c) {
-						if args, ok := safeRecallArgs(row); ok {
-							row.RecallText, row.RecallError, err = s.recall(runs["current"].bin, args)
-							if err != nil {
-								return err
-							}
+					c := batch[j]
+					row.SourceExcerpt = excerpts[row.Arm][c.ID]
+					if args, ok := safeRecallArgs(row); ok && (isFact(c) || isRecovery(c)) {
+						bin := runs["current"].bin
+						if isRecovery(c) {
+							bin = runs[row.Arm].bin
+						}
+						row.RecallText, row.RecallError, err = s.recall(bin, args)
+						if err != nil {
+							return err
 						}
 					}
 					if err = enc.Encode(row); err != nil {

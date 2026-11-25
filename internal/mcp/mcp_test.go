@@ -459,8 +459,11 @@ func assertRecallSchema(t *testing.T, schema map[string]any) {
 	t.Helper()
 	properties := asMap(t, schema["properties"])
 	assertKeys(t, "recall properties", properties, []string{
-		"cue", "scope", "reader", "mode", "delivery_window", "offset",
+		"cue", "scope", "reader", "mode", "delivery_window", "offset", "unit_id",
 	})
+	if kind := asString(t, asMap(t, properties["unit_id"])["type"]); kind != "string" {
+		t.Fatalf("unit_id type: %q", kind)
+	}
 	if keys := stringList(t, asMap(t, properties["mode"])["enum"]); strings.Join(keys, ",") != "full,probe,recent" {
 		t.Fatalf("mode enum: %v", keys)
 	}

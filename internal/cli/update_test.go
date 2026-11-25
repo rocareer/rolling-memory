@@ -14,10 +14,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func sha256HexBytes(b []byte) string {
@@ -294,4 +297,75 @@ func TestResolveConsoleAssetBaseLeavesNonGiteeUnchanged(t *testing.T) {
 	if got := resolveConsoleAssetBase(base); got != base {
 		t.Fatalf("resolveConsoleAssetBase(%q) = %q, want unchanged", base, got)
 	}
+}
+
+func TestUpdateLockAbandoned(t *testing.T) {
+	write := func(t *testing.T, dir, name, content string) string {
+		t.Helper()
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+
+	deadPID := func() int {
+		cmd := exec.Command("sh", "-c", "exit 0")
+		if err := cmd.Start(); err != nil {
+			t.Fatal(err)
+		}
+		pid := cmd.Process.Pid
+		_ = cmd.Wait()
+		return pid
+	}
+
+	t.Run("young lock with dead pid is abandoned", func(t *testing.T) {
+		dir := t.TempDir()
+		path := write(t, dir, "update.lock", strconv.Itoa(deadPID())+"\n")
+		if !updateLockAbandoned(path) {
+			t.Fatalf("expected dead-PID lock to be reclaimable")
+		}
+	})
+
+	t.Run("young lock with live pid is held", func(t *testing.T) {
+		dir := t.TempDir()
+		path := write(t, dir, "update.lock", strconv.Itoa(os.Getpid())+"\n")
+		if updateLockAbandoned(path) {
+			t.Fatalf("expected live-PID lock to be treated as held")
+		}
+	})
+
+	t.Run("empty lock is treated as held", func(t *testing.T) {
+		dir := t.TempDir()
+		path := write(t, dir, "update.lock", "")
+		if updateLockAbandoned(path) {
+			t.Fatalf("expected empty lock to be treated as held")
+		}
+	})
+
+	t.Run("garbage lock is treated as held", func(t *testing.T) {
+		dir := t.TempDir()
+		path := write(t, dir, "update.lock", "not-a-pid")
+		if updateLockAbandoned(path) {
+			t.Fatalf("expected garbage lock to be treated as held")
+		}
+	})
+
+	t.Run("old lock is abandoned regardless of pid", func(t *testing.T) {
+		dir := t.TempDir()
+		path := write(t, dir, "update.lock", strconv.Itoa(os.Getpid())+"\n")
+		old := time.Now().Add(-31 * time.Minute)
+		if err := os.Chtimes(path, old, old); err != nil {
+			t.Fatal(err)
+		}
+		if !updateLockAbandoned(path) {
+			t.Fatalf("expected old lock to be reclaimable")
+		}
+	})
+
+	t.Run("missing lock is abandoned", func(t *testing.T) {
+		if !updateLockAbandoned(filepath.Join(t.TempDir(), "absent.lock")) {
+			t.Fatalf("expected missing lock to be reclaimable")
+		}
+	})
 }

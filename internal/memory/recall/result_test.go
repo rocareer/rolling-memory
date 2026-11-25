@@ -23,6 +23,11 @@ func TestRenderKeepsSourceHandlesAheadOfShortenedExcerpt(t *testing.T) {
 	if !strings.Contains(block, "已核验命中片段: ep_opening, ep_exception") || !strings.Contains(block, "正文已缩短") {
 		t.Fatalf("source handles or excerpt status lost before body: %s", block)
 	}
+	// The read hint must name the last verified unit, where the omitted tail lives,
+	// rather than a placeholder that forces the assistant to guess among cited IDs.
+	if !strings.Contains(block, `recall({"unit_id":"ep_exception"})`) {
+		t.Fatalf("shortened excerpt did not name the tail unit for the read: %s", block)
+	}
 }
 
 // TestRenderRecordsCharacterTruncation verifies the render-time cut is reported even when

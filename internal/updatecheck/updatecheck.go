@@ -26,7 +26,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/rocareer/rolling-memory/internal/config"
@@ -1090,7 +1092,7 @@ func acquireLock() (func(), bool) {
 	}
 	handle, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
-		if info, statErr := os.Stat(path); statErr == nil && time.Since(info.ModTime()) > 10*time.Minute {
+		if checkLockAbandoned(path) {
 			_ = os.Remove(path)
 			handle, err = os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 		}
@@ -1101,4 +1103,50 @@ func acquireLock() (func(), bool) {
 	_, _ = handle.WriteString(fmt.Sprintf("%d\n", os.Getpid()))
 	_ = handle.Close()
 	return func() { _ = os.Remove(path) }, true
+}
+
+// checkLockAbandoned reports whether an existing state-cache lock no longer has
+// a live owner and can be reclaimed. A lock older than ten minutes is always
+// reclaimable; a younger lock is reclaimable only when it records a positive
+// PID that no longer refers to a running process. An unreadable or empty lock
+// is treated as live so a writer that has not yet recorded its PID is never
+// raced.
+func checkLockAbandoned(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return true
+	}
+	if time.Since(info.ModTime()) > 10*time.Minute {
+		return true
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(raw)))
+	if err != nil || pid <= 0 {
+		return false
+	}
+	return !processAlive(pid)
+}
+
+// processAlive reports whether a same-host process is still running via a
+// signal-0 probe. Only ESRCH / a reaped process count as dead; permission
+// errors or platforms without signal 0 are treated as alive so a stale lock is
+// never reclaimed from a live owner.
+func processAlive(pid int) bool {
+	if pid <= 0 {
+		return false
+	}
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	}
+	if err := process.Signal(syscall.Signal(0)); err != nil {
+		if errors.Is(err, syscall.ESRCH) || errors.Is(err, os.ErrProcessDone) {
+			return false
+		}
+		return true
+	}
+	return true
 }

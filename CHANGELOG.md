@@ -5,6 +5,13 @@ All notable user-facing changes to **Rolling Memory** are documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Read an unabridged conversation source unit through the same MCP `recall` tool by passing only its cited `unit_id`. An unavailable or changed source reports an error rather than returning substitute text.
+- Collaboration diagnostics now distinguish choosing the correct source ID from successfully reading its exact original text.
+
 ## [0.0.20] - 2026-11-25
 
 ### Changed

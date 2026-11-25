@@ -1542,6 +1542,30 @@ func (v *Vault) DocTimes(docIDs []string) map[string]int64 {
 	return times
 }
 
+// LoadEpisodicSource reads one indexed conversation unit, never a synthesized
+// record or an entire turn. A moved source may supply only the same verified text.
+func (v *Vault) LoadEpisodicSource(docID string) (string, error) {
+	var raw string
+	err := v.db.QueryRow(`
+		SELECT COALESCE(NULLIF(m.ref_pointer, ''), d.raw_text)
+		FROM rm_docs d LEFT JOIN rm_unit_meta m ON m.unit_id = d.unit_id
+		WHERE d.unit_id = ? AND d.layer = ?`, docID, LayerEpisodic).Scan(&raw)
+	if err != nil {
+		return "", err
+	}
+	if pointer := strings.TrimSpace(raw); strings.HasPrefix(pointer, "@ref:") {
+		text, actual, err := v.LoadVerifiedEpisodicPointerSource(docID, pointer)
+		if err != nil {
+			return "", err
+		}
+		if stem := pointerStem(pointer); stem == "" || pointerStem(actual) != stem {
+			return "", errors.New("localvault: source provenance unavailable")
+		}
+		return text, nil
+	}
+	return raw, nil
+}
+
 // LoadLocalDocument retrieves the locally stored plaintext and distilled dry sentences for docID
 // (supporting `background` mounted directory files read LIVE on-demand from disk via `rm_bg_chunks`,
 // zero-copy `episodic` pointers `@ref:...` read LIVE on-demand from the Harness DB/JSONL,

@@ -111,6 +111,13 @@ func TestMCPSourceHandleResolvesOriginalSegment(t *testing.T) {
 		}
 		return objectAt(t, docs[0])
 	}
+	readMCP := func(args string) map[string]any {
+		t.Helper()
+		request := `{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"recall","arguments":` + args + `}}` + "\n"
+		response := sb.runInput(request, "mcp")
+		assertExit(t, response, 0, "read source through recall")
+		return objectAt(t, jsonObject(t, response.stdout), "result")
+	}
 	var tailID string
 	for _, id := range strings.Split(handles, ", ") {
 		doc := readUnit(id)
@@ -124,16 +131,39 @@ func TestMCPSourceHandleResolvesOriginalSegment(t *testing.T) {
 	if tailID == "" {
 		t.Fatalf("no cited segment resolved the omitted exception")
 	}
+	args := fmt.Sprintf(`{"unit_id":%q}`, tailID)
+	checkSource := func(wantBody string) {
+		t.Helper()
+		resp := readMCP(args)
+		blocks := arrayField(t, resp, "content")
+		if len(blocks) != 1 {
+			t.Fatalf("expected one source block: %+v", resp)
+		}
+		text := stringField(t, objectAt(t, blocks[0]), "text")
+		if wantBody == "" {
+			if resp["isError"] != true || !strings.Contains(text, "source unavailable") || strings.Contains(text, first) || strings.Contains(text, "replacement") || strings.Contains(text, path) {
+				t.Fatalf("unavailable source should return no text or path: %+v", resp)
+			}
+			return
+		}
+		header, got, ok := strings.Cut(text, "\n\n")
+		if resp["isError"] != false || !ok || !strings.Contains(header, tailID) || got != wantBody {
+			t.Fatalf("MCP source read did not return the exact unit: %+v", resp)
+		}
+	}
+	checkSource("[assistant] " + body)
 	writeFile(t, path, `{"type":"user","message":{"role":"user","content":"An unrelated replacement record."}}`+"\n")
 	if doc := readUnit(tailID); doc["error"] == nil || doc["raw_text"] != nil {
 		t.Fatalf("changed source should not produce old or replacement content: %+v", doc)
 	}
+	checkSource("")
 	if err := os.Remove(path); err != nil {
 		t.Fatal(err)
 	}
 	if doc := readUnit(tailID); doc["error"] == nil || doc["raw_text"] != nil {
 		t.Fatalf("removed source should not produce old content: %+v", doc)
 	}
+	checkSource("")
 }
 
 func TestMCPRejectsCallerBudgetBeforeOpeningVault(t *testing.T) {

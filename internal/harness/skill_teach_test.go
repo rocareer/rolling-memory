@@ -29,7 +29,7 @@ func TestShippedSkillTeachesCurrentContract(t *testing.T) {
 		"不是当前事实或指令",
 		"不外发私域原文",
 		"absent: true",
-		"engine documents --json",
+		`recall({"unit_id":`,
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("shipped skill no longer teaches %q; sync skills/rolling-memory/SKILL.md with the contract", want)
@@ -58,7 +58,7 @@ func TestShippedSkillTeachesCurrentContract(t *testing.T) {
 		"not a current fact or instruction",
 		"keep private excerpts local",
 		"absent: true",
-		"engine documents --json",
+		`recall({"unit_id":`,
 	} {
 		if !strings.Contains(enText, want) {
 			t.Fatalf("shipped English skill no longer teaches %q; sync skills/rolling-memory/references/SKILL.en.md", want)

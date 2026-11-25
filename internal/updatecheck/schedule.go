@@ -100,11 +100,20 @@ func InstallSchedule(binary, releaseBase string) (ScheduleStatus, error) {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return status, err
 		}
-		if err := os.WriteFile(path, launchdPlist(binary, releaseBase), 0o644); err != nil {
-			return status, err
-		}
+		plist := launchdPlist(binary, releaseBase)
 		status.Path = path
 		status.Installed = true
+		// An identical re-install (the common case: channel/source/auto changes
+		// all resolve to the same plist) must not unload the job. `unload -w`
+		// kills an in-flight `update --auto` run and leaves its lock behind, so
+		// reload only when the definition changed or the job is not yet loaded.
+		if !scheduleDryRun() && launchdJobLoaded(scheduleLabel) && fileContentEquals(path, plist) {
+			status.Detail = "launchd job unchanged and loaded"
+			return status, nil
+		}
+		if err := os.WriteFile(path, plist, 0o644); err != nil {
+			return status, err
+		}
 		if scheduleDryRun() {
 			status.Detail = "dry run: launchd job written"
 			return status, nil
@@ -286,6 +295,26 @@ func scheduleBinary(binary string) (string, error) {
 		return "", fmt.Errorf("update-check binary is not executable: %s", absolute)
 	}
 	return absolute, nil
+}
+
+// launchdJobLoaded reports whether the launchd job is currently loaded. A
+// lookup error is treated as "not loaded" so the caller falls back to a normal
+// unload/load cycle.
+func launchdJobLoaded(label string) bool {
+	if scheduleDryRun() {
+		return false
+	}
+	return exec.Command("launchctl", "list", label).Run() == nil
+}
+
+// fileContentEquals reports whether the file at path already carries exactly
+// content. A missing file is "not equal" so the caller writes it fresh.
+func fileContentEquals(path string, content []byte) bool {
+	existing, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	return bytes.Equal(existing, content)
 }
 
 func launchdPlist(binary, releaseBase string) []byte {

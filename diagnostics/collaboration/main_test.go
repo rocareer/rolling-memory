@@ -140,6 +140,29 @@ func TestReceiptRequiresCompleteUniqueRowsAndReleaseIdentity(t *testing.T) {
 	}
 }
 
+func TestSourceRecoveryRequiresTheVerbatimRead(t *testing.T) {
+	c := scenario{Group: "source_recovery", Want: "read_source", Source: "The ordinary rule.", Answer: "One final condition applies."}
+	id := recoveryID(c)
+	row := observation{
+		Calls:         []call{toolCall("recall", `{"unit_id":"`+id+`"}`)},
+		SourceExcerpt: "（正文已缩短）\n  已核验命中片段: " + id,
+		RecallText:    "Conversation source unit " + id + ":\n\n" + recoveryBody(c),
+	}
+	if got := classify(c, row); got.MatchedSource != 1 || got.SourceReads != 1 || got.Strict != 1 || got.Unnecessary != 0 {
+		t.Fatalf("exact recovery: %+v", got)
+	}
+	for _, broken := range []observation{
+		{Calls: row.Calls, SourceExcerpt: row.SourceExcerpt, RecallText: "summary " + id + ":\n\n" + c.Answer},
+		{Calls: row.Calls, RecallText: row.RecallText},
+		{Calls: row.Calls, SourceExcerpt: row.SourceExcerpt, RecallText: row.RecallText, RecallError: true},
+		{Calls: []call{toolCall("read_source", `{"unit_id":"`+id+`"}`)}, SourceExcerpt: row.SourceExcerpt, RecallText: row.RecallText},
+	} {
+		if got := classify(c, broken); got.MatchedSource != 1 || got.SourceReads != 0 || got.Strict != 0 {
+			t.Fatalf("unverified read got credit: %+v", got)
+		}
+	}
+}
+
 func TestPublicSuiteIsFrozen(t *testing.T) {
 	cases, sha, err := readSuite("cases-v4.json")
 	if err != nil {
@@ -154,5 +177,12 @@ func TestPublicSuiteIsFrozen(t *testing.T) {
 	}
 	if langs["zh"] != 26 || langs["en"] != 26 {
 		t.Fatalf("unexpected language coverage: %v", langs)
+	}
+	cases, sha, err = readSuite("cases-v5.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sha != "2a53e33c3ca31b7c71f18c1086b90a092d47b6ee1b8d07a9e9401fd320c78a40" || len(cases) != 50 {
+		t.Fatalf("v5 suite changed: %s (%d cases); use a new suite version", sha, len(cases))
 	}
 }
