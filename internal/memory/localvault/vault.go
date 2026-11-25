@@ -3037,8 +3037,13 @@ func (c *sqliteReadCache) handle(path string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	handle.SetMaxOpenConns(2)
-	handle.SetMaxIdleConns(2)
+	// One connection, kept idle between calls: the turn-prefix cache
+	// (internal/episodic) invalidates on PRAGMA data_version, which counts the
+	// commits one connection observed. A second pooled connection would read the
+	// same file state under a different count and could be served a prefix cached
+	// before the source changed, so this handle serves exactly one connection.
+	handle.SetMaxOpenConns(1)
+	handle.SetMaxIdleConns(1)
 	handle.SetConnMaxIdleTime(0)
 	handle.SetConnMaxLifetime(0)
 	if c.db != nil {

@@ -242,12 +242,19 @@ func ZCodeTurnSegmentsUpTo(db *sql.DB, sessionID, userMsgID string, minSegments 
 		return nil, false, errors.New("episodic: zcode turn requires session and user message id")
 	}
 	var cacheKey zcodeTurnCacheKey
-	{
+	// PRAGMA data_version counts the commits one connection has observed: two
+	// connections report different counts for the same file state, and a fresh
+	// connection restarts below a count an older connection already published. A
+	// prefix cached under such a token could therefore be served as verified after
+	// the source changed. Only a handle that serves one connection at a time (the
+	// vault's read handle) keeps the token monotonic, so only that handle uses the
+	// cache; a pooled handle reads the turn through every time.
+	if db.Stats().MaxOpenConnections == 1 {
 		var msgCount, maxSeq, totalChg, dataVersion int64
 		_ = db.QueryRow(`SELECT COUNT(*), COALESCE(MAX(sequence), 0), total_changes() FROM message WHERE session_id = ?`, sessionID).Scan(&msgCount, &maxSeq, &totalChg)
-		// A source edit can rewrite a part without changing message identity, so
-		// the key also carries the connection's data_version: another connection's
-		// commit invalidates the prefix instead of serving the pre-edit text.
+		// A source edit can rewrite a part without changing message identity, so the
+		// key also carries data_version and total_changes: either another
+		// connection's commit or this connection's own write invalidates the prefix.
 		_ = db.QueryRow(`PRAGMA data_version`).Scan(&dataVersion)
 		cacheKey = zcodeTurnCacheKey{
 			db:           db,
@@ -512,6 +519,10 @@ func ZCodeTurnSegmentsUpTo(db *sql.DB, sessionID, userMsgID string, minSegments 
 // caller; early-stopped prefixes are reusable for later early-segment lookups.
 // The store keeps the longest prefix and never downgrades a complete entry.
 func cacheZCodeTurnSegments(key zcodeTurnCacheKey, segments []Segment, complete bool, minSegments int) {
+	if key.db == nil {
+		// The caller's handle is pooled, so ZCodeTurnSegmentsUpTo kept the cache off.
+		return
+	}
 	if !complete && minSegments <= 0 {
 		return
 	}

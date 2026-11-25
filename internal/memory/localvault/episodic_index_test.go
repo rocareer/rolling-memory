@@ -1117,6 +1117,32 @@ func TestZCodePointerReflectsSourceEdits(t *testing.T) {
 	wg.Wait()
 }
 
+// TestZCodeReadHandleKeepsOneConnection pins the invariant the turn-prefix cache
+// relies on: PRAGMA data_version counts the commits one connection observed, so a
+// second pooled connection could read the same file state under a different count
+// and be served a prefix cached before the source changed.
+func TestZCodeReadHandleKeepsOneConnection(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "zcode.db")
+	source, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := source.Exec(`CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, sequence INTEGER, time_created INTEGER, data TEXT)`); err != nil {
+		_ = source.Close()
+		t.Fatal(err)
+	}
+	if err := source.Close(); err != nil {
+		t.Fatal(err)
+	}
+	handle, err := zcodeReadHandle(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := handle.Stats().MaxOpenConnections; got != 1 {
+		t.Fatalf("zcode read handle max connections = %d, want 1", got)
+	}
+}
+
 func TestJSONLPointerSameMetadataEditFailsClosed(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "source.jsonl")

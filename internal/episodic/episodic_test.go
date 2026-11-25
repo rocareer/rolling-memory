@@ -21,6 +21,10 @@ func openZCodeFixture(t *testing.T) *sql.DB {
 	if err != nil {
 		t.Fatalf("open fixture: %v", err)
 	}
+	// The turn-prefix cache keys on PRAGMA data_version, which is per connection;
+	// it stays off on a pooled handle. One connection is the shape the vault's read
+	// handle uses, so the fixture exercises the cached path.
+	db.SetMaxOpenConns(1)
 	t.Cleanup(func() { db.Close() })
 	for _, ddl := range []string{
 		`CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, sequence INTEGER, time_created INTEGER, data TEXT)`,
@@ -425,5 +429,81 @@ func TestZCodeTurnCacheServesEarlyPrefixAndInvalidatesOnAppend(t *testing.T) {
 	}
 	if got := zcodeTurnCacheHitCount(); got != hit0+2 {
 		t.Fatalf("stale prefix survived a new message: hits=%d want=%d", got, hit0+2)
+	}
+}
+
+// TestZCodeTurnCacheStaysOffOnPooledHandles pins the cache contract that a
+// CI-only failure exposed: PRAGMA data_version counts the commits each
+// connection observed, so two pooled connections report different counts for the
+// same file state and a fresh connection restarts below a count an older one
+// already published. Keyed on a pooled handle, the second connection inherited a
+// pre-edit prefix and hydration reported the old text as verified.
+func TestZCodeTurnCacheStaysOffOnPooledHandles(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "zcode-pooled.db")
+	writer, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("seed handle: %v", err)
+	}
+	for _, stmt := range []string{
+		`CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, sequence INTEGER, time_created INTEGER, data TEXT)`,
+		`CREATE TABLE part (message_id TEXT, sequence INTEGER, data TEXT)`,
+		`INSERT INTO message (id, session_id, sequence, time_created, data) VALUES ('u1', 's1', 1, 1700000000, '{"role":"user"}')`,
+		`INSERT INTO part (message_id, sequence, data) VALUES ('u1', 0, '{"type":"text","text":"fixture question"}')`,
+		`INSERT INTO message (id, session_id, sequence, time_created, data) VALUES ('a1', 's1', 2, 1700000001, '{"role":"assistant"}')`,
+		`INSERT INTO part (message_id, sequence, data) VALUES ('a1', 0, '{"type":"text","text":"fixture reply"}')`,
+	} {
+		if _, err := writer.Exec(stmt); err != nil {
+			t.Fatalf("seed (%s): %v", stmt, err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("close seed handle: %v", err)
+	}
+
+	reader, err := sql.Open("sqlite", "file:"+path+"?mode=ro")
+	if err != nil {
+		t.Fatalf("reader handle: %v", err)
+	}
+	defer reader.Close()
+	reader.SetMaxOpenConns(2)
+	reader.SetMaxIdleConns(2)
+
+	warm, _, err := ZCodeTurnSegmentsUpTo(reader, "s1", "u1", 3)
+	if err != nil || len(warm) == 0 || warm[0].Text != "fixture question" {
+		t.Fatalf("warm read = %+v err=%v", warm, err)
+	}
+	hits := zcodeTurnCacheHitCount()
+
+	edit, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("edit handle: %v", err)
+	}
+	if _, err := edit.Exec(`UPDATE part SET data = '{"type":"text","text":"changed primary"}' WHERE message_id = 'u1'`); err != nil {
+		t.Fatalf("edit source: %v", err)
+	}
+	if err := edit.Close(); err != nil {
+		t.Fatalf("close edit handle: %v", err)
+	}
+
+	// Hold the connection that served the warm read so the post-edit read has to
+	// take the pool's second connection.
+	pin, err := reader.Query(`SELECT 1 FROM part`)
+	if err != nil {
+		t.Fatalf("pin connection: %v", err)
+	}
+	defer pin.Close()
+	if !pin.Next() {
+		t.Fatalf("pin connection produced no row")
+	}
+
+	after, _, err := ZCodeTurnSegmentsUpTo(reader, "s1", "u1", 3)
+	if err != nil {
+		t.Fatalf("post-edit read: %v", err)
+	}
+	if len(after) == 0 || after[0].Text != "changed primary" {
+		t.Fatalf("pooled handle served the pre-edit segment: %+v", after)
+	}
+	if got := zcodeTurnCacheHitCount(); got != hits {
+		t.Fatalf("pooled handle used the turn cache: hits=%d want=%d", got, hits)
 	}
 }
